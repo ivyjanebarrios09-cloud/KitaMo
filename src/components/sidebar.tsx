@@ -31,7 +31,7 @@ import {
   Sheet,
   SheetContent,
 } from '@/components/ui/sheet';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 const sidebarNavItems = [
@@ -49,46 +49,61 @@ const roomSubNavItems = [
     { href: '/analytics', label: 'Expense Analytics', icon: BarChart3 },
 ];
 
-function NavContent() {
+function NavContent({ isMobile = false }: { isMobile?: boolean }) {
     const pathname = usePathname();
     const isRoomRoute = pathname.startsWith('/dashboard/rooms/');
     const roomId = isRoomRoute ? pathname.split('/')[3] : null;
 
+    const renderLink = (item: any, isSubItem = false) => {
+      const href = isSubItem && roomId ? `/dashboard/rooms/${roomId}${item.href}` : item.href;
+      const isActive = isSubItem
+        ? (item.href === '' ? pathname === href : pathname.startsWith(href))
+        : ((item.href === '/dashboard' && pathname === item.href) || (item.href !== '/dashboard' && pathname.startsWith(item.href)));
+
+      const linkContent = (
+        <div
+          className={cn(
+            'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
+            isActive && 'bg-muted text-primary',
+            isMobile && 'justify-start',
+            !isMobile && 'justify-center'
+          )}
+        >
+          <item.icon className="h-5 w-5" />
+          {!isMobile ? null : <span className="truncate">{item.label}</span>}
+        </div>
+      );
+
+      if (isMobile) {
+        return <Link key={item.label} href={href}>{linkContent}</Link>;
+      }
+
+      return (
+        <TooltipProvider key={item.label} delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link href={href}>
+                {linkContent}
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <p>{item.label}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    };
+
     return (
         <>
-         {sidebarNavItems.map((item) => (
-            <Link
-                key={item.label}
-                href={item.href}
-                className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
-                ((item.href === '/dashboard' && pathname === item.href) || (item.href !== '/dashboard' && pathname.startsWith(item.href))) && 'bg-muted text-primary'
-                )}
-            >
-                <item.icon className="h-5 w-5" />
-                <span className="truncate">{item.label}</span>
-            </Link>
-            ))}
+         {sidebarNavItems.map((item) => renderLink(item))}
             {isRoomRoute && roomId && (
-                 <div className="pl-4 mt-2 space-y-1 border-l ml-3">
-                 <p className="px-3 py-2 text-xs font-semibold text-muted-foreground/80 uppercase">Room Menu</p>
-                 {roomSubNavItems.map((item) => {
-                   const itemPath = `/dashboard/rooms/${roomId}${item.href}`;
-                   const isActive = item.href === '' ? pathname === itemPath : pathname.startsWith(itemPath);
-                   return (
-                     <Link
-                       key={item.label}
-                       href={itemPath}
-                       className={cn(
-                         'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary text-sm',
-                         isActive && 'bg-muted text-primary'
-                       )}
-                     >
-                       <item.icon className="h-4 w-4" />
-                       <span className="truncate">{item.label}</span>
-                     </Link>
-                   );
-                 })}
+                 <div className={cn("mt-2 space-y-1", !isMobile && "border-t pt-2")}>
+                 {!isMobile && <p className="px-3 py-2 text-xs font-semibold text-muted-foreground/80 uppercase text-center">Room</p>}
+                 {isMobile && <div className="pl-4 mt-2 space-y-1 border-l ml-3"><p className="px-3 py-2 text-xs font-semibold text-muted-foreground/80 uppercase">Room Menu</p></div>}
+                 <div className={cn(isMobile && "pl-4 mt-2 space-y-1 border-l ml-3")}>
+                    {roomSubNavItems.map((item) => renderLink(item, true))}
+                 </div>
                </div>
             )}
         </>
@@ -96,29 +111,29 @@ function NavContent() {
 }
 
 
-export function Sidebar() {
+export function Sidebar({isMobileSheet = false}: {isMobileSheet?: boolean}) {
   const { user, logout } = useAuth();
   const userInitial = user?.email?.charAt(0).toUpperCase() || '?';
 
-  return (
-    <aside className="w-64 bg-card border-r flex flex-col h-full">
-      <div className="h-16 flex items-center justify-between px-6 border-b">
+  const sidebarContent = (
+    <>
+      <div className="h-16 flex items-center justify-center px-6 border-b">
         <Link
           href="/"
           className="flex items-center gap-2 font-semibold text-lg"
         >
           <BookOpen className="h-6 w-6 text-primary" />
-          <span>KitaMo!</span>
+          {isMobileSheet && <span>KitaMo!</span>}
         </Link>
       </div>
-      <nav className="flex-1 py-4 px-4 space-y-2">
-        <NavContent />
+      <nav className="flex-1 py-4 px-2 space-y-2">
+        <NavContent isMobile={isMobileSheet}/>
       </nav>
-      <div className="p-4 border-t mt-auto">
+      <div className="p-2 border-t mt-auto">
         {user && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="w-full justify-start gap-2 text-left">
+              <Button variant="ghost" className="w-full justify-center h-12 w-12 p-0">
                 <Avatar className="h-9 w-9">
                   <AvatarImage
                     src={`https://avatar.vercel.sh/${user.email}.png`}
@@ -126,10 +141,12 @@ export function Sidebar() {
                   />
                   <AvatarFallback>{userInitial}</AvatarFallback>
                 </Avatar>
-                <div className="flex flex-col items-start overflow-hidden">
-                    <span className="text-sm font-medium leading-none truncate">Hello!</span>
-                    <span className="text-xs text-muted-foreground leading-none truncate">{user.email}</span>
-                </div>
+                {isMobileSheet && (
+                    <div className="flex flex-col items-start overflow-hidden ml-2">
+                        <span className="text-sm font-medium leading-none truncate">Hello!</span>
+                        <span className="text-xs text-muted-foreground leading-none truncate">{user.email}</span>
+                    </div>
+                )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -157,6 +174,16 @@ export function Sidebar() {
           </DropdownMenu>
         )}
       </div>
+    </>
+  );
+
+  if (isMobileSheet) {
+    return <div className="flex flex-col h-full bg-card">{sidebarContent}</div>
+  }
+
+  return (
+    <aside className="w-20 bg-card border-r flex-col h-full hidden lg:flex">
+      {sidebarContent}
     </aside>
   );
 }
@@ -166,7 +193,7 @@ export function MobileSidebar({isSidebarOpen, setSidebarOpen}: {isSidebarOpen: b
         <div className="lg:hidden">
              <Sheet open={isSidebarOpen} onOpenChange={setSidebarOpen}>
                 <SheetContent side="left" className="flex flex-col p-0 w-72">
-                    <Sidebar />
+                    <Sidebar isMobileSheet={true} />
                 </SheetContent>
             </Sheet>
         </div>
@@ -252,7 +279,9 @@ export function BottomNavBar() {
     <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-card border-t z-40">
       <div className="flex justify-around items-center h-16">
         {navItems.map((item) => {
-            const isActive = (item.href === '/dashboard' && pathname === item.href) || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+            const isActive = item.href === ''
+                ? pathname === `/dashboard/rooms/${roomId}`
+                : (item.href === '/dashboard' && pathname === item.href) || (item.href !== '/dashboard' && pathname.startsWith(item.href));
             return (
                 <Link
                     key={item.label}

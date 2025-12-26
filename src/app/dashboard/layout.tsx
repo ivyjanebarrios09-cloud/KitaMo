@@ -15,9 +15,7 @@ export default function DashboardLayout({
   return (
     <AuthGuard>
       <div className="flex min-h-screen bg-background">
-        <div className="hidden lg:block">
-          <Sidebar />
-        </div>
+        <Sidebar />
         <MobileSidebar isSidebarOpen={isSidebarOpen} setSidebarOpen={setSidebarOpen} />
         <div className="flex-1 flex flex-col relative pb-16 lg:pb-0">
           <Header onMenuClick={() => setSidebarOpen(true)} />
