@@ -15,6 +15,7 @@ import {
   BarChart3,
   Settings,
   Megaphone,
+  FileText,
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import {
@@ -223,9 +224,11 @@ export function MobileSidebar({isSidebarOpen, setSidebarOpen}: {isSidebarOpen: b
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
-                            <UserIcon className="mr-2 h-4 w-4" />
-                            <span>Profile</span>
+                        <DropdownMenuItem asChild>
+                          <Link href="/dashboard/personal-statements">
+                            <FileText className="mr-2 h-4 w-4" />
+                            <span>Personal Statements</span>
+                          </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                             <Settings className="mr-2 h-4 w-4" />
@@ -287,9 +290,11 @@ export function Header({onMenuClick}: {onMenuClick?: () => void}) {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                        <UserIcon className="mr-2 h-4 w-4" />
-                        <span>Profile</span>
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard/personal-statements">
+                        <FileText className="mr-2 h-4 w-4" />
+                        <span>Personal Statements</span>
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                         <Settings className="mr-2 h-4 w-4" />
@@ -362,7 +367,7 @@ export function BottomNavBar() {
                     />
                     <AvatarFallback className="text-xs">{userInitial}</AvatarFallback>
                   </Avatar>
-                  <span className="text-xs truncate">Profile</span>
+                  <span className="text-xs truncate">More</span>
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56 mb-2" align="end" forceMount>
@@ -375,9 +380,11 @@ export function BottomNavBar() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <UserIcon className="mr-2 h-4 w-4" />
-                <span>Profile</span>
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/personal-statements">
+                  <FileText className="mr-2 h-4 w-4" />
+                  <span>Personal Statements</span>
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Settings className="mr-2 h-4 w-4" />
