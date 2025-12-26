@@ -139,9 +139,6 @@ function NavContent({ isMobile = false }: { isMobile?: boolean }) {
 
 
 export function Sidebar({isMobileSheet = false}: {isMobileSheet?: boolean}) {
-  const { user, logout } = useAuth();
-  const userInitial = user?.email?.charAt(0).toUpperCase() || '?';
-  const chairpersonName = user?.displayName || user?.email?.split('@')[0] || 'Chairperson';
 
   const sidebarContent = (
     <>
@@ -150,60 +147,13 @@ export function Sidebar({isMobileSheet = false}: {isMobileSheet?: boolean}) {
           href="/"
           className="flex items-center gap-2 font-semibold text-lg"
         >
-          
+          <Logo />
           {isMobileSheet && <span>KitaMo!</span>}
         </Link>
       </div>
       <nav className="flex-1 py-4 px-2 space-y-2">
         <NavContent isMobile={isMobileSheet}/>
       </nav>
-      {isMobileSheet && (
-        <div className="p-2 border-t mt-auto">
-        {user && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="w-full justify-start h-auto p-2">
-                <Avatar className="h-9 w-9">
-                  <AvatarImage
-                    src={`https://avatar.vercel.sh/${user.email}.png`}
-                    alt={user.email!}
-                  />
-                  <AvatarFallback>{userInitial}</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col items-start overflow-hidden ml-2">
-                    <span className="text-sm font-medium leading-none truncate">{chairpersonName}</span>
-                    <span className="text-xs text-muted-foreground leading-none truncate">{user.email}</span>
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{chairpersonName}</p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {user.email}
-                  </p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <UserIcon className="mr-2 h-4 w-4" />
-                <span>Profile</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
-      )}
     </>
   );
 
@@ -219,11 +169,60 @@ export function Sidebar({isMobileSheet = false}: {isMobileSheet?: boolean}) {
 }
 
 export function MobileSidebar({isSidebarOpen, setSidebarOpen}: {isSidebarOpen: boolean, setSidebarOpen: (open: boolean) => void}) {
+    const { user, logout } = useAuth();
+    const userInitial = user?.email?.charAt(0).toUpperCase() || '?';
+    const chairpersonName = user?.displayName || user?.email?.split('@')[0] || 'Chairperson';
+
     return (
         <div className="lg:hidden">
              <Sheet open={isSidebarOpen} onOpenChange={setSidebarOpen}>
                 <SheetContent side="left" className="flex flex-col p-0 w-72">
                     <Sidebar isMobileSheet={true} />
+                    <div className="p-2 border-t mt-auto">
+                    {user && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="w-full justify-start h-auto p-2">
+                            <Avatar className="h-9 w-9">
+                            <AvatarImage
+                                src={`https://avatar.vercel.sh/${user.email}.png`}
+                                alt={user.email!}
+                            />
+                            <AvatarFallback>{userInitial}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col items-start overflow-hidden ml-2">
+                                <span className="text-sm font-medium leading-none truncate">{chairpersonName}</span>
+                                <span className="text-xs text-muted-foreground leading-none truncate">{user.email}</span>
+                            </div>
+                        </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-56" align="end" forceMount>
+                        <DropdownMenuLabel className="font-normal">
+                            <div className="flex flex-col space-y-1">
+                            <p className="text-sm font-medium leading-none">{chairpersonName}</p>
+                            <p className="text-xs leading-none text-muted-foreground">
+                                {user.email}
+                            </p>
+                            </div>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem>
+                            <UserIcon className="mr-2 h-4 w-4" />
+                            <span>Profile</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                            <Settings className="mr-2 h-4 w-4" />
+                            <span>Settings</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={logout}>
+                            <LogOut className="mr-2 h-4 w-4" />
+                            <span>Log out</span>
+                        </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    )}
+                </div>
                 </SheetContent>
             </Sheet>
         </div>
@@ -240,10 +239,9 @@ export function Header({onMenuClick}: {onMenuClick: () => void}) {
                     <Menu className="h-6 w-6" />
                     <span className="sr-only">Toggle navigation menu</span>
                 </Button>
-                <Link href="/" className="flex items-center gap-2 font-semibold text-lg">
-                    <Logo />
-                    <span className="hidden sm:inline-block">KitaMo!</span>
-                </Link>
+                <div className="hidden lg:flex items-center gap-2 font-semibold text-lg">
+                    <span>KitaMo!</span>
+                </div>
             </div>
             <div className="w-full flex-1">
                 {/* Optional: Add search or other header elements here */}
