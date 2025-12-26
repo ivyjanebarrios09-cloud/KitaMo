@@ -17,30 +17,41 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ArrowRight, MoreHorizontal, PlusCircle, Users } from 'lucide-react';
 import Link from 'next/link';
+import { useUserRooms } from '@/hooks/use-user-rooms';
+import { useAuth } from '@/context/auth-context';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import React from 'react';
+import { createRoom } from '@/lib/firebase-actions';
+import { useToast } from '@/hooks/use-toast';
+import { Loader } from '@/components/loader';
 
-const rooms = [
-  {
-    id: 'socrates-fund-monitoring',
-    name: 'Socrates Fund Monitoring',
-    description: 'To monitor the funds and expenses',
-    students: 1,
-    balance: 0.0,
-  },
-  {
-    id: 'rizal-monitoring-funds',
-    name: 'Rizal Monitoring Funds',
-    description: 'A monitoring room for the funds and expenses of the section Rizal',
-    students: 0,
-    balance: 0.0,
-  },
-  {
-    id: 'bonifacio-fund-monitoring',
-    name: 'Bonifacio Fund Monitoring',
-    description: 'No description provided.',
-    students: 0,
-    balance: 0.0,
-  },
-];
+
+const roomSchema = z.object({
+  name: z.string().min(1, 'Room name is required'),
+  description: z.string().optional(),
+});
 
 const RoomCard = ({ room }) => (
   <Card className="shadow-sm hover:shadow-lg transition-shadow flex flex-col">
@@ -52,8 +63,8 @@ const RoomCard = ({ room }) => (
     <CardFooter className="flex justify-between items-center text-sm text-muted-foreground">
       <div className="flex items-center gap-2">
         <Users className="h-4 w-4" />
-        <span>{room.students} Students</span>
-        <span>₱{room.balance.toFixed(2)}</span>
+        <span>{room.studentCount || 0} Students</span>
+        <span>₱{(room.totalCollected - room.totalExpenses).toFixed(2) || '0.00'}</span>
       </div>
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" asChild>
@@ -79,8 +90,62 @@ const RoomCard = ({ room }) => (
   </Card>
 );
 
+const RoomCardSkeleton = () => (
+    <Card className="shadow-sm flex flex-col">
+        <CardHeader>
+            <Skeleton className="h-6 w-3/4" />
+            <Skeleton className="h-4 w-full mt-2" />
+            <Skeleton className="h-4 w-2/3 mt-1" />
+        </CardHeader>
+        <CardContent className="flex-grow"></CardContent>
+        <CardFooter className="flex justify-between items-center">
+            <Skeleton className="h-5 w-24" />
+            <div className="flex items-center gap-2">
+                <Skeleton className="h-8 w-24" />
+                <Skeleton className="h-8 w-8" />
+            </div>
+        </CardFooter>
+    </Card>
+)
 
 export default function ManageRoomsPage() {
+  const { user } = useAuth();
+  const { rooms, loading } = useUserRooms(user?.uid);
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [formLoading, setFormLoading] = React.useState(false);
+  const { toast } = useToast();
+
+  const form = useForm({
+    resolver: zodResolver(roomSchema),
+    defaultValues: {
+      name: '',
+      description: '',
+    },
+  });
+
+  const onSubmit = async (values: z.infer<typeof roomSchema>) => {
+    if (!user) return;
+    setFormLoading(true);
+    try {
+      await createRoom(user.uid, values);
+      toast({
+        title: 'Room Created!',
+        description: `${values.name} has been successfully created.`,
+      });
+      form.reset();
+      setDialogOpen(false);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error creating room',
+        description: 'An unexpected error occurred. Please try again.',
+      });
+    } finally {
+        setFormLoading(false);
+    }
+  };
+
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex justify-between items-center">
@@ -90,16 +155,77 @@ export default function ManageRoomsPage() {
             Your financial rooms are listed below.
           </p>
         </div>
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Create Room
-        </Button>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+                <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Create Room
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Create New Room</DialogTitle>
+                    <DialogDescription>
+                        Fill in the details to create a new financial tracking room.
+                    </DialogDescription>
+                </DialogHeader>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="name"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Room Name</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="e.g., Socrates Fund" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="description"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Description (Optional)</FormLabel>
+                                    <FormControl>
+                                        <Textarea placeholder="A brief description of the room's purpose" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         <DialogFooter>
+                            <Button type="button" variant="ghost" onClick={() => setDialogOpen(false)}>Cancel</Button>
+                            <Button type="submit" disabled={formLoading}>
+                                {formLoading ? <Loader className="h-4 w-4"/> : "Create"}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {rooms.map((room, index) => (
-          <RoomCard key={index} room={room} />
-        ))}
+        {loading ? (
+          <>
+            <RoomCardSkeleton />
+            <RoomCardSkeleton />
+            <RoomCardSkeleton />
+          </>
+        ) : rooms.length > 0 ? (
+          rooms.map((room) => (
+            <RoomCard key={room.id} room={room} />
+          ))
+        ) : (
+            <div className="md:col-span-2 lg:col-span-3 text-center text-muted-foreground py-16">
+                <p>No rooms found.</p>
+                <p className="text-sm">Click "Create Room" to get started.</p>
+            </div>
+        )}
       </div>
     </div>
   );

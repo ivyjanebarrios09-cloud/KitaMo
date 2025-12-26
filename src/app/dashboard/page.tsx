@@ -16,60 +16,49 @@ import {
 } from '@/components/ui/table';
 import { useAuth } from '@/context/auth-context';
 import { PiggyBank, Receipt, Scale, Users } from 'lucide-react';
+import { useUserRooms } from '@/hooks/use-user-rooms';
+import { Loader } from '@/components/loader';
+import Link from 'next/link';
 
-const StatCard = ({ title, value, icon: Icon, currency = '₱' }) => (
+const StatCard = ({ title, value, icon: Icon, currency = '₱', loading = false }) => (
   <Card className="shadow-sm hover:shadow-md transition-shadow">
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
       <CardTitle className="text-sm font-medium">{title}</CardTitle>
       <Icon className="h-5 w-5 text-muted-foreground" />
     </CardHeader>
     <CardContent>
-      <div className="text-2xl font-bold">
-        {currency}
-        {value}
-      </div>
+        {loading ? <Loader className="h-6 w-6"/> : (
+            <div className="text-2xl font-bold">
+                {currency}
+                {value}
+            </div>
+        )}
     </CardContent>
   </Card>
 );
 
-const transactions = [
-  {
-    type: 'deadline',
-    date: 'Dec 30, 2025',
-    room: 'Socrates Fund Monitoring',
-    description: 'Food Expenses',
-    status: 'Paid',
-    amount: 150.0,
-  },
-  {
-    type: 'deadline',
-    date: 'Dec 30, 2025',
-    room: 'Rizal Monitoring Funds',
-    description: 'Year End Party',
-    status: 'Unpaid',
-    amount: 500.0,
-  },
-  {
-    type: 'deadline',
-    date: 'Dec 29, 2025',
-    room: 'Socrates Fund Monitoring',
-    description: 'Year End Party',
-    status: 'Paid',
-    amount: 500.0,
-  },
-  {
-    type: 'expense',
-    date: 'Dec 24, 2025',
-    room: 'Rizal Monitoring Funds',
-    description: 'Christmas Decor',
-    status: 'Paid',
-    amount: 300.0,
-  },
-];
 
 export default function DashboardPage() {
     const { user } = useAuth();
-    const chairpersonName = user?.email?.split('@')[0] || 'Chairperson';
+    const { rooms, loading: roomsLoading } = useUserRooms(user?.uid);
+    const chairpersonName = user?.displayName || user?.email?.split('@')[0] || 'Chairperson';
+
+    // Mock data for transactions - to be replaced with real data
+    const transactions: any[] = [];
+    const loading = roomsLoading;
+
+    const stats = rooms.reduce((acc, room) => {
+        acc.totalCollected += room.totalCollected || 0;
+        acc.totalExpenses += room.totalExpenses || 0;
+        acc.totalStudents += room.studentCount || 0;
+        return acc;
+    }, {
+        totalCollected: 0,
+        totalExpenses: 0,
+        totalStudents: 0
+    });
+
+    stats.netBalance = stats.totalCollected - stats.totalExpenses;
 
   return (
     <div className="flex flex-col gap-8">
@@ -81,14 +70,15 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Collected" value="650.00" icon={PiggyBank} />
-        <StatCard title="Total Expenses" value="600.00" icon={Receipt} />
-        <StatCard title="Net Balance" value="50.00" icon={Scale} />
+        <StatCard title="Total Collected" value={stats.totalCollected.toFixed(2)} icon={PiggyBank} loading={loading}/>
+        <StatCard title="Total Expenses" value={stats.totalExpenses.toFixed(2)} icon={Receipt} loading={loading} />
+        <StatCard title="Net Balance" value={stats.netBalance.toFixed(2)} icon={Scale} loading={loading} />
         <StatCard
           title="Total Students"
-          value="1"
+          value={stats.totalStudents}
           icon={Users}
           currency=""
+          loading={loading}
         />
       </div>
 
@@ -112,42 +102,56 @@ export default function DashboardPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {transactions.map((transaction, index) => (
-                <TableRow key={index}>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        transaction.type === 'expense'
-                          ? 'destructive'
-                          : 'secondary'
-                      }
-                      className="capitalize"
-                    >
-                      {transaction.type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{transaction.date}</TableCell>
-                  <TableCell>
-                    <a href="#" className="text-primary hover:underline">
-                      {transaction.room}
-                    </a>
-                  </TableCell>
-                  <TableCell>{transaction.description}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        transaction.status === 'Paid' ? 'default' : 'destructive'
-                      }
-                      className={transaction.status === 'Paid' ? 'bg-green-500/20 text-green-700 border-green-500/30 hover:bg-green-500/30' : ''}
-                    >
-                      {transaction.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    ₱{transaction.amount.toFixed(2)}
+              {loading ? (
+                <TableRow>
+                    <TableCell colSpan={6} className="text-center">
+                        <div className="flex justify-center p-8"><Loader/></div>
+                    </TableCell>
+                </TableRow>
+              ) : transactions.length > 0 ? (
+                transactions.map((transaction, index) => (
+                  <TableRow key={index}>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          transaction.type === 'expense'
+                            ? 'destructive'
+                            : 'secondary'
+                        }
+                        className="capitalize"
+                      >
+                        {transaction.type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{transaction.date}</TableCell>
+                    <TableCell>
+                      <a href="#" className="text-primary hover:underline">
+                        {transaction.room}
+                      </a>
+                    </TableCell>
+                    <TableCell>{transaction.description}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          transaction.status === 'Paid' ? 'default' : 'destructive'
+                        }
+                        className={transaction.status === 'Paid' ? 'bg-green-500/20 text-green-700 border-green-500/30 hover:bg-green-500/30' : ''}
+                      >
+                        {transaction.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      ₱{transaction.amount.toFixed(2)}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center h-24">
+                    No recent transactions found.
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>
