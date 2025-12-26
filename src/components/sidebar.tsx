@@ -14,6 +14,7 @@ import {
   ClipboardList,
   BarChart3,
   Menu,
+  Settings,
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import {
@@ -114,6 +115,7 @@ function NavContent({ isMobile = false }: { isMobile?: boolean }) {
 export function Sidebar({isMobileSheet = false}: {isMobileSheet?: boolean}) {
   const { user, logout } = useAuth();
   const userInitial = user?.email?.charAt(0).toUpperCase() || '?';
+  const chairpersonName = user?.displayName || user?.email?.split('@')[0] || 'Chairperson';
 
   const sidebarContent = (
     <>
@@ -133,7 +135,7 @@ export function Sidebar({isMobileSheet = false}: {isMobileSheet?: boolean}) {
         {user && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="w-full justify-center h-12 w-12 p-0">
+              <Button variant="ghost" className={cn("w-full justify-center p-0", isMobileSheet ? "h-auto" : "h-12 w-12")}>
                 <Avatar className="h-9 w-9">
                   <AvatarImage
                     src={`https://avatar.vercel.sh/${user.email}.png`}
@@ -143,7 +145,7 @@ export function Sidebar({isMobileSheet = false}: {isMobileSheet?: boolean}) {
                 </Avatar>
                 {isMobileSheet && (
                     <div className="flex flex-col items-start overflow-hidden ml-2">
-                        <span className="text-sm font-medium leading-none truncate">Hello!</span>
+                        <span className="text-sm font-medium leading-none truncate">{chairpersonName}</span>
                         <span className="text-xs text-muted-foreground leading-none truncate">{user.email}</span>
                     </div>
                 )}
@@ -152,12 +154,21 @@ export function Sidebar({isMobileSheet = false}: {isMobileSheet?: boolean}) {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">Hello!</p>
+                  <p className="text-sm font-medium leading-none">{chairpersonName}</p>
                   <p className="text-xs leading-none text-muted-foreground">
                     {user.email}
                   </p>
                 </div>
               </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <UserIcon className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout}>
                 <LogOut className="mr-2 h-4 w-4" />
@@ -195,6 +206,7 @@ export function MobileSidebar({isSidebarOpen, setSidebarOpen}: {isSidebarOpen: b
 
 export function Header({onMenuClick}: {onMenuClick: () => void}) {
     const { user, logout } = useAuth();
+    const chairpersonName = user?.displayName || user?.email?.split('@')[0] || 'Chairperson';
     return (
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-16 lg:px-6 sticky top-0 z-30">
             <div className="lg:hidden">
@@ -206,7 +218,7 @@ export function Header({onMenuClick}: {onMenuClick: () => void}) {
             <div className="w-full flex-1">
                 {/* Optional: Add search or other header elements here */}
             </div>
-            <div className="hidden lg:block">
+            <div className="flex items-center gap-4">
               {user && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -223,12 +235,21 @@ export function Header({onMenuClick}: {onMenuClick: () => void}) {
                   <DropdownMenuContent className="w-56" align="end" forceMount>
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">Hello!</p>
+                        <p className="text-sm font-medium leading-none">{chairpersonName}</p>
                         <p className="text-xs leading-none text-muted-foreground">
                           {user.email}
                         </p>
                       </div>
                     </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem>
+                        <UserIcon className="mr-2 h-4 w-4" />
+                        <span>Profile</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Settings</span>
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={logout}>
                       <LogOut className="mr-2 h-4 w-4" />
@@ -246,6 +267,7 @@ export function BottomNavBar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const userInitial = user?.email?.charAt(0).toUpperCase() || '?';
+  const chairpersonName = user?.displayName || user?.email?.split('@')[0] || 'Chairperson';
 
   const isRoomRoute = pathname.startsWith('/dashboard/rooms/');
   const roomId = isRoomRoute ? pathname.split('/')[3] : null;
@@ -299,12 +321,21 @@ export function BottomNavBar() {
             <DropdownMenuContent className="w-56 mb-2" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">Hello!</p>
+                  <p className="text-sm font-medium leading-none">{chairpersonName}</p>
                   <p className="text-xs leading-none text-muted-foreground">
                     {user.email}
                   </p>
                 </div>
               </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <UserIcon className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout}>
                 <LogOut className="mr-2 h-4 w-4" />
