@@ -1,139 +1,104 @@
 
 'use client';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Loader } from '@/components/loader';
-import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
-import { addAnnouncement } from '@/lib/firebase-actions';
-import { useParams } from 'next/navigation';
-import { useAuth } from '@/context/auth-context';
-import { Megaphone, PlusCircle } from 'lucide-react';
 
-const announcementSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  content: z.string().min(1, 'Content is required'),
-});
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Loader } from '@/components/loader';
+import { Megaphone, Receipt, Calendar as CalendarIcon } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import { useRoomTransactions } from '@/hooks/use-room-transactions';
+import { format } from 'date-fns';
+
+const TransactionIcon = ({ type }) => {
+  switch (type) {
+    case 'expense':
+      return <Receipt className="h-5 w-5 text-destructive" />;
+    case 'deadline':
+      return <CalendarIcon className="h-5 w-5 text-blue-500" />;
+    case 'payment':
+        return <Receipt className="h-5 w-5 text-green-500" />;
+    default:
+      return <Megaphone className="h-5 w-5 text-muted-foreground" />;
+  }
+};
 
 export default function AnnouncementPage() {
-  const [formLoading, setFormLoading] = useState(false);
-  const { toast } = useToast();
   const params = useParams();
   const roomId = params.roomId as string;
-  const { user } = useAuth();
-
-  const form = useForm<z.infer<typeof announcementSchema>>({
-    resolver: zodResolver(announcementSchema),
-    defaultValues: {
-      title: '',
-      content: '',
-    },
-  });
-
-  const onSubmit = async (values: z.infer<typeof announcementSchema>) => {
-    if (!user) {
-      toast({
-        variant: 'destructive',
-        title: 'Authentication Error',
-        description: 'You must be logged in to post an announcement.',
-      });
-      return;
-    }
-    setFormLoading(true);
-    try {
-      const userName =
-        user.displayName || user.email?.split('@')[0] || 'Anonymous';
-      await addAnnouncement(roomId, user.uid, userName, values);
-      toast({
-        title: 'Announcement Posted!',
-        description: 'Your announcement has been shared with the room.',
-      });
-      form.reset();
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to post announcement. Please try again.',
-      });
-    } finally {
-      setFormLoading(false);
-    }
-  };
+  const { transactions, loading } = useRoomTransactions(roomId);
 
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center gap-2">
         <Megaphone className="w-6 h-6" />
-        <h1 className="text-2xl font-bold">Announcements</h1>
+        <h1 className="text-2xl font-bold">Activity Feed</h1>
       </div>
 
       <Card className="shadow-md">
         <CardHeader>
-          <CardTitle>Create an Announcement</CardTitle>
+          <CardTitle>Room History</CardTitle>
+          <CardDescription>
+            A log of all expenses, payments, and deadlines for this room.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Important Update" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="content"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Message</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Write your announcement here..."
-                        className="min-h-[120px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button className="w-full sm:w-auto" type="submit" disabled={formLoading}>
-                {formLoading ? (
-                  <Loader className="h-4 w-4" />
-                ) : (
-                  <>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Post Announcement
-                  </>
-                )}
-              </Button>
-            </form>
-          </Form>
+          {loading ? (
+            <div className="flex justify-center p-8">
+              <Loader />
+            </div>
+          ) : transactions.length > 0 ? (
+            <div className="space-y-6">
+              {transactions.map((transaction) => (
+                <div key={transaction.id} className="flex items-start gap-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                    <TransactionIcon type={transaction.type} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="font-semibold">{transaction.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {transaction.date
+                          ? format(transaction.date.toDate(), 'PP')
+                          : 'N/A'}
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                        <Badge
+                            variant={
+                            transaction.type === 'expense'
+                                ? 'destructive'
+                                : transaction.type === 'payment' ? 'secondary' : 'default'
+                            }
+                            className="capitalize"
+                        >
+                            {transaction.type}
+                        </Badge>
+                        <p className="font-medium text-right">
+                            ₱{transaction.amount.toFixed(2)}
+                        </p>
+                    </div>
+                     {transaction.studentName && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                            Paid by: {transaction.studentName}
+                        </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-muted-foreground py-16">
+              <p>No activity recorded yet.</p>
+            </div>
+          )}
         </CardContent>
       </Card>
-      <p className="text-center text-muted-foreground mt-4">
-        Feature to view announcements is coming soon.
-      </p>
     </div>
   );
 }
