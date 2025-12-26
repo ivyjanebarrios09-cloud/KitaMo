@@ -131,7 +131,7 @@ export default function PersonalStatementsPage() {
               <Select defaultValue="2025">
                 <SelectTrigger>
                   <SelectValue placeholder="Select a year" />
-                </Trigger>
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="2025">2025</SelectItem>
                   <SelectItem value="2024">2024</SelectItem>
