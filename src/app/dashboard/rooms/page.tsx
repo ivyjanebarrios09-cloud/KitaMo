@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -127,7 +128,8 @@ export default function ManageRoomsPage() {
     if (!user) return;
     setFormLoading(true);
     try {
-      await createRoom(user.uid, values);
+      const ownerName = user.displayName || user.email?.split('@')[0] || 'Anonymous';
+      await createRoom(user.uid, ownerName, values);
       toast({
         title: 'Room Created!',
         description: `${values.name} has been successfully created.`,
