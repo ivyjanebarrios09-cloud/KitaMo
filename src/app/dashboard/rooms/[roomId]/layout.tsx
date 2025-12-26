@@ -1,8 +1,8 @@
 
+
 'use client';
 
 import {
-  ArrowLeft,
   ChevronLeft,
   Home,
   Megaphone,
@@ -12,55 +12,33 @@ import {
   ClipboardList,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useParams, usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
+import { useParams } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
+import { useRoom } from '@/hooks/use-room';
 
-const roomNavItems = [
-  { href: '', label: 'Dashboard', icon: Home },
-  { href: '/announcement', label: 'Announcement', icon: Megaphone },
-  { href: '/expenses', label: 'Expenses', icon: Wallet },
-  { href: '/fund-deadlines', label: 'Fund Deadlines', icon: Calendar },
-  { href: '/students', label: 'Students', icon: Users },
-];
 
 export default function RoomDetailLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
   const params = useParams();
   const { roomId } = params;
+  const { room, loading } = useRoom(roomId as string);
 
-  // A mock function to get room details. 
-  // In a real app, you would fetch this from your data source.
-  const getRoomDetails = (id: string) => {
-    const roomNames: { [key: string]: string } = {
-        'socrates-fund-monitoring': 'Socrates Fund Monitoring',
-        'rizal-monitoring-funds': 'Rizal Monitoring Funds',
-        'bonifacio-fund-monitoring': 'Bonifacio Fund Monitoring'
-    }
-    return {
-      name: roomNames[id as string] || 'Room Not Found',
-      code: 'XM6VLF',
-    };
-  };
-
-  const room = getRoomDetails(roomId as string);
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-           <Link href="/dashboard/rooms" className="p-2 rounded-md hover:bg-muted">
+           <Link href="/dashboard/rooms" className="p-2 rounded-md hover:bg-muted -ml-2">
                 <ChevronLeft className="h-6 w-6" />
            </Link>
-           <div>
-            <h1 className="text-2xl font-bold flex items-center gap-4">
-                {room.name}
-                <Badge variant="secondary">CODE: {room.code}</Badge>
+           <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-1">
+            <h1 className="text-xl sm:text-2xl font-bold truncate">
+                {loading ? 'Loading...' : room?.name || 'Room'}
             </h1>
+            {!loading && room?.code && <Badge variant="secondary">CODE: {room.code}</Badge>}
            </div>
         </div>
       </div>

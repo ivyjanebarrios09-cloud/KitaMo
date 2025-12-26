@@ -103,7 +103,7 @@ export default function ExpensesPage() {
                 title: 'Expense Added!',
                 description: `${values.name} has been recorded.`,
             });
-            form.reset();
+            form.reset({ name: '', description: '', amount: 0, date: undefined });
         } catch (error) {
             toast({
                 variant: 'destructive',
@@ -149,8 +149,8 @@ export default function ExpensesPage() {
         />
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-8 items-start">
-        <Card className="shadow-md">
+      <div className="grid lg:grid-cols-5 gap-8 items-start">
+        <Card className="shadow-md lg:col-span-2">
           <CardHeader>
             <CardTitle>Post New Expense</CardTitle>
             <CardDescription>
@@ -160,8 +160,20 @@ export default function ExpensesPage() {
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
+                <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel>Expense Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., Venue Rental" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                 <FormField
                     control={form.control}
                     name="date"
                     render={({ field }) => (
@@ -195,20 +207,6 @@ export default function ExpensesPage() {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel>Expense Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., Venue Rental" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
                 <FormField
                   control={form.control}
                   name="description"
@@ -248,7 +246,7 @@ export default function ExpensesPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-md">
+        <Card className="shadow-md lg:col-span-3">
           <CardHeader>
             <CardTitle>Recent Payments</CardTitle>
             <CardDescription>
@@ -260,7 +258,7 @@ export default function ExpensesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Student</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead className="hidden sm:table-cell">Date</TableHead>
                   <TableHead>Note</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
                 </TableRow>
@@ -275,8 +273,8 @@ export default function ExpensesPage() {
                 ) : transactions.length > 0 ? (
                     transactions.map((payment) => (
                     <TableRow key={payment.id}>
-                        <TableCell>{payment.studentName}</TableCell>
-                        <TableCell>{payment.date ? format(payment.date.toDate(), 'PP') : 'N/A'}</TableCell>
+                        <TableCell className="font-medium">{payment.studentName}</TableCell>
+                        <TableCell className="hidden sm:table-cell">{payment.date ? format(payment.date.toDate(), 'PP') : 'N/A'}</TableCell>
                         <TableCell>{payment.name}</TableCell>
                         <TableCell className="text-right font-medium">
                         ₱{payment.amount.toFixed(2)}
