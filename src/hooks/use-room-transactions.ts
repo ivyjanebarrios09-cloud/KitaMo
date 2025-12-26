@@ -18,12 +18,14 @@ export function useRoomTransactions(roomId, type = null) {
     const transactionsRef = collection(db, 'rooms', roomId, 'transactions');
     
     if (type) {
+        // Simple query with filter and order on the same field
         q = query(
             transactionsRef,
             where('type', '==', type),
             orderBy('date', 'desc')
         );
     } else {
+        // Order by creation time
         q = query(
             transactionsRef,
             orderBy('createdAt', 'desc')
