@@ -32,6 +32,8 @@ import { cn } from '@/lib/utils';
 import {
   Sheet,
   SheetContent,
+  SheetHeader,
+  SheetTitle,
 } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -177,6 +179,9 @@ export function MobileSidebar({isSidebarOpen, setSidebarOpen}: {isSidebarOpen: b
         <div className="lg:hidden">
              <Sheet open={isSidebarOpen} onOpenChange={setSidebarOpen}>
                 <SheetContent side="left" className="flex flex-col p-0 w-72">
+                    <SheetHeader className="p-0">
+                      <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
+                    </SheetHeader>
                     <Sidebar isMobileSheet={true} />
                     <div className="p-2 border-t mt-auto">
                     {user && (
