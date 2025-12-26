@@ -15,16 +15,18 @@ export function useRoomTransactions(roomId, type = null) {
     }
 
     let q;
+    const transactionsRef = collection(db, 'rooms', roomId, 'transactions');
+    
     if (type) {
         q = query(
-            collection(db, 'rooms', roomId, 'transactions'), 
+            transactionsRef,
             where('type', '==', type),
-            orderBy('date', 'desc')
+            orderBy('createdAt', 'desc')
         );
     } else {
         q = query(
-            collection(db, 'rooms', roomId, 'transactions'),
-            orderBy('date', 'desc')
+            transactionsRef,
+            orderBy('createdAt', 'desc')
         );
     }
     
@@ -37,7 +39,7 @@ export function useRoomTransactions(roomId, type = null) {
       setTransactions(data);
       setLoading(false);
     }, (error) => {
-        console.error(`Error fetching ${type} transactions: `, error);
+        console.error(`Error fetching ${type || 'all'} transactions: `, error);
         setLoading(false);
     });
 
