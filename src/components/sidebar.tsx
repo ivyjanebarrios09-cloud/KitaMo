@@ -15,6 +15,7 @@ import {
   BarChart3,
   Settings,
   Megaphone,
+  Menu,
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import {
@@ -143,18 +144,39 @@ export function Sidebar({isMobileSheet = false}: {isMobileSheet?: boolean}) {
 
   const sidebarContent = (
     <>
-      <div className="h-16 flex items-center justify-center px-6 border-b">
-        <Link
-          href="/"
-          className="flex items-center gap-2 font-semibold text-lg"
-        >
-          <Logo />
-          {isMobileSheet && <span>KitaMo!</span>}
-        </Link>
+      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="h-16 flex items-center justify-center px-6 border-b">
+            <Link
+            href="/dashboard"
+            className="flex items-center gap-2 font-semibold text-lg"
+            >
+            <Logo />
+            {isMobileSheet && <span>KitaMo!</span>}
+            </Link>
+        </div>
+        <nav className="flex-1 py-4 px-2 space-y-2">
+            <NavContent isMobile={isMobileSheet}/>
+        </nav>
       </div>
-      <nav className="flex-1 py-4 px-2 space-y-2">
-        <NavContent isMobile={isMobileSheet}/>
-      </nav>
+
+       {!isMobileSheet && (
+         <div className="mt-auto p-2 border-t">
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link href="#">
+                  <div className="flex items-center justify-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary">
+                    <Settings className="h-5 w-5" />
+                  </div>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Settings</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      )}
     </>
   );
 
@@ -163,7 +185,7 @@ export function Sidebar({isMobileSheet = false}: {isMobileSheet?: boolean}) {
   }
 
   return (
-    <aside className="w-20 bg-card border-r flex-col h-full hidden lg:flex">
+    <aside className="w-20 bg-card border-r flex flex-col h-full hidden lg:flex">
       {sidebarContent}
     </aside>
   );
@@ -178,7 +200,7 @@ export function MobileSidebar({isSidebarOpen, setSidebarOpen}: {isSidebarOpen: b
         <div className="lg:hidden">
              <Sheet open={isSidebarOpen} onOpenChange={setSidebarOpen}>
                 <SheetContent side="left" className="flex flex-col p-0 w-72">
-                    <SheetHeader className="p-0">
+                    <SheetHeader className="p-0 hidden">
                       <SheetTitle>Menu</SheetTitle>
                     </SheetHeader>
                     <Sidebar isMobileSheet={true} />
@@ -238,10 +260,15 @@ export function Header({onMenuClick}: {onMenuClick: () => void}) {
     const chairpersonName = user?.displayName || user?.email?.split('@')[0] || 'Chairperson';
     return (
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-16 lg:px-6 sticky top-0 z-30">
-            <div className="flex items-center gap-2 font-semibold text-lg lg:hidden">
-                <Logo />
-                <span>KitaMo!</span>
-            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={onMenuClick}
+            >
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle Menu</span>
+            </Button>
             <div className="w-full flex-1">
                 {/* Optional: Add search or other header elements here */}
             </div>
