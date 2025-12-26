@@ -51,6 +51,7 @@ import { Loader } from '@/components/loader';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { useStudentRooms } from '@/hooks/use-student-rooms';
+import { Badge } from '@/components/ui/badge';
 
 
 const roomSchema = z.object({
@@ -66,7 +67,10 @@ const joinRoomSchema = z.object({
 const RoomCard = ({ room, onEdit, onDelete, isChairperson }) => (
     <Card className="shadow-sm hover:shadow-lg transition-shadow flex flex-col">
       <CardHeader>
-        <CardTitle className="text-xl">{room.name}</CardTitle>
+        <div className="flex justify-between items-start">
+            <CardTitle className="text-xl">{room.name}</CardTitle>
+            {room.code && <Badge variant="outline">CODE: {room.code}</Badge>}
+        </div>
         <CardDescription className="h-10">{room.description}</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow">
