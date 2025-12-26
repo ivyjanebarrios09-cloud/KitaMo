@@ -21,7 +21,7 @@ export default function Home() {
                     Your Personal Task Manager
                   </div>
                   <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline text-primary">
-                    Organize Your Life with KitaClone
+                    Organize Your Life with KitaMo!
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl mx-auto lg:mx-0">
                     A simple, modern, and fast way to manage your tasks. Stay organized, focused, and achieve more every day.
@@ -61,7 +61,7 @@ export default function Home() {
                 <div className="inline-block rounded-lg bg-secondary px-3 py-1 text-sm">Features</div>
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Everything You Need to Be Productive</h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  KitaClone provides a comprehensive set of tools to help you manage your tasks efficiently and effectively.
+                  KitaMo! provides a comprehensive set of tools to help you manage your tasks efficiently and effectively.
                 </p>
               </div>
             </div>

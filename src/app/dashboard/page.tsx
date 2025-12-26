@@ -1,204 +1,155 @@
 'use client';
-
-import { useState, useEffect, useMemo } from 'react';
+import { Badge } from '@/components/ui/badge';
 import {
-  collection,
-  addDoc,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  orderBy,
-  query,
-  serverTimestamp,
-  updateDoc,
-  where,
-} from 'firebase/firestore';
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { useAuth } from '@/context/auth-context';
-import { db } from '@/lib/firebase';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Loader } from '@/components/loader';
-import { Trash2, Plus } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PiggyBank, Receipt, Scale, Users } from 'lucide-react';
 
-interface Task {
-  id: string;
-  text: string;
-  completed: boolean;
-}
+const StatCard = ({ title, value, icon: Icon, currency = '₱' }) => (
+  <Card className="shadow-sm hover:shadow-md transition-shadow">
+    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardTitle className="text-sm font-medium">{title}</CardTitle>
+      <Icon className="h-5 w-5 text-muted-foreground" />
+    </CardHeader>
+    <CardContent>
+      <div className="text-2xl font-bold">
+        {currency}
+        {value}
+      </div>
+    </CardContent>
+  </Card>
+);
+
+const transactions = [
+  {
+    type: 'deadline',
+    date: 'Dec 30, 2025',
+    room: 'Socrates Fund Monitoring',
+    description: 'Food Expenses',
+    status: 'Paid',
+    amount: 150.0,
+  },
+  {
+    type: 'deadline',
+    date: 'Dec 30, 2025',
+    room: 'Rizal Monitoring Funds',
+    description: 'Year End Party',
+    status: 'Unpaid',
+    amount: 500.0,
+  },
+  {
+    type: 'deadline',
+    date: 'Dec 29, 2025',
+    room: 'Socrates Fund Monitoring',
+    description: 'Year End Party',
+    status: 'Paid',
+    amount: 500.0,
+  },
+  {
+    type: 'expense',
+    date: 'Dec 24, 2025',
+    room: 'Rizal Monitoring Funds',
+    description: 'Christmas Decor',
+    status: 'Paid',
+    amount: 300.0,
+  },
+];
 
 export default function DashboardPage() {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [newTask, setNewTask] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [isAdding, setIsAdding] = useState(false);
-  const [filter, setFilter] = useState('all');
-
-  useEffect(() => {
-    if (!user) return;
-
-    setLoading(true);
-    const q = query(
-      collection(db, 'tasks'),
-      where('userId', '==', user.uid),
-      orderBy('createdAt', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(
-      q,
-      (querySnapshot) => {
-        const tasksData: Task[] = [];
-        querySnapshot.forEach((doc) => {
-          tasksData.push({ id: doc.id, ...doc.data() } as Task);
-        });
-        setTasks(tasksData);
-        setLoading(false);
-      },
-      (error) => {
-        console.error('Error fetching tasks: ', error);
-        toast({
-          variant: 'destructive',
-          title: 'Failed to load tasks.',
-          description: 'Please try refreshing the page.',
-        });
-        setLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
-  }, [user, toast]);
-
-  const addTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newTask.trim() === '' || !user) return;
-
-    setIsAdding(true);
-    try {
-      await addDoc(collection(db, 'tasks'), {
-        text: newTask.trim(),
-        completed: false,
-        createdAt: serverTimestamp(),
-        userId: user.uid,
-      });
-      setNewTask('');
-    } catch (error) {
-      console.error('Error adding task: ', error);
-       toast({
-          variant: 'destructive',
-          title: 'Failed to add task.',
-          description: 'Please try again.',
-        });
-    } finally {
-      setIsAdding(false);
-    }
-  };
-
-  const toggleTask = async (id: string, completed: boolean) => {
-    const taskDoc = doc(db, 'tasks', id);
-    await updateDoc(taskDoc, { completed: !completed });
-  };
-
-  const deleteTask = async (id: string) => {
-    const taskDoc = doc(db, 'tasks', id);
-    await deleteDoc(taskDoc);
-  };
-  
-  const filteredTasks = useMemo(() => {
-    switch (filter) {
-      case 'active':
-        return tasks.filter(task => !task.completed);
-      case 'completed':
-        return tasks.filter(task => task.completed);
-      default:
-        return tasks;
-    }
-  }, [tasks, filter]);
+    const { user } = useAuth();
+    const chairpersonName = user?.email?.split('@')[0] || 'Chairperson';
 
   return (
-    <div className="container mx-auto p-4 md:p-8">
-      <Card className="max-w-3xl mx-auto shadow-lg">
+    <div className="flex flex-col gap-8">
+      <div>
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <p className="text-muted-foreground">
+          Welcome back, {chairpersonName}! Here's an overview of all your rooms.
+        </p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard title="Total Collected" value="650.00" icon={PiggyBank} />
+        <StatCard title="Total Expenses" value="600.00" icon={Receipt} />
+        <StatCard title="Net Balance" value="50.00" icon={Scale} />
+        <StatCard
+          title="Total Students"
+          value="1"
+          icon={Users}
+          currency=""
+        />
+      </div>
+
+      <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="text-2xl">Welcome to your Dashboard</CardTitle>
-          <CardDescription>Here are your tasks for today. Stay productive!</CardDescription>
+          <CardTitle>Recent History</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            The last 10 transactions across all of your rooms.
+          </p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={addTask} className="flex gap-2 mb-6">
-            <Input
-              type="text"
-              value={newTask}
-              onChange={(e) => setNewTask(e.target.value)}
-              placeholder="What needs to be done?"
-              disabled={isAdding}
-              className="text-base"
-            />
-            <Button type="submit" disabled={isAdding || newTask.trim() === ''}>
-              {isAdding ? <Loader className="h-4 w-4" /> : <><Plus className="h-4 w-4" /> <span className="hidden sm:inline">Add Task</span></>}
-            </Button>
-          </form>
-
-          <Tabs value={filter} onValueChange={setFilter}>
-            <TabsList className="grid w-full grid-cols-3 mb-4">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="active">Active</TabsTrigger>
-              <TabsTrigger value="completed">Completed</TabsTrigger>
-            </TabsList>
-            <TabsContent value={filter}>
-              {loading ? (
-                <div className="flex justify-center p-8">
-                  <Loader />
-                </div>
-              ) : (
-                <ul className="space-y-3">
-                  {filteredTasks.map((task) => (
-                    <li
-                      key={task.id}
-                      className="flex items-center gap-4 p-4 rounded-lg transition-all bg-secondary/30 hover:bg-secondary/70 border"
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Type</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Room</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {transactions.map((transaction, index) => (
+                <TableRow key={index}>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        transaction.type === 'expense'
+                          ? 'destructive'
+                          : 'secondary'
+                      }
+                      className="capitalize"
                     >
-                      <Checkbox
-                        id={`task-${task.id}`}
-                        checked={task.completed}
-                        onCheckedChange={() => toggleTask(task.id, task.completed)}
-                        aria-label={`Mark ${task.text} as ${task.completed ? 'incomplete' : 'complete'}`}
-                        className="h-5 w-5"
-                      />
-                      <label
-                        htmlFor={`task-${task.id}`}
-                        className={`flex-1 font-medium cursor-pointer transition-colors ${
-                          task.completed ? 'line-through text-muted-foreground' : 'text-foreground'
-                        }`}
-                      >
-                        {task.text}
-                      </label>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
-                        onClick={() => deleteTask(task.id)}
-                        aria-label={`Delete task: ${task.text}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </li>
-                  ))}
-                  {tasks.length > 0 && filteredTasks.length === 0 && (
-                     <p className="text-center text-muted-foreground py-8">
-                      No {filter} tasks.
-                    </p>
-                  )}
-                  {tasks.length === 0 && (
-                     <p className="text-center text-muted-foreground py-8">
-                      You have no tasks yet. Add one above!
-                    </p>
-                  )}
-                </ul>
-              )}
-            </TabsContent>
-          </Tabs>
+                      {transaction.type}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{transaction.date}</TableCell>
+                  <TableCell>
+                    <a href="#" className="text-primary hover:underline">
+                      {transaction.room}
+                    </a>
+                  </TableCell>
+                  <TableCell>{transaction.description}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        transaction.status === 'Paid' ? 'default' : 'destructive'
+                      }
+                      className={transaction.status === 'Paid' ? 'bg-green-500/20 text-green-700 border-green-500/30 hover:bg-green-500/30' : ''}
+                    >
+                      {transaction.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    ₱{transaction.amount.toFixed(2)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

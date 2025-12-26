@@ -109,7 +109,7 @@ export default function RegisterPage() {
        <div className="absolute top-6 left-6">
         <Link href="/" className="flex items-center gap-2 font-semibold text-lg text-primary hover:text-primary/80 transition-colors">
           <BookOpen className="h-6 w-6" />
-          <span>KitaClone</span>
+          <span>KitaMo!</span>
         </Link>
       </div>
       <Card className="w-full max-w-sm shadow-xl">
