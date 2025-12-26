@@ -1,5 +1,6 @@
 
-import { addDoc, collection, serverTimestamp, writeBatch, doc, getDocs, query, where, updateDoc, deleteDoc, runTransaction, increment } from "firebase/firestore";
+
+import { addDoc, collection, serverTimestamp, writeBatch, doc, getDocs, query, where, updateDoc, deleteDoc, runTransaction, increment, arrayUnion } from "firebase/firestore";
 import { db } from "./firebase";
 import { customAlphabet } from 'nanoid';
 
@@ -88,7 +89,9 @@ export const addExpense = async (roomId: string, data: { name: string, descripti
                 amount: data.amount,
                 date: data.date,
                 ownerId: ownerId, 
-                createdAt: serverTimestamp()
+                createdAt: serverTimestamp(),
+                seenCount: 0,
+                seenBy: []
             });
 
             // Update total expenses in the room document
@@ -116,3 +119,30 @@ export const addAnnouncement = async (roomId: string, userId: string, userName: 
         throw new Error("Could not add announcement.");
     }
 }
+
+
+export const markTransactionAsSeen = async (roomId: string, transactionId: string, userId: string) => {
+    try {
+        const transactionRef = doc(db, 'rooms', roomId, 'transactions', transactionId);
+        
+        await runTransaction(db, async (transaction) => {
+            const transactionDoc = await transaction.get(transactionRef);
+            if (!transactionDoc.exists()) {
+                throw "Transaction does not exist!";
+            }
+
+            const seenBy = transactionDoc.data().seenBy || [];
+            if (!seenBy.includes(userId)) {
+                 transaction.update(transactionRef, {
+                    seenCount: increment(1),
+                    seenBy: arrayUnion(userId)
+                });
+            }
+        });
+
+    } catch (error) {
+        console.error("Error marking transaction as seen: ", error);
+        // We don't throw an error here to prevent crashing the app for the user
+        // But we log it for debugging purposes.
+    }
+};

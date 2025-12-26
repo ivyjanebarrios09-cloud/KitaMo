@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -10,10 +11,15 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader } from '@/components/loader';
-import { Megaphone, Receipt, Calendar as CalendarIcon } from 'lucide-react';
+import { Megaphone, Receipt, Calendar as CalendarIcon, Eye } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useRoomTransactions } from '@/hooks/use-room-transactions';
 import { format } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/context/auth-context';
+import { markTransactionAsSeen } from '@/lib/firebase-actions';
+import { useRoom } from '@/hooks/use-room';
+
 
 const TransactionIcon = ({ type }) => {
   switch (type) {
@@ -32,6 +38,20 @@ export default function AnnouncementPage() {
   const params = useParams();
   const roomId = params.roomId as string;
   const { transactions, loading } = useRoomTransactions(roomId);
+  const { user } = useAuth();
+  const { room } = useRoom(roomId);
+
+  const isChairperson = user?.uid === room?.ownerId;
+
+  const handleSeen = (transactionId: string) => {
+    if (!user) return;
+    markTransactionAsSeen(roomId, transactionId, user.uid);
+  };
+  
+  const hasSeen = (transaction) => {
+    if (!user) return false;
+    return transaction.seenBy?.includes(user.uid);
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -88,6 +108,19 @@ export default function AnnouncementPage() {
                             Paid by: {transaction.studentName}
                         </p>
                     )}
+                    <div className="flex items-center justify-between mt-2">
+                        {isChairperson ? (
+                             <div className="flex items-center text-sm text-muted-foreground">
+                                <Eye className="w-4 h-4 mr-1"/>
+                                <span>{transaction.seenCount || 0} seen</span>
+                            </div>
+                        ) : (
+                            <Button variant={hasSeen(transaction) ? "secondary" : "outline"} size="sm" onClick={() => handleSeen(transaction.id)} disabled={hasSeen(transaction)}>
+                                <Eye className="w-4 h-4 mr-2"/>
+                                {hasSeen(transaction) ? "Seen" : "Mark as Seen"}
+                            </Button>
+                        )}
+                    </div>
                   </div>
                 </div>
               ))}
