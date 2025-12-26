@@ -15,23 +15,26 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ArrowLeft, MoreHorizontal, PlusCircle, Users } from 'lucide-react';
+import { ArrowRight, MoreHorizontal, PlusCircle, Users } from 'lucide-react';
 import Link from 'next/link';
 
 const rooms = [
   {
+    id: 'socrates-fund-monitoring',
     name: 'Socrates Fund Monitoring',
     description: 'To monitor the funds and expenses',
     students: 1,
     balance: 0.0,
   },
   {
+    id: 'rizal-monitoring-funds',
     name: 'Rizal Monitoring Funds',
     description: 'A monitoring room for the funds and expenses of the section Rizal',
     students: 0,
     balance: 0.0,
   },
   {
+    id: 'bonifacio-fund-monitoring',
     name: 'Bonifacio Fund Monitoring',
     description: 'No description provided.',
     students: 0,
@@ -53,8 +56,10 @@ const RoomCard = ({ room }) => (
         <span>₱{room.balance.toFixed(2)}</span>
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm">
-          Manage Room <ArrowLeft className="h-4 w-4 transform rotate-180 ml-2" />
+        <Button variant="ghost" size="sm" asChild>
+          <Link href={`/dashboard/rooms/${room.id}`}>
+            Manage Room <ArrowRight className="h-4 w-4 ml-2" />
+          </Link>
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -80,10 +85,6 @@ export default function ManageRoomsPage() {
     <div className="flex flex-col gap-8">
       <div className="flex justify-between items-center">
         <div>
-          <Link href="/dashboard" className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-2">
-             <ArrowLeft className="w-4 h-4" />
-             Back to Dashboard
-          </Link>
           <h1 className="text-3xl font-bold">Manage Rooms</h1>
           <p className="text-muted-foreground">
             Your financial rooms are listed below.

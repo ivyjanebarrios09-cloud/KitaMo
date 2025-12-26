@@ -21,16 +21,48 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from './ui/collapsible';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+import React from 'react';
+
 
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Home' },
-  { href: '/dashboard/rooms', icon: Archive, label: 'Rooms' },
 ];
+
+const roomNavItems = [
+    { href: '/dashboard/rooms/[roomId]', label: 'Dashboard', icon: Home, exact: true},
+    { href: '/dashboard/rooms/[roomId]/announcement', label: 'Announcement', icon: BookOpen },
+    { href: '/dashboard/rooms/[roomId]/expenses', label: 'Expenses', icon: Archive },
+    { href: '/dashboard/rooms/[roomId]/fund-deadlines', label: 'Fund Deadlines', icon: Archive },
+    { href: '/dashboard/rooms/[roomId]/students', label: 'Students', icon: UserIcon },
+];
+
 
 export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const userInitial = user?.email?.charAt(0).toUpperCase() || '?';
+  const isRoomRoute = pathname.startsWith('/dashboard/rooms/');
+  const [isRoomsOpen, setIsRoomsOpen] = React.useState(true);
+
+
+  const sidebarNavItems = [
+    { href: '/dashboard', icon: Home, label: 'Dashboard' },
+  ];
+
+  const roomSubNavItems = [
+    { href: '', label: 'Room Dashboard', icon: Home },
+    { href: '/announcement', label: 'Announcement', icon: BookOpen },
+    { href: '/expenses', label: 'Expenses', icon: Archive },
+    { href: '/fund-deadlines', label: 'Fund Deadlines', icon: Archive },
+    { href: '/students', label: 'Students', icon: UserIcon },
+  ];
+
 
   return (
     <aside className="w-64 flex-shrink-0 bg-card border-r flex flex-col">
@@ -40,8 +72,8 @@ export function Sidebar() {
           <span>KitaMo!</span>
         </Link>
       </div>
-      <nav className="flex-1 py-4 px-4 space-y-2">
-        {navItems.map((item) => (
+      <nav className="flex-1 py-4 px-4 space-y-1">
+        {sidebarNavItems.map((item) => (
           <Link
             key={item.label}
             href={item.href}
@@ -55,6 +87,44 @@ export function Sidebar() {
             <span>{item.label}</span>
           </Link>
         ))}
+
+        <Collapsible open={isRoomsOpen} onOpenChange={setIsRoomsOpen}>
+            <CollapsibleTrigger className="w-full">
+                 <Link
+                    href="/dashboard/rooms"
+                    className={cn(
+                        'flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-card-foreground/80 transition-all hover:bg-primary/10 hover:text-primary',
+                        pathname.startsWith('/dashboard/rooms') && 'bg-primary/20 text-primary font-semibold'
+                    )}
+                    >
+                    <div className="flex items-center gap-3">
+                        <Archive className="h-5 w-5" />
+                        <span>Rooms</span>
+                    </div>
+                    <ChevronDown className={cn("h-5 w-5 transition-transform", isRoomsOpen && "rotate-180")} />
+                </Link>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="py-1 pl-6">
+                {isRoomRoute && roomSubNavItems.map((item) => {
+                    const roomId = pathname.split('/')[3];
+                    const itemPath = `/dashboard/rooms/${roomId}${item.href}`
+                    return (
+                        <Link
+                            key={item.label}
+                            href={itemPath}
+                            className={cn(
+                            'flex items-center gap-3 rounded-lg px-3 py-2 text-card-foreground/70 transition-all hover:bg-primary/10 hover:text-primary text-sm',
+                            pathname === itemPath && 'bg-primary/10 text-primary font-medium'
+                            )}
+                        >
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.label}</span>
+                        </Link>
+                    )
+                })}
+            </CollapsibleContent>
+        </Collapsible>
+
       </nav>
       <div className="p-4 border-t mt-auto">
         {user && (
