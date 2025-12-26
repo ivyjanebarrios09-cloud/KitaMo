@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -18,11 +19,12 @@ export function useRoomTransactions(roomId, type = null) {
     const transactionsRef = collection(db, 'rooms', roomId, 'transactions');
     
     if (type) {
-        // Simple query with filter and order on the same field
+        // Querying and ordering by a single field doesn't require a composite index.
+        // We will sort client-side if a different order is needed.
         q = query(
             transactionsRef,
             where('type', '==', type),
-            orderBy('date', 'desc')
+            orderBy('type', 'asc') // Order by the same field we filter on.
         );
     } else {
         // Order by creation time
@@ -38,6 +40,10 @@ export function useRoomTransactions(roomId, type = null) {
       querySnapshot.forEach((doc) => {
         data.push({ id: doc.id, ...doc.data() });
       });
+      // Sort by date client-side to get the desired order
+      if (type) {
+          data.sort((a, b) => (b.date?.toDate() || 0) - (a.date?.toDate() || 0));
+      }
       setTransactions(data);
       setLoading(false);
     }, (error) => {
