@@ -1,5 +1,6 @@
-'use client';
 
+'use client';
+import 'react-day-picker/dist/style.css';
 import {
   Card,
   CardContent,
