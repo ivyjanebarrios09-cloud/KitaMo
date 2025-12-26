@@ -172,15 +172,15 @@ function NewDeadlineModal({ roomId }: { roomId: string }) {
                       <Calendar
                         mode="single"
                         selected={field.value}
-                        onSelect={field.onChange}
+                        onSelect={(date) => {
+                          field.onChange(date);
+                          setCalendarOpen(false);
+                        }}
                         disabled={(date) =>
                           date < new Date() || date < new Date('1900-01-01')
                         }
                         initialFocus
                       />
-                       <div className="p-2 border-t flex justify-end">
-                        <Button size="sm" onClick={() => setCalendarOpen(false)}>Save</Button>
-                       </div>
                     </PopoverContent>
                   </Popover>
                   <FormMessage />
