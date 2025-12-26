@@ -4,11 +4,40 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Calendar as CalendarIcon, Wand2 } from 'lucide-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Calendar as CalendarIcon, PlusCircle } from 'lucide-react';
+import { format } from 'date-fns';
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -19,23 +48,15 @@ import {
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import React, { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
 import { addDeadline } from '@/lib/firebase-actions';
 import { useToast } from '@/hooks/use-toast';
 import { useParams } from 'next/navigation';
 import { Loader } from '@/components/loader';
+import { useAuth } from '@/context/auth-context';
+import { useRoom } from '@/hooks/use-room';
+import { Badge } from '@/components/ui/badge';
+import { useRoomDeadlines } from '@/hooks/use-room-deadlines';
+import { useStudentDeadlines } from '@/hooks/use-student-deadlines';
 
 const deadlineSchema = z.object({
   title: z.string().min(1, 'Deadline title is required'),
@@ -45,9 +66,8 @@ const deadlineSchema = z.object({
   description: z.string().min(1, 'Description is required'),
 });
 
-export default function FundDeadlinesPage() {
-  const params = useParams();
-  const roomId = params.roomId as string;
+function NewDeadlineModal({ roomId }: { roomId: string }) {
+  const [open, setOpen] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
   const { toast } = useToast();
 
@@ -70,6 +90,7 @@ export default function FundDeadlinesPage() {
         description: `${values.title} has been posted for all students.`,
       });
       form.reset({ title: '', amount: 0, dueDate: undefined, category: '', description: '' });
+      setOpen(false);
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -82,122 +103,258 @@ export default function FundDeadlinesPage() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Post a New Fund Deadline</CardTitle>
-          <CardDescription>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Post New Deadline
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Post a New Fund Deadline</DialogTitle>
+          <DialogDescription>
             Create a deadline and notify students in the activity feed.
-          </CardDescription>
-        </CardHeader>
+          </DialogDescription>
+        </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <CardContent className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Deadline Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Spring Formal Tickets" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="amount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Amount per Student (₱)</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="0" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="dueDate"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Due Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={'outline'}
-                              className={cn(
-                                'w-full justify-start text-left font-normal',
-                                !field.value && 'text-muted-foreground'
-                              )}
-                            >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {field.value ? (
-                                format(field.value, 'PPP')
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Event Contribution" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Deadline Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Spring Formal Tickets" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="amount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Amount per Student (₱)</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="0" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
                 control={form.control}
-                name="description"
+                name="dueDate"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description / Announcement</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Write your announcement here. This will be visible to all students."
-                        className="min-h-[100px]"
-                        {...field}
-                      />
-                    </FormControl>
+                <FormItem className="flex flex-col">
+                    <FormLabel>Due Date</FormLabel>
+                    <Popover>
+                    <PopoverTrigger asChild>
+                        <FormControl>
+                        <Button
+                            variant={'outline'}
+                            className={cn(
+                            'w-full justify-start text-left font-normal',
+                            !field.value && 'text-muted-foreground'
+                            )}
+                        >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {field.value ? (
+                            format(field.value, 'PPP')
+                            ) : (
+                            <span>Pick a date</span>
+                            )}
+                        </Button>
+                        </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                        <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        initialFocus
+                        />
+                    </PopoverContent>
+                    </Popover>
                     <FormMessage />
-                  </FormItem>
+                </FormItem>
                 )}
-              />
-            </CardContent>
-            <CardFooter className="flex justify-end">
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description / Announcement</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Write your announcement here..."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={formLoading}>
                 {formLoading ? <Loader className="h-4 w-4" /> : 'Post Deadline'}
               </Button>
-            </CardFooter>
+            </DialogFooter>
           </form>
         </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ChairpersonFundDeadlines({ roomId }: { roomId: string }) {
+  const { deadlines, loading } = useRoomDeadlines(roomId);
+
+  return (
+    <div className="flex flex-col gap-8">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+            <CalendarIcon className="w-6 h-6" />
+            <h1 className="text-2xl font-bold">Fund Deadlines</h1>
+        </div>
+        <NewDeadlineModal roomId={roomId} />
+      </div>
+
+      <Card className="shadow-md">
+        <CardHeader>
+          <CardTitle>Posted Deadlines</CardTitle>
+          <CardDescription>
+            All fund deadlines created for this room.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Deadline</TableHead>
+                <TableHead>Due Date</TableHead>
+                <TableHead className="text-right">Amount Required</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center">
+                    <div className="flex justify-center p-8">
+                      <Loader />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : deadlines.length > 0 ? (
+                deadlines.map((deadline) => (
+                  <TableRow key={deadline.id}>
+                    <TableCell className="font-medium">{deadline.name}</TableCell>
+                    <TableCell>
+                      {deadline.date
+                        ? format(deadline.date.toDate(), 'PP')
+                        : 'N/A'}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      ₱{deadline.amount.toFixed(2)}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={3} className="h-24 text-center">
+                    No deadlines posted yet.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
       </Card>
     </div>
   );
+}
+
+function StudentFundDeadlines({ roomId, studentId }: { roomId: string, studentId: string }) {
+    const { deadlines, loading } = useStudentDeadlines(roomId, studentId);
+
+    return (
+        <div className="flex flex-col gap-8">
+            <div className="flex items-center gap-2">
+                <CalendarIcon className="w-6 h-6" />
+                <h1 className="text-2xl font-bold">Deadlines</h1>
+            </div>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Fund Deadlines</CardTitle>
+                    <CardDescription>Upcoming and past due payments.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Deadline</TableHead>
+                                <TableHead>Due Date</TableHead>
+                                <TableHead>Amount Required</TableHead>
+                                <TableHead>Amount Paid</TableHead>
+                                <TableHead>Status</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                        {loading ? (
+                            <TableRow>
+                                <TableCell colSpan={5} className="text-center">
+                                    <div className="flex justify-center p-8"><Loader/></div>
+                                </TableCell>
+                            </TableRow>
+                        ) : deadlines.length > 0 ? (
+                            deadlines.map((deadline) => (
+                            <TableRow key={deadline.id}>
+                                <TableCell className="font-medium">{deadline.name}</TableCell>
+                                <TableCell>{deadline.date ? format(deadline.date.toDate(), 'PP') : 'N/A'}</TableCell>
+                                <TableCell>₱{deadline.amount.toFixed(2)}</TableCell>
+                                <TableCell>₱{deadline.amountPaid.toFixed(2)}</TableCell>
+                                <TableCell>
+                                    <Badge variant={deadline.status === 'Paid' ? 'secondary' : 'destructive'} className={deadline.status === 'Paid' ? 'bg-green-100 text-green-800' : ''}>
+                                        {deadline.status}
+                                    </Badge>
+                                </TableCell>
+                            </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                            <TableCell colSpan={5} className="text-center h-24">
+                                No deadlines found.
+                            </TableCell>
+                            </TableRow>
+                        )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        </div>
+    )
+}
+
+export default function FundDeadlinesPage() {
+  const params = useParams();
+  const roomId = params.roomId as string;
+  const { user } = useAuth();
+  const { room, loading } = useRoom(roomId);
+
+  if (loading) {
+    return <div className="flex justify-center p-8"><Loader /></div>
+  }
+
+  const isChairperson = user?.uid === room?.ownerId;
+
+  if (isChairperson) {
+    return <ChairpersonFundDeadlines roomId={roomId} />;
+  }
+
+  return <StudentFundDeadlines roomId={roomId} studentId={user!.uid} />;
 }
