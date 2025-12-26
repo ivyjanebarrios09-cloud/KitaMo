@@ -66,14 +66,7 @@ const Logo = () => (
           <stop offset="100%" stopColor="hsl(var(--accent))" />
         </linearGradient>
       </defs>
-      <circle
-        cx="14"
-        cy="14"
-        r="12"
-        stroke="hsl(var(--primary) / 0.5)"
-        strokeWidth="2"
-      />
-      <circle cx="14" cy="14" r="9" fill="url(#logo-gradient)" />
+      <circle cx="14" cy="14" r="12" fill="url(#logo-gradient)" />
     </svg>
   );
 
@@ -143,14 +136,13 @@ export function Sidebar({isMobileSheet = false}: {isMobileSheet?: boolean}) {
 
   const sidebarContent = (
     <>
-      <div className="flex-1">
+      <div className="flex-1 overflow-y-auto">
         <div className="h-16 flex items-center justify-center px-6 border-b">
             <Link
             href="/dashboard"
             className="flex items-center gap-2 font-semibold text-lg"
             >
             <Logo />
-            {isMobileSheet && <span>KitaMo!</span>}
             </Link>
         </div>
         <nav className="flex-1 py-4 px-2 space-y-2">
@@ -184,7 +176,7 @@ export function Sidebar({isMobileSheet = false}: {isMobileSheet?: boolean}) {
   }
 
   return (
-    <aside className="w-20 bg-card border-r flex flex-col h-full hidden lg:flex">
+    <aside className="w-20 bg-card border-r flex-col h-screen hidden lg:flex">
       {sidebarContent}
     </aside>
   );
@@ -200,7 +192,7 @@ export function MobileSidebar({isSidebarOpen, setSidebarOpen}: {isSidebarOpen: b
              <Sheet open={isSidebarOpen} onOpenChange={setSidebarOpen}>
                 <SheetContent side="left" className="flex flex-col p-0 w-72">
                     <SheetHeader className="p-4">
-                      <SheetTitle className="sr-only">Menu</SheetTitle>
+                      <SheetTitle>Menu</SheetTitle>
                     </SheetHeader>
                     <Sidebar isMobileSheet={true} />
                     <div className="p-2 border-t mt-auto">

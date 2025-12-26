@@ -61,14 +61,7 @@ const Logo = () => (
           <stop offset="100%" stopColor="hsl(var(--accent))" />
         </linearGradient>
       </defs>
-      <circle
-        cx="14"
-        cy="14"
-        r="12"
-        stroke="hsl(var(--primary) / 0.5)"
-        strokeWidth="2"
-      />
-      <circle cx="14" cy="14" r="9" fill="url(#logo-gradient)" />
+      <circle cx="14" cy="14" r="12" fill="url(#logo-gradient)" />
     </svg>
   );
 
@@ -133,7 +126,6 @@ export default function RegisterPage() {
        <div className="absolute top-6 left-6">
         <Link href="/" className="flex items-center gap-2 font-semibold text-lg text-primary hover:text-primary/80 transition-colors">
           <Logo />
-          <span>KitaMo!</span>
         </Link>
       </div>
       <Card className="w-full max-w-sm shadow-xl">
