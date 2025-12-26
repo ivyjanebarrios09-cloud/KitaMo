@@ -42,13 +42,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { cn } from '@/lib/utils';
 import { addDeadline } from '@/lib/firebase-actions';
 import { useToast } from '@/hooks/use-toast';
 import { useParams } from 'next/navigation';
@@ -62,7 +55,7 @@ import { useStudentDeadlines } from '@/hooks/use-student-deadlines';
 const deadlineSchema = z.object({
   title: z.string().min(1, 'Deadline title is required'),
   amount: z.coerce.number().min(0.01, 'Amount must be greater than 0'),
-  dueDate: z.date({ required_error: 'Please select a due date' }),
+  dueDate: z.coerce.date({ required_error: 'Please select a due date' }),
   category: z.string().optional(),
   description: z.string().min(1, 'Description is required'),
 });
@@ -152,34 +145,9 @@ function NewDeadlineModal({ roomId }: { roomId: string }) {
                 render={({ field }) => (
                 <FormItem className="flex flex-col">
                     <FormLabel>Due Date</FormLabel>
-                    <Popover>
-                    <PopoverTrigger asChild>
-                        <FormControl>
-                        <Button
-                            variant={'outline'}
-                            className={cn(
-                            'w-full justify-start text-left font-normal',
-                            !field.value && 'text-muted-foreground'
-                            )}
-                        >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? (
-                            format(field.value, 'PPP')
-                            ) : (
-                            <span>Pick a date</span>
-                            )}
-                        </Button>
-                        </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                        <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                        />
-                    </PopoverContent>
-                    </Popover>
+                    <FormControl>
+                      <Input type="date" {...field} value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : ''} />
+                    </FormControl>
                     <FormMessage />
                 </FormItem>
                 )}
