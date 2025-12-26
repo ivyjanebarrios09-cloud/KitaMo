@@ -106,6 +106,49 @@ export const addExpense = async (roomId: string, data: { name: string, descripti
     }
 }
 
+export const addDeadline = async (roomId: string, data: { title: string, amount: number, dueDate: Date, category?: string, description: string }) => {
+    try {
+        const roomRef = doc(db, 'rooms', roomId);
+        
+        await runTransaction(db, async (transaction) => {
+            const roomDoc = await transaction.get(roomRef);
+            if (!roomDoc.exists()) {
+                throw "Room does not exist!";
+            }
+            
+            const ownerId = roomDoc.data().ownerId;
+
+            // Add to deadlines subcollection
+            const deadlineRef = doc(collection(db, 'rooms', roomId, 'deadlines'));
+            transaction.set(deadlineRef, {
+                name: data.title,
+                amount: data.amount,
+                date: data.dueDate,
+                category: data.category,
+                description: data.description,
+                createdAt: serverTimestamp()
+            });
+
+            // Add to general transactions log
+            const transactionRef = doc(collection(db, 'rooms', roomId, 'transactions'));
+            transaction.set(transactionRef, {
+                type: 'deadline',
+                name: data.title,
+                amount: data.amount,
+                date: data.dueDate,
+                ownerId: ownerId,
+                createdAt: serverTimestamp(),
+                seenCount: 0,
+                seenBy: []
+            });
+        });
+    } catch (error) {
+        console.error("Error adding deadline: ", error);
+        throw new Error("Could not add deadline.");
+    }
+};
+
+
 export const addAnnouncement = async (roomId: string, userId: string, userName: string, data: { title: string, content: string }) => {
     try {
         await addDoc(collection(db, 'rooms', roomId, 'announcements'), {
