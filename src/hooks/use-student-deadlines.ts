@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -15,30 +16,27 @@ export function useStudentDeadlines(roomId, studentId) {
       return;
     }
 
-    const fetchDeadlinesAndPayments = async () => {
-        setLoading(true);
-        try {
-            // 1. Fetch all deadlines for the room
-            const deadlinesRef = collection(db, 'rooms', roomId, 'deadlines');
-            const deadlinesQuery = query(deadlinesRef, orderBy('date', 'desc'));
-            const deadlinesSnapshot = await getDocs(deadlinesQuery);
-            const allDeadlines = deadlinesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const deadlinesRef = collection(db, 'rooms', roomId, 'deadlines');
+    const deadlinesQuery = query(deadlinesRef, orderBy('date', 'desc'));
 
-            // 2. Fetch all payments made by the student for this room
-            const paymentsRef = collection(db, 'rooms', roomId, 'transactions');
-            const paymentsQuery = query(paymentsRef, 
-                where('studentId', '==', studentId), 
-                where('type', '==', 'payment')
-            );
-            const paymentsSnapshot = await getDocs(paymentsQuery);
+    const unsubscribeDeadlines = onSnapshot(deadlinesQuery, (deadlinesSnapshot) => {
+        const allDeadlines = deadlinesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        const paymentsRef = collection(db, 'rooms', roomId, 'transactions');
+        const paymentsQuery = query(paymentsRef, 
+            where('studentId', '==', studentId), 
+            where('type', '==', 'payment')
+        );
+
+        const unsubscribePayments = onSnapshot(paymentsQuery, (paymentsSnapshot) => {
             const studentPayments = paymentsSnapshot.docs.map(doc => doc.data());
 
-            // 3. Map payments to deadlines
             const processedDeadlines = allDeadlines.map(deadline => {
-                // Find payments specifically for this deadline
                 const paymentsForDeadline = studentPayments.filter(p => p.deadlineId === deadline.id);
                 const amountPaid = paymentsForDeadline.reduce((sum, p) => sum + p.amount, 0);
-                const isPaid = amountPaid >= deadline.amount;
+                
+                // Consider floating point inaccuracies
+                const isPaid = amountPaid >= deadline.amount - 0.001;
                 
                 return {
                     ...deadline,
@@ -48,16 +46,19 @@ export function useStudentDeadlines(roomId, studentId) {
             });
 
             setDeadlines(processedDeadlines);
-        } catch (error) {
-            console.error("Error fetching student deadlines and payments: ", error);
-        } finally {
             setLoading(false);
-        }
-    }
+        }, (error) => {
+            console.error("Error fetching student payments: ", error);
+            setLoading(false);
+        });
 
-    // Since we are combining multiple queries, we can't use a single snapshot listener easily.
-    // This fetches the data once. For real-time updates, a more complex setup would be needed.
-    fetchDeadlinesAndPayments();
+        return () => unsubscribePayments();
+    }, (error) => {
+        console.error("Error fetching deadlines: ", error);
+        setLoading(false);
+    });
+
+    return () => unsubscribeDeadlines();
 
   }, [roomId, studentId]);
 
