@@ -9,6 +9,7 @@ import {
   BookOpen,
   LogOut,
   User as UserIcon,
+  Archive
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import {
@@ -25,6 +26,7 @@ import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Home' },
+  { href: '/dashboard/rooms', icon: Archive, label: 'Rooms' },
   { href: '/dashboard/students', icon: Users, label: 'Students' },
   { href: '/dashboard/transactions', icon: ClipboardList, label: 'Transactions' },
 ];
