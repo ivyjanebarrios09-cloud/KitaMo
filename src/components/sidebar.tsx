@@ -15,7 +15,7 @@ import {
   BarChart3,
   Menu,
   Settings,
-  BookOpen,
+  Megaphone,
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import {
@@ -43,7 +43,7 @@ const sidebarNavItems = [
 
 const roomSubNavItems = [
     { href: '', label: 'Room Dashboard', icon: Home },
-    { href: '/announcement', label: 'Announcement', icon: BookOpen },
+    { href: '/announcement', label: 'Announcement', icon: Megaphone },
     { href: '/expenses', label: 'Expenses', icon: Wallet },
     { href: '/fund-deadlines', label: 'Fund Deadlines', icon: Calendar },
     { href: '/students', label: 'Students', icon: UserIcon },
@@ -150,7 +150,7 @@ export function Sidebar({isMobileSheet = false}: {isMobileSheet?: boolean}) {
           href="/"
           className="flex items-center gap-2 font-semibold text-lg"
         >
-          <Logo />
+          
           {isMobileSheet && <span>KitaMo!</span>}
         </Link>
       </div>
@@ -235,11 +235,15 @@ export function Header({onMenuClick}: {onMenuClick: () => void}) {
     const chairpersonName = user?.displayName || user?.email?.split('@')[0] || 'Chairperson';
     return (
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-16 lg:px-6 sticky top-0 z-30">
-            <div className="lg:hidden">
-                <Button variant="outline" size="icon" onClick={onMenuClick}>
+            <div className="flex items-center gap-4">
+                <Button variant="outline" size="icon" onClick={onMenuClick} className="lg:hidden">
                     <Menu className="h-6 w-6" />
                     <span className="sr-only">Toggle navigation menu</span>
                 </Button>
+                <Link href="/" className="flex items-center gap-2 font-semibold text-lg">
+                    <Logo />
+                    <span className="hidden sm:inline-block">KitaMo!</span>
+                </Link>
             </div>
             <div className="w-full flex-1">
                 {/* Optional: Add search or other header elements here */}
