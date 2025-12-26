@@ -19,6 +19,8 @@ import { PiggyBank, Receipt, Scale, Users } from 'lucide-react';
 import { useUserRooms } from '@/hooks/use-user-rooms';
 import { Loader } from '@/components/loader';
 import Link from 'next/link';
+import { useUserTransactions } from '@/hooks/use-user-transactions';
+import { format } from 'date-fns';
 
 const StatCard = ({ title, value, icon: Icon, currency = '₱', loading = false }) => (
   <Card className="shadow-sm hover:shadow-md transition-shadow">
@@ -41,11 +43,10 @@ const StatCard = ({ title, value, icon: Icon, currency = '₱', loading = false 
 export default function DashboardPage() {
     const { user } = useAuth();
     const { rooms, loading: roomsLoading } = useUserRooms(user?.uid);
+    const { transactions, loading: transactionsLoading } = useUserTransactions(user?.uid);
     const chairpersonName = user?.displayName || user?.email?.split('@')[0] || 'Chairperson';
 
-    // Mock data for transactions - to be replaced with real data
-    const transactions: any[] = [];
-    const loading = roomsLoading;
+    const loading = roomsLoading || transactionsLoading;
 
     const stats = rooms.reduce((acc, room) => {
         acc.totalCollected += room.totalCollected || 0;
@@ -59,6 +60,12 @@ export default function DashboardPage() {
     });
 
     stats.netBalance = stats.totalCollected - stats.totalExpenses;
+
+    const getRoomName = (roomId) => {
+        const room = rooms.find(r => r.id === roomId);
+        return room ? room.name : 'Unknown Room';
+    }
+
 
   return (
     <div className="flex flex-col gap-8">
@@ -97,20 +104,19 @@ export default function DashboardPage() {
                 <TableHead>Date</TableHead>
                 <TableHead>Room</TableHead>
                 <TableHead>Description</TableHead>
-                <TableHead>Status</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                    <TableCell colSpan={6} className="text-center">
+                    <TableCell colSpan={5} className="text-center">
                         <div className="flex justify-center p-8"><Loader/></div>
                     </TableCell>
                 </TableRow>
               ) : transactions.length > 0 ? (
-                transactions.map((transaction, index) => (
-                  <TableRow key={index}>
+                transactions.map((transaction) => (
+                  <TableRow key={transaction.id}>
                     <TableCell>
                       <Badge
                         variant={
@@ -123,23 +129,13 @@ export default function DashboardPage() {
                         {transaction.type}
                       </Badge>
                     </TableCell>
-                    <TableCell>{transaction.date}</TableCell>
+                    <TableCell>{transaction.date ? format(transaction.date.toDate(), 'PP') : 'N/A'}</TableCell>
                     <TableCell>
-                      <a href="#" className="text-primary hover:underline">
-                        {transaction.room}
-                      </a>
+                      <Link href={`/dashboard/rooms/${transaction.roomId}`} className="text-primary hover:underline">
+                        {getRoomName(transaction.roomId)}
+                      </Link>
                     </TableCell>
-                    <TableCell>{transaction.description}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          transaction.status === 'Paid' ? 'default' : 'destructive'
-                        }
-                        className={transaction.status === 'Paid' ? 'bg-green-500/20 text-green-700 border-green-500/30 hover:bg-green-500/30' : ''}
-                      >
-                        {transaction.status}
-                      </Badge>
-                    </TableCell>
+                    <TableCell>{transaction.name}</TableCell>
                     <TableCell className="text-right font-medium">
                       ₱{transaction.amount.toFixed(2)}
                     </TableCell>
@@ -147,7 +143,7 @@ export default function DashboardPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center h-24">
+                  <TableCell colSpan={5} className="text-center h-24">
                     No recent transactions found.
                   </TableCell>
                 </TableRow>
