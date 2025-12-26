@@ -10,7 +10,8 @@ import {
   Archive,
   Wallet,
   Calendar,
-  ClipboardList
+  ClipboardList,
+  BarChart3,
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import {
@@ -65,6 +66,7 @@ export function Sidebar() {
     { href: '/fund-deadlines', label: 'Fund Deadlines', icon: Calendar },
     { href: '/students', label: 'Students', icon: UserIcon },
     { href: '/statements', label: 'Statements', icon: ClipboardList },
+    { href: '/analytics', label: 'Expense Analytics', icon: BarChart3 },
   ];
 
 
