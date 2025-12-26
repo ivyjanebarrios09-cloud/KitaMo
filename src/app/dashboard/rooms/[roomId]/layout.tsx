@@ -4,12 +4,6 @@
 
 import {
   ChevronLeft,
-  Home,
-  Megaphone,
-  Users,
-  Wallet,
-  Calendar,
-  ClipboardList,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -35,7 +29,7 @@ export default function RoomDetailLayout({
                 <ChevronLeft className="h-6 w-6" />
            </Link>
            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-1">
-            <h1 className="text-xl sm:text-2xl font-bold truncate">
+            <h1 className="text-xl sm:text-2xl font-bold truncate max-w-[200px] sm:max-w-none">
                 {loading ? 'Loading...' : room?.name || 'Room'}
             </h1>
             {!loading && room?.code && <Badge variant="secondary">CODE: {room.code}</Badge>}

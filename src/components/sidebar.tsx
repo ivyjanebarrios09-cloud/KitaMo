@@ -13,7 +13,6 @@ import {
   Calendar,
   ClipboardList,
   BarChart3,
-  Menu,
   Settings,
   Megaphone,
 } from 'lucide-react';
@@ -180,7 +179,7 @@ export function MobileSidebar({isSidebarOpen, setSidebarOpen}: {isSidebarOpen: b
              <Sheet open={isSidebarOpen} onOpenChange={setSidebarOpen}>
                 <SheetContent side="left" className="flex flex-col p-0 w-72">
                     <SheetHeader className="p-0">
-                      <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
+                      <SheetTitle>Menu</SheetTitle>
                     </SheetHeader>
                     <Sidebar isMobileSheet={true} />
                     <div className="p-2 border-t mt-auto">
@@ -239,14 +238,9 @@ export function Header({onMenuClick}: {onMenuClick: () => void}) {
     const chairpersonName = user?.displayName || user?.email?.split('@')[0] || 'Chairperson';
     return (
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-16 lg:px-6 sticky top-0 z-30">
-            <div className="flex items-center gap-4">
-                <Button variant="outline" size="icon" onClick={onMenuClick} className="lg:hidden">
-                    <Menu className="h-6 w-6" />
-                    <span className="sr-only">Toggle navigation menu</span>
-                </Button>
-                <div className="hidden lg:flex items-center gap-2 font-semibold text-lg">
-                    <span>KitaMo!</span>
-                </div>
+            <div className="flex items-center gap-2 font-semibold text-lg lg:hidden">
+                <Logo />
+                <span>KitaMo!</span>
             </div>
             <div className="w-full flex-1">
                 {/* Optional: Add search or other header elements here */}
@@ -320,13 +314,15 @@ export function BottomNavBar() {
     <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-card border-t z-40">
       <div className="flex justify-around items-center h-16">
         {navItems.map((item) => {
-            const isActive = item.href === ''
-                ? pathname === `/dashboard/rooms/${roomId}`
-                : (item.href === '/dashboard' && pathname === item.href) || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+            const href = item.href || `/dashboard/rooms/${roomId}`;
+            const isActive = href === `/dashboard/rooms/${roomId}`
+              ? pathname === href
+              : (item.href === '/dashboard' && pathname === item.href) || (item.href !== '/dashboard' && pathname.startsWith(href));
+
             return (
                 <Link
                     key={item.label}
-                    href={item.href}
+                    href={href}
                     className={cn(
                     'flex flex-col items-center justify-center gap-1 text-muted-foreground transition-all w-full h-full',
                     isActive && 'text-primary bg-muted/50'
