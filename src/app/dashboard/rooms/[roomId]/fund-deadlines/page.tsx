@@ -51,6 +51,9 @@ import { useRoom } from '@/hooks/use-room';
 import { Badge } from '@/components/ui/badge';
 import { useRoomDeadlines } from '@/hooks/use-room-deadlines';
 import { useStudentDeadlines } from '@/hooks/use-student-deadlines';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { Calendar } from '@/components/ui/calendar';
 
 const deadlineSchema = z.object({
   title: z.string().min(1, 'Deadline title is required'),
@@ -63,6 +66,7 @@ const deadlineSchema = z.object({
 function NewDeadlineModal({ roomId }: { roomId: string }) {
   const [open, setOpen] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof deadlineSchema>>({
@@ -139,18 +143,49 @@ function NewDeadlineModal({ roomId }: { roomId: string }) {
                 </FormItem>
               )}
             />
-             <FormField
-                control={form.control}
-                name="dueDate"
-                render={({ field }) => (
+            <FormField
+              control={form.control}
+              name="dueDate"
+              render={({ field }) => (
                 <FormItem className="flex flex-col">
-                    <FormLabel>Due Date</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : ''} />
-                    </FormControl>
-                    <FormMessage />
+                  <FormLabel>Due Date</FormLabel>
+                  <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={'outline'}
+                          className={cn(
+                            'w-full pl-3 text-left font-normal',
+                            !field.value && 'text-muted-foreground'
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, 'PPP')
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date < new Date() || date < new Date('1900-01-01')
+                        }
+                        initialFocus
+                      />
+                       <div className="p-2 border-t flex justify-end">
+                        <Button size="sm" onClick={() => setCalendarOpen(false)}>Save</Button>
+                       </div>
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
                 </FormItem>
-                )}
+              )}
             />
             <FormField
               control={form.control}
