@@ -21,7 +21,7 @@ export function useRoomTransactions(roomId, type = null) {
         q = query(
             transactionsRef,
             where('type', '==', type),
-            orderBy('createdAt', 'desc')
+            orderBy('date', 'desc')
         );
     } else {
         q = query(
