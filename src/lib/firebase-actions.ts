@@ -88,7 +88,8 @@ export const addExpense = async (roomId: string, data: { name: string, descripti
                 name: data.name,
                 amount: data.amount,
                 date: data.date,
-                ownerId: ownerId, 
+                ownerId: ownerId,
+                roomId: roomId,
                 createdAt: serverTimestamp(),
                 seenCount: 0,
                 seenBy: []
@@ -137,6 +138,7 @@ export const addDeadline = async (roomId: string, data: { title: string, amount:
                 amount: data.amount,
                 date: data.dueDate,
                 ownerId: ownerId,
+                roomId: roomId,
                 createdAt: serverTimestamp(),
                 seenCount: 0,
                 seenBy: []
