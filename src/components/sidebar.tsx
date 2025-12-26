@@ -15,7 +15,6 @@ import {
   BarChart3,
   Settings,
   Megaphone,
-  Menu,
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import {
@@ -144,7 +143,7 @@ export function Sidebar({isMobileSheet = false}: {isMobileSheet?: boolean}) {
 
   const sidebarContent = (
     <>
-      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+      <div className="flex-1">
         <div className="h-16 flex items-center justify-center px-6 border-b">
             <Link
             href="/dashboard"
@@ -200,8 +199,8 @@ export function MobileSidebar({isSidebarOpen, setSidebarOpen}: {isSidebarOpen: b
         <div className="lg:hidden">
              <Sheet open={isSidebarOpen} onOpenChange={setSidebarOpen}>
                 <SheetContent side="left" className="flex flex-col p-0 w-72">
-                    <SheetHeader className="p-0 hidden">
-                      <SheetTitle>Menu</SheetTitle>
+                    <SheetHeader className="p-4">
+                      <SheetTitle className="sr-only">Menu</SheetTitle>
                     </SheetHeader>
                     <Sidebar isMobileSheet={true} />
                     <div className="p-2 border-t mt-auto">
@@ -255,20 +254,20 @@ export function MobileSidebar({isSidebarOpen, setSidebarOpen}: {isSidebarOpen: b
     )
 }
 
-export function Header({onMenuClick}: {onMenuClick: () => void}) {
+export function Header({onMenuClick}: {onMenuClick?: () => void}) {
     const { user, logout } = useAuth();
     const chairpersonName = user?.displayName || user?.email?.split('@')[0] || 'Chairperson';
     return (
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-16 lg:px-6 sticky top-0 z-30">
-            <Button
+            {onMenuClick && <Button
               variant="ghost"
               size="icon"
               className="lg:hidden"
               onClick={onMenuClick}
             >
-              <Menu className="h-5 w-5" />
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path></svg>
               <span className="sr-only">Toggle Menu</span>
-            </Button>
+            </Button>}
             <div className="w-full flex-1">
                 {/* Optional: Add search or other header elements here */}
             </div>
