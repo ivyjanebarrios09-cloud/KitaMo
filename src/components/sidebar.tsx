@@ -1,11 +1,11 @@
 
+
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Home,
-  BookOpen,
   LogOut,
   User as UserIcon,
   Archive,
@@ -15,6 +15,7 @@ import {
   BarChart3,
   Menu,
   Settings,
+  BookOpen,
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import {
@@ -49,6 +50,31 @@ const roomSubNavItems = [
     { href: '/statements', label: 'Statements', icon: ClipboardList },
     { href: '/analytics', label: 'Expense Analytics', icon: BarChart3 },
 ];
+
+const Logo = () => (
+    <svg
+      width="28"
+      height="28"
+      viewBox="0 0 28 28"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="hsl(var(--primary))" />
+          <stop offset="100%" stopColor="hsl(var(--accent))" />
+        </linearGradient>
+      </defs>
+      <circle
+        cx="14"
+        cy="14"
+        r="12"
+        stroke="hsl(var(--primary) / 0.5)"
+        strokeWidth="2"
+      />
+      <circle cx="14" cy="14" r="9" fill="url(#logo-gradient)" />
+    </svg>
+  );
 
 function NavContent({ isMobile = false }: { isMobile?: boolean }) {
     const pathname = usePathname();
@@ -124,7 +150,7 @@ export function Sidebar({isMobileSheet = false}: {isMobileSheet?: boolean}) {
           href="/"
           className="flex items-center gap-2 font-semibold text-lg"
         >
-          <BookOpen className="h-6 w-6 text-primary" />
+          <Logo />
           {isMobileSheet && <span>KitaMo!</span>}
         </Link>
       </div>

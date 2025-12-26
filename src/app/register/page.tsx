@@ -7,7 +7,6 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { BookOpen } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -47,6 +46,31 @@ const formSchema = z
     message: "Passwords don't match.",
     path: ['confirmPassword'],
   });
+
+const Logo = () => (
+    <svg
+      width="28"
+      height="28"
+      viewBox="0 0 28 28"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="hsl(var(--primary))" />
+          <stop offset="100%" stopColor="hsl(var(--accent))" />
+        </linearGradient>
+      </defs>
+      <circle
+        cx="14"
+        cy="14"
+        r="12"
+        stroke="hsl(var(--primary) / 0.5)"
+        strokeWidth="2"
+      />
+      <circle cx="14" cy="14" r="9" fill="url(#logo-gradient)" />
+    </svg>
+  );
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -108,7 +132,7 @@ export default function RegisterPage() {
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-secondary/20">
        <div className="absolute top-6 left-6">
         <Link href="/" className="flex items-center gap-2 font-semibold text-lg text-primary hover:text-primary/80 transition-colors">
-          <BookOpen className="h-6 w-6" />
+          <Logo />
           <span>KitaMo!</span>
         </Link>
       </div>
