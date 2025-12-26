@@ -4,8 +4,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Home,
-  Users,
-  ClipboardList,
   BookOpen,
   LogOut,
   User as UserIcon,
@@ -27,8 +25,6 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Home' },
   { href: '/dashboard/rooms', icon: Archive, label: 'Rooms' },
-  { href: '/dashboard/students', icon: Users, label: 'Students' },
-  { href: '/dashboard/transactions', icon: ClipboardList, label: 'Transactions' },
 ];
 
 export function Sidebar() {
