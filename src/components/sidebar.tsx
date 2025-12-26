@@ -157,11 +157,12 @@ export function Sidebar({isMobileSheet = false}: {isMobileSheet?: boolean}) {
       <nav className="flex-1 py-4 px-2 space-y-2">
         <NavContent isMobile={isMobileSheet}/>
       </nav>
-      <div className="p-2 border-t mt-auto">
+      {isMobileSheet && (
+        <div className="p-2 border-t mt-auto">
         {user && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className={cn("w-full justify-center p-0", isMobileSheet ? "h-auto" : "h-12 w-12")}>
+              <Button variant="ghost" className="w-full justify-start h-auto p-2">
                 <Avatar className="h-9 w-9">
                   <AvatarImage
                     src={`https://avatar.vercel.sh/${user.email}.png`}
@@ -169,12 +170,10 @@ export function Sidebar({isMobileSheet = false}: {isMobileSheet?: boolean}) {
                   />
                   <AvatarFallback>{userInitial}</AvatarFallback>
                 </Avatar>
-                {isMobileSheet && (
-                    <div className="flex flex-col items-start overflow-hidden ml-2">
-                        <span className="text-sm font-medium leading-none truncate">{chairpersonName}</span>
-                        <span className="text-xs text-muted-foreground leading-none truncate">{user.email}</span>
-                    </div>
-                )}
+                <div className="flex flex-col items-start overflow-hidden ml-2">
+                    <span className="text-sm font-medium leading-none truncate">{chairpersonName}</span>
+                    <span className="text-xs text-muted-foreground leading-none truncate">{user.email}</span>
+                </div>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -204,6 +203,7 @@ export function Sidebar({isMobileSheet = false}: {isMobileSheet?: boolean}) {
           </DropdownMenu>
         )}
       </div>
+      )}
     </>
   );
 
