@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -44,10 +45,12 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import React from 'react';
-import { createRoom, deleteRoom, updateRoom } from '@/lib/firebase-actions';
+import { createRoom, deleteRoom, updateRoom, joinRoom } from '@/lib/firebase-actions';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useUserProfile } from '@/hooks/use-user-profile';
+import { useStudentRooms } from '@/hooks/use-student-rooms';
 
 
 const roomSchema = z.object({
@@ -55,8 +58,12 @@ const roomSchema = z.object({
   description: z.string().optional(),
 });
 
+const joinRoomSchema = z.object({
+    code: z.string().length(6, 'Room code must be 6 characters long'),
+});
 
-const RoomCard = ({ room, onEdit, onDelete }) => (
+
+const RoomCard = ({ room, onEdit, onDelete, isChairperson }) => (
     <Card className="shadow-sm hover:shadow-lg transition-shadow flex flex-col">
       <CardHeader>
         <CardTitle className="text-xl">{room.name}</CardTitle>
@@ -75,22 +82,24 @@ const RoomCard = ({ room, onEdit, onDelete }) => (
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" asChild>
             <Link href={`/dashboard/rooms/${room.id}`}>
-              Manage Room <ArrowRight className="h-4 w-4 ml-2" />
+              {isChairperson ? 'Manage Room' : 'View Room'} <ArrowRight className="h-4 w-4 ml-2" />
             </Link>
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit(room)}>Edit</DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive" onClick={() => onDelete(room)}>
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {isChairperson && (
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreHorizontal className="h-4 w-4" />
+                </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onEdit(room)}>Edit</DropdownMenuItem>
+                <DropdownMenuItem className="text-destructive" onClick={() => onDelete(room)}>
+                    Delete
+                </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </CardFooter>
     </Card>
@@ -189,142 +198,274 @@ const RoomFormModal = ({ open, onOpenChange, room, onSubmit, formLoading }) => {
     )
 }
 
-export default function ManageRoomsPage() {
-  const { user } = useAuth();
-  const { rooms, loading } = useUserRooms(user?.uid);
-  const [modalOpen, setModalOpen] = React.useState(false);
-  const [formLoading, setFormLoading] = React.useState(false);
-  const [selectedRoom, setSelectedRoom] = React.useState(null);
-  const [deleteAlertOpen, setDeleteAlertOpen] = React.useState(false);
-  const { toast } = useToast();
+const JoinRoomModal = ({ open, onOpenChange, onSubmit, formLoading }) => {
+    const form = useForm({
+        resolver: zodResolver(joinRoomSchema),
+        defaultValues: { code: '' },
+    });
 
-  const handleCreate = () => {
-    setSelectedRoom(null);
-    setModalOpen(true);
-  }
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Join a Room</DialogTitle>
+                    <DialogDescription>
+                        Enter the 6-character room code provided by your chairperson.
+                    </DialogDescription>
+                </DialogHeader>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="code"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Room Code</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="ABC123" {...field} maxLength={6} onChange={(e) => field.onChange(e.target.value.toUpperCase())}/>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         <DialogFooter>
+                            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+                            <Button type="submit" disabled={formLoading}>
+                                {formLoading ? <Loader className="h-4 w-4"/> : "Join"}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+    )
+}
 
-  const handleEdit = (room) => {
-    setSelectedRoom(room);
-    setModalOpen(true);
-  }
+function ChairpersonRoomsPage() {
+    const { user } = useAuth();
+    const { rooms, loading } = useUserRooms(user?.uid);
+    const [modalOpen, setModalOpen] = React.useState(false);
+    const [formLoading, setFormLoading] = React.useState(false);
+    const [selectedRoom, setSelectedRoom] = React.useState(null);
+    const [deleteAlertOpen, setDeleteAlertOpen] = React.useState(false);
+    const { toast } = useToast();
   
-  const handleDelete = (room) => {
-    setSelectedRoom(room);
-    setDeleteAlertOpen(true);
-  }
-
-  const confirmDelete = async () => {
-    if (!selectedRoom) return;
-    try {
-      await deleteRoom(selectedRoom.id);
-      toast({
-        title: 'Room Deleted',
-        description: `${selectedRoom.name} has been permanently deleted.`,
-      });
-    } catch (error) {
-        toast({
-            variant: 'destructive',
-            title: 'Error deleting room',
-            description: 'An unexpected error occurred. Please try again.',
-        });
-    } finally {
-        setDeleteAlertOpen(false);
-        setSelectedRoom(null);
-    }
-  }
-
-
-  const onSubmit = async (values: z.infer<typeof roomSchema>) => {
-    if (!user) return;
-    setFormLoading(true);
-
-    const isEditing = !!selectedRoom;
-    
-    try {
-        if (isEditing) {
-            await updateRoom(selectedRoom.id, values);
-            toast({
-                title: 'Room Updated!',
-                description: `${values.name} has been successfully updated.`,
-            });
-        } else {
-            const ownerName = user.displayName || user.email?.split('@')[0] || 'Anonymous';
-            await createRoom(user.uid, ownerName, values);
-            toast({
-                title: 'Room Created!',
-                description: `${values.name} has been successfully created.`,
-            });
-        }
-      setModalOpen(false);
+    const handleCreate = () => {
       setSelectedRoom(null);
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: isEditing ? 'Error updating room' : 'Error creating room',
-        description: 'An unexpected error occurred. Please try again.',
-      });
-    } finally {
-        setFormLoading(false);
+      setModalOpen(true);
     }
-  };
+  
+    const handleEdit = (room) => {
+      setSelectedRoom(room);
+      setModalOpen(true);
+    }
+    
+    const handleDelete = (room) => {
+      setSelectedRoom(room);
+      setDeleteAlertOpen(true);
+    }
+  
+    const confirmDelete = async () => {
+      if (!selectedRoom) return;
+      try {
+        await deleteRoom(selectedRoom.id);
+        toast({
+          title: 'Room Deleted',
+          description: `${selectedRoom.name} has been permanently deleted.`,
+        });
+      } catch (error) {
+          toast({
+              variant: 'destructive',
+              title: 'Error deleting room',
+              description: 'An unexpected error occurred. Please try again.',
+          });
+      } finally {
+          setDeleteAlertOpen(false);
+          setSelectedRoom(null);
+      }
+    }
+  
+  
+    const onSubmit = async (values: z.infer<typeof roomSchema>) => {
+      if (!user) return;
+      setFormLoading(true);
+  
+      const isEditing = !!selectedRoom;
+      
+      try {
+          if (isEditing) {
+              await updateRoom(selectedRoom.id, values);
+              toast({
+                  title: 'Room Updated!',
+                  description: `${values.name} has been successfully updated.`,
+              });
+          } else {
+              const ownerName = user.displayName || user.email?.split('@')[0] || 'Anonymous';
+              await createRoom(user.uid, ownerName, values);
+              toast({
+                  title: 'Room Created!',
+                  description: `${values.name} has been successfully created.`,
+              });
+          }
+        setModalOpen(false);
+        setSelectedRoom(null);
+      } catch (error) {
+        toast({
+          variant: 'destructive',
+          title: isEditing ? 'Error updating room' : 'Error creating room',
+          description: 'An unexpected error occurred. Please try again.',
+        });
+      } finally {
+          setFormLoading(false);
+      }
+    };
 
-
-  return (
-    <div className="flex flex-col gap-8">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Manage Rooms</h1>
-          <p className="text-muted-foreground">
-            Your financial rooms are listed below.
-          </p>
-        </div>
-        <Button onClick={handleCreate}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Create Room
-        </Button>
-      </div>
-
-       <RoomFormModal
-         open={modalOpen}
-         onOpenChange={setModalOpen}
-         room={selectedRoom}
-         onSubmit={onSubmit}
-         formLoading={formLoading}
-       />
-
-        <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the room "{selectedRoom?.name}" and all of its associated data, including students, expenses, and deadlines.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {loading ? (
-          <>
-            <RoomCardSkeleton />
-            <RoomCardSkeleton />
-            <RoomCardSkeleton />
-          </>
-        ) : rooms.length > 0 ? (
-          rooms.map((room) => (
-            <RoomCard key={room.id} room={room} onEdit={handleEdit} onDelete={handleDelete} />
-          ))
-        ) : (
-            <div className="md:col-span-2 lg:col-span-3 text-center text-muted-foreground py-16">
-                <p>No rooms found.</p>
-                <p className="text-sm">Click "Create Room" to get started.</p>
+    return (
+        <div className="flex flex-col gap-8">
+            <div className="flex justify-between items-center">
+                <div>
+                <h1 className="text-3xl font-bold">Manage Rooms</h1>
+                <p className="text-muted-foreground">
+                    Your financial rooms are listed below.
+                </p>
+                </div>
+                <Button onClick={handleCreate}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Create Room
+                </Button>
             </div>
-        )}
-      </div>
-    </div>
-  );
+
+            <RoomFormModal
+                open={modalOpen}
+                onOpenChange={setModalOpen}
+                room={selectedRoom}
+                onSubmit={onSubmit}
+                formLoading={formLoading}
+            />
+
+            <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the room "{selectedRoom?.name}" and all of its associated data, including students, expenses, and deadlines.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {loading ? (
+                <>
+                    <RoomCardSkeleton />
+                    <RoomCardSkeleton />
+                    <RoomCardSkeleton />
+                </>
+                ) : rooms.length > 0 ? (
+                rooms.map((room) => (
+                    <RoomCard key={room.id} room={room} onEdit={handleEdit} onDelete={handleDelete} isChairperson={true}/>
+                ))
+                ) : (
+                    <div className="md:col-span-2 lg:col-span-3 text-center text-muted-foreground py-16">
+                        <p>No rooms found.</p>
+                        <p className="text-sm">Click "Create Room" to get started.</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    )
+}
+
+function StudentRoomsPage() {
+    const { user } = useAuth();
+    const { rooms, loading } = useStudentRooms(user?.uid);
+    const { toast } = useToast();
+    const [modalOpen, setModalOpen] = React.useState(false);
+    const [formLoading, setFormLoading] = React.useState(false);
+
+    const onJoinSubmit = async (values: z.infer<typeof joinRoomSchema>) => {
+        if (!user) return;
+        setFormLoading(true);
+        try {
+            const studentName = user.displayName || user.email?.split('@')[0] || 'Anonymous';
+            const studentEmail = user.email || '';
+            await joinRoom(values.code, user.uid, studentName, studentEmail);
+            toast({
+                title: "Successfully Joined!",
+                description: "You have been added to the room.",
+            });
+            setModalOpen(false);
+        } catch (error: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Failed to Join Room',
+                description: error.message || 'Please check the code and try again.',
+            });
+        } finally {
+            setFormLoading(false);
+        }
+    };
+
+
+    return (
+        <div className="flex flex-col gap-8">
+            <div className="flex justify-between items-center">
+                <div>
+                <h1 className="text-3xl font-bold">My Rooms</h1>
+                <p className="text-muted-foreground">
+                    The rooms you have joined are listed below.
+                </p>
+                </div>
+                <Button onClick={() => setModalOpen(true)}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Join Room
+                </Button>
+            </div>
+
+            <JoinRoomModal 
+                open={modalOpen}
+                onOpenChange={setModalOpen}
+                onSubmit={onJoinSubmit}
+                formLoading={formLoading}
+            />
+
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {loading ? (
+                <>
+                    <RoomCardSkeleton />
+                    <RoomCardSkeleton />
+                </>
+                ) : rooms.length > 0 ? (
+                rooms.map((room) => (
+                    <RoomCard key={room.id} room={room} onEdit={() => {}} onDelete={() => {}} isChairperson={false} />
+                ))
+                ) : (
+                    <div className="md:col-span-2 lg:col-span-3 text-center text-muted-foreground py-16">
+                        <p>You haven't joined any rooms yet.</p>
+                        <p className="text-sm">Click "Join Room" to get started.</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    )
+}
+
+
+export default function ManageRoomsPage() {
+    const { user } = useAuth();
+    const { userProfile, loading } = useUserProfile(user?.uid);
+
+    if (loading) {
+        return <div className="flex justify-center p-8"><Loader/></div>
+    }
+
+    if (userProfile?.role === 'student') {
+        return <StudentRoomsPage />;
+    }
+    
+    return <ChairpersonRoomsPage />;
 }

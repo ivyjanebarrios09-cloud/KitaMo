@@ -1,6 +1,6 @@
 
 
-import { addDoc, collection, serverTimestamp, writeBatch, doc, getDocs, query, where, updateDoc, deleteDoc, runTransaction, increment, arrayUnion } from "firebase/firestore";
+import { addDoc, collection, serverTimestamp, writeBatch, doc, getDocs, query, where, updateDoc, deleteDoc, runTransaction, increment, arrayUnion, setDoc } from "firebase/firestore";
 import { db } from "./firebase";
 import { customAlphabet } from 'nanoid';
 
@@ -190,4 +190,40 @@ export const markTransactionAsSeen = async (roomId: string, transactionId: strin
         // We don't throw an error here to prevent crashing the app for the user
         // But we log it for debugging purposes.
     }
+};
+
+export const joinRoom = async (roomCode: string, userId: string, studentName: string, studentEmail: string) => {
+    const roomsRef = collection(db, 'rooms');
+    const q = query(roomsRef, where("code", "==", roomCode));
+    
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+        throw new Error("No room found with that code.");
+    }
+
+    const roomDoc = querySnapshot.docs[0];
+    const roomId = roomDoc.id;
+    const roomRef = doc(db, 'rooms', roomId);
+
+    await runTransaction(db, async (transaction) => {
+        const studentRef = doc(db, 'rooms', roomId, 'students', userId);
+        const studentDoc = await transaction.get(studentRef);
+
+        if (studentDoc.exists()) {
+            throw new Error("You are already a member of this room.");
+        }
+
+        transaction.set(studentRef, {
+            name: studentName,
+            email: studentEmail,
+            joinedAt: serverTimestamp(),
+            totalPaid: 0,
+            totalOwed: 0, // This would be updated when new deadlines are posted
+        });
+
+        transaction.update(roomRef, {
+            studentCount: increment(1)
+        });
+    });
 };
