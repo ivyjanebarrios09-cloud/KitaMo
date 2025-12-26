@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, Users, PiggyBank, Receipt } from 'lucide-react';
+import { DollarSign, Users, PiggyBank, Receipt, Home } from 'lucide-react';
 
 const StatCard = ({ title, value, subtext, icon: Icon, currency = '₱' }) => (
     <Card className="shadow-sm hover:shadow-md transition-shadow">
