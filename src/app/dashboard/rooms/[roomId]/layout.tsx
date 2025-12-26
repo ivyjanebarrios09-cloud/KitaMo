@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import {
@@ -9,6 +7,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { useRoom } from '@/hooks/use-room';
+import { useAuth } from '@/context/auth-context';
 
 
 export default function RoomDetailLayout({
@@ -19,7 +18,9 @@ export default function RoomDetailLayout({
   const params = useParams();
   const { roomId } = params;
   const { room, loading } = useRoom(roomId as string);
+  const { user } = useAuth();
 
+  const isChairperson = user?.uid === room?.ownerId;
 
   return (
     <div className="flex flex-col h-full">
@@ -32,7 +33,7 @@ export default function RoomDetailLayout({
             <h1 className="text-xl sm:text-2xl font-bold truncate max-w-[200px] sm:max-w-none">
                 {loading ? 'Loading...' : room?.name || 'Room'}
             </h1>
-            {!loading && room?.code && <Badge variant="secondary">CODE: {room.code}</Badge>}
+            {!loading && room?.code && isChairperson && <Badge variant="secondary">CODE: {room.code}</Badge>}
            </div>
         </div>
       </div>
