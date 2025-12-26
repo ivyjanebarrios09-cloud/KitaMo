@@ -7,7 +7,10 @@ import {
   BookOpen,
   LogOut,
   User as UserIcon,
-  Archive
+  Archive,
+  Wallet,
+  Calendar,
+  ClipboardList
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import {
@@ -35,11 +38,11 @@ const navItems = [
 ];
 
 const roomNavItems = [
-    { href: '/dashboard/rooms/[roomId]', label: 'Dashboard', icon: Home, exact: true},
-    { href: '/dashboard/rooms/[roomId]/announcement', label: 'Announcement', icon: BookOpen },
-    { href: '/dashboard/rooms/[roomId]/expenses', label: 'Expenses', icon: Archive },
-    { href: '/dashboard/rooms/[roomId]/fund-deadlines', label: 'Fund Deadlines', icon: Archive },
-    { href: '/dashboard/rooms/[roomId]/students', label: 'Students', icon: UserIcon },
+    { href: '', label: 'Dashboard', icon: Home, exact: true},
+    { href: '/announcement', label: 'Announcement', icon: BookOpen },
+    { href: '/expenses', label: 'Expenses', icon: Archive },
+    { href: '/fund-deadlines', label: 'Fund Deadlines', icon: Archive },
+    { href: '/students', label: 'Students', icon: UserIcon },
 ];
 
 
@@ -58,9 +61,10 @@ export function Sidebar() {
   const roomSubNavItems = [
     { href: '', label: 'Room Dashboard', icon: Home },
     { href: '/announcement', label: 'Announcement', icon: BookOpen },
-    { href: '/expenses', label: 'Expenses', icon: Archive },
-    { href: '/fund-deadlines', label: 'Fund Deadlines', icon: Archive },
+    { href: '/expenses', label: 'Expenses', icon: Wallet },
+    { href: '/fund-deadlines', label: 'Fund Deadlines', icon: Calendar },
     { href: '/students', label: 'Students', icon: UserIcon },
+    { href: '/statements', label: 'Statements', icon: ClipboardList },
   ];
 
 
