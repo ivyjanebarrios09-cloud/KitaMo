@@ -66,7 +66,6 @@ const deadlineSchema = z.object({
 function NewDeadlineModal({ roomId }: { roomId: string }) {
   const [open, setOpen] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
-  const [calendarOpen, setCalendarOpen] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof deadlineSchema>>({
@@ -143,50 +142,37 @@ function NewDeadlineModal({ roomId }: { roomId: string }) {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="dueDate"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Due Date</FormLabel>
-                  <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                    <PopoverTrigger asChild>
+             <FormField
+                control={form.control}
+                name="dueDate"
+                render={({ field }) => {
+                  const dateValue = field.value ? format(new Date(field.value), 'yyyy-MM-dd') : '';
+                  return (
+                    <FormItem>
+                      <FormLabel>Due Date</FormLabel>
                       <FormControl>
-                        <Button
-                          variant={'outline'}
-                          className={cn(
-                            'w-full pl-3 text-left font-normal',
-                            !field.value && 'text-muted-foreground'
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, 'PPP')
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
+                        <Input 
+                          type="date" 
+                          {...field} 
+                          value={dateValue}
+                          onChange={(e) => {
+                              const date = e.target.value ? new Date(e.target.value) : null;
+                              // Adjust for timezone offset
+                              if (date) {
+                                const timezoneOffset = date.getTimezoneOffset() * 60000;
+                                const adjustedDate = new Date(date.getTime() + timezoneOffset);
+                                field.onChange(adjustedDate);
+                              } else {
+                                field.onChange(null);
+                              }
+                          }}
+                        />
                       </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={(date) => {
-                          field.onChange(date);
-                          setCalendarOpen(false);
-                        }}
-                        disabled={(date) =>
-                          date < new Date() || date < new Date('1900-01-01')
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                      <FormMessage />
+                    </FormItem>
+                  )
+                }}
+              />
             <FormField
               control={form.control}
               name="description"
