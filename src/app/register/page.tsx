@@ -31,6 +31,7 @@ import { auth, db } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-context';
 import { useEffect, useState } from 'react';
 import { Loader } from '@/components/loader';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const formSchema = z
   .object({
@@ -41,6 +42,9 @@ const formSchema = z
       message: 'Password must be at least 6 characters.',
     }),
     confirmPassword: z.string(),
+    role: z.enum(['student', 'chairperson'], {
+        required_error: "You need to select a role."
+    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match.",
@@ -97,6 +101,7 @@ export default function RegisterPage() {
       
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         email: values.email,
+        role: values.role,
         createdAt: serverTimestamp(),
       });
 
@@ -170,6 +175,40 @@ export default function RegisterPage() {
                     <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
                       <Input type="password" placeholder="••••••••" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Select your role</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex space-x-4"
+                      >
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="student" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Student
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="chairperson" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Financial Chairperson
+                          </FormLabel>
+                        </FormItem>
+                      </RadioGroup>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
