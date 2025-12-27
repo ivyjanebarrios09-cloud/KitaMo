@@ -30,6 +30,7 @@ import { useAuth } from '@/context/auth-context';
 import { useRoom } from '@/hooks/use-room';
 import { useParams } from 'next/navigation';
 import { Loader } from '@/components/loader';
+import { useToast } from '@/hooks/use-toast';
 
 const StatementCard = ({
   icon: Icon,
@@ -173,6 +174,15 @@ function ChairpersonStatementsPage() {
 
 
 function StudentStatementsPage() {
+    const { toast } = useToast();
+
+    const handleActionClick = (label: string) => {
+        toast({
+        title: 'Generating Statement...',
+        description: `Your ${label} download will begin shortly.`,
+        });
+    };
+
     const studentActions = [
         { label: 'View', icon: <Eye className="mr-2 h-4 w-4" /> },
         { label: 'PDF', icon: <FileText className="mr-2 h-4 w-4" /> },
@@ -204,7 +214,7 @@ function StudentStatementsPage() {
                 <CardContent>
                      <div className="flex items-center justify-end gap-2">
                         {studentActions.map((action, index) => (
-                        <Button key={index} variant="outline" disabled>
+                        <Button key={index} variant="outline" onClick={() => handleActionClick(action.label)}>
                             {action.icon}
                             {action.label}
                         </Button>
@@ -216,7 +226,7 @@ function StudentStatementsPage() {
                 <CardHeader>
                     <CardTitle>Coming Soon!</CardTitle>
                     <CardDescription>
-                        This feature is currently under construction. Please check back later for full statement generation and download functionality.
+                        Full statement generation and download functionality is currently under construction. This is a test.
                     </CardDescription>
                 </CardHeader>
             </Card>
