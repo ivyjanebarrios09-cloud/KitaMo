@@ -25,7 +25,7 @@ import {
   FileSpreadsheet,
   Wallet,
 } from 'lucide-react';
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useRoom } from '@/hooks/use-room';
 import { useParams, useRouter } from 'next/navigation';
@@ -40,6 +40,7 @@ const StatementCard = ({
   description,
   children,
   actions,
+  onAction,
 }) => (
   <Card className="shadow-sm hover:shadow-md transition-shadow">
     <CardHeader>
@@ -55,7 +56,7 @@ const StatementCard = ({
       {children && <div className="grid gap-4 mb-6">{children}</div>}
       <div className="flex items-center justify-end gap-2">
         {actions.map((action, index) => (
-          <Button key={index} variant="outline" onClick={action.onClick} disabled={action.disabled}>
+          <Button key={index} variant="outline" onClick={() => onAction(action.label)} disabled={action.disabled}>
             {action.icon}
             {action.label}
           </Button>
@@ -65,13 +66,39 @@ const StatementCard = ({
   </Card>
 );
 
-const actions = [
-  { label: 'View', icon: <Eye className="mr-2 h-4 w-4" /> , disabled: true},
-  { label: 'PDF', icon: <FileText className="mr-2 h-4 w-4" /> , disabled: true},
-  { label: 'Excel', icon: <FileSpreadsheet className="mr-2 h-4 w-4" />, disabled: true },
-];
+const baseActions = [
+    { label: 'View', icon: <Eye className="mr-2 h-4 w-4" /> , disabled: false},
+    { label: 'PDF', icon: <FileText className="mr-2 h-4 w-4" /> , disabled: false},
+    { label: 'Excel', icon: <FileSpreadsheet className="mr-2 h-4 w-4" />, disabled: false },
+  ];
 
 function ChairpersonStatementsPage() {
+    const router = useRouter();
+    const params = useParams();
+    const roomId = params.roomId as string;
+    const [year, setYear] = useState('2025');
+    const [month, setMonth] = useState('december');
+
+    const handleAction = (reportType: string, action: string) => {
+        let path = `/dashboard/rooms/${roomId}/statements/${reportType}`;
+        const queryParams = new URLSearchParams();
+
+        if (reportType === 'yearly') {
+            queryParams.set('year', year);
+        } else if (reportType === 'monthly') {
+            queryParams.set('year', year);
+            queryParams.set('month', month);
+        }
+
+        if (action === 'PDF') {
+            queryParams.set('download', 'pdf');
+        } else if (action === 'Excel') {
+            queryParams.set('download', 'csv');
+        }
+
+        router.push(`${path}?${queryParams.toString()}`);
+    }
+
   return (
     <div className='flex flex-col gap-6'>
         <div>
@@ -83,93 +110,89 @@ function ChairpersonStatementsPage() {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <StatementCard
-            icon={CalendarDays}
-            title="Financial Statement for the Whole Year"
-            description="A comprehensive report of all expenses, deadlines, and payments for the entire year."
-            actions={actions}
+                icon={CalendarDays}
+                title="Financial Statement for the Whole Year"
+                description="A comprehensive report of all expenses, deadlines, and payments for the entire year."
+                actions={baseActions}
+                onAction={(action) => handleAction('yearly', action)}
             >
-            <div className="space-y-2">
-                <label className="text-sm font-medium">Select Year</label>
-                <Select defaultValue="2025">
-                <SelectTrigger>
-                    <SelectValue placeholder="Select a year" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="2025">2025</SelectItem>
-                    <SelectItem value="2024">2024</SelectItem>
-                    <SelectItem value="2023">2023</SelectItem>
-                </SelectContent>
-                </Select>
-            </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">Select Year</label>
+                    <Select value={year} onValueChange={setYear}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="2025">2025</SelectItem>
+                            <SelectItem value="2024">2024</SelectItem>
+                            <SelectItem value="2023">2023</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
             </StatementCard>
 
             <StatementCard
-            icon={CalendarDays}
-            title="Financial Statement for a Specific Month"
-            description="A detailed report of all financial activities for a single selected month."
-            actions={actions}
+                icon={CalendarDays}
+                title="Financial Statement for a Specific Month"
+                description="A detailed report of all financial activities for a single selected month."
+                actions={baseActions}
+                onAction={(action) => handleAction('monthly', action)}
             >
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                <label className="text-sm font-medium">Select Month</label>
-                <Select defaultValue="december">
-                    <SelectTrigger>
-                    <SelectValue placeholder="Select a month" />
-                    </SelectTrigger>
-                    <SelectContent>
-                    <SelectItem value="january">January</SelectItem>
-                    <SelectItem value="february">February</SelectItem>
-                    <SelectItem value="march">March</SelectItem>
-                    <SelectItem value="april">April</SelectItem>
-                    <SelectItem value="may">May</SelectItem>
-                    <SelectItem value="june">June</SelectItem>
-                    <SelectItem value="july">July</SelectItem>
-                    <SelectItem value="august">August</SelectItem>
-                    <SelectItem value="september">September</SelectItem>
-                    <SelectItem value="october">October</SelectItem>
-                    <SelectItem value="november">November</SelectItem>
-                    <SelectItem value="december">December</SelectItem>
-                    </SelectContent>
-                </Select>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                    <label className="text-sm font-medium">Select Month</label>
+                    <Select value={month} onValueChange={setMonth}>
+                        <SelectTrigger>
+                        <SelectValue placeholder="Select a month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="january">January</SelectItem>
+                            <SelectItem value="february">February</SelectItem>
+                            <SelectItem value="march">March</SelectItem>
+                            <SelectItem value="april">April</SelectItem>
+                            <SelectItem value="may">May</SelectItem>
+                            <SelectItem value="june">June</SelectItem>
+                            <SelectItem value="july">July</SelectItem>
+                            <SelectItem value="august">August</SelectItem>
+                            <SelectItem value="september">September</SelectItem>
+                            <SelectItem value="october">October</SelectItem>
+                            <SelectItem value="november">November</SelectItem>
+                            <SelectItem value="december">December</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    </div>
+                    <div className="space-y-2">
+                    <label className="text-sm font-medium">Select Year</label>
+                    <Select value={year} onValueChange={setYear}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="2025">2025</SelectItem>
+                            <SelectItem value="2024">2024</SelectItem>
+                            <SelectItem value="2023">2023</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    </div>
                 </div>
-                <div className="space-y-2">
-                <label className="text-sm font-medium">Select Year</label>
-                <Select defaultValue="2025">
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select a year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="2025">2025</SelectItem>
-                        <SelectItem value="2024">2024</SelectItem>
-                        <SelectItem value="2023">2023</SelectItem>
-                    </SelectContent>
-                </Select>
-                </div>
-            </div>
             </StatementCard>
 
             <StatementCard
-            icon={BarChart3}
-            title="Summary of Collection"
-            description="An overview of total funds collected, payment status per student, and collection progress."
-            actions={actions}
+                icon={BarChart3}
+                title="Summary of Collection"
+                description="An overview of total funds collected, payment status per student, and collection progress."
+                actions={baseActions}
+                onAction={(action) => handleAction('collection-summary', action)}
             />
 
             <StatementCard
-            icon={FileText}
-            title="Summary of Expenses"
-            description="A breakdown of all expenses, showing where the collected funds were spent."
-            actions={actions}
+                icon={FileText}
+                title="Summary of Expenses"
+                description="A breakdown of all expenses, showing where the collected funds were spent."
+                actions={baseActions}
+                onAction={(action) => handleAction('expense-summary', action)}
             />
         </div>
-        <Card>
-            <CardHeader>
-                <CardTitle>Coming Soon!</CardTitle>
-                <CardDescription>
-                    This feature is currently under construction. Please check back later for full statement generation and download functionality.
-                </CardDescription>
-            </CardHeader>
-        </Card>
     </div>
   );
 }
