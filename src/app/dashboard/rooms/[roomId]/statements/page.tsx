@@ -31,6 +31,9 @@ import { useRoom } from '@/hooks/use-room';
 import { useParams, useRouter } from 'next/navigation';
 import { Loader } from '@/components/loader';
 import { useToast } from '@/hooks/use-toast';
+import { useStudentDeadlines } from '@/hooks/use-student-deadlines';
+import { exportToCSV } from 'csv-export';
+import { format } from 'date-fns';
 
 const StatementCard = ({
   icon: Icon,
@@ -133,14 +136,14 @@ function ChairpersonStatementsPage() {
                 <div className="space-y-2">
                 <label className="text-sm font-medium">Select Year</label>
                 <Select defaultValue="2025">
-                    <SelectTrigger>
+                <SelectTrigger>
                     <SelectValue placeholder="Select a year" />
-                    </SelectTrigger>
-                    <SelectContent>
+                </SelectTrigger>
+                <SelectContent>
                     <SelectItem value="2025">2025</SelectItem>
                     <SelectItem value="2024">2024</SelectItem>
                     <SelectItem value="2023">2023</SelectItem>
-                    </SelectContent>
+                </SelectContent>
                 </Select>
                 </div>
             </div>
@@ -178,34 +181,65 @@ function StudentStatementsPage() {
     const router = useRouter();
     const params = useParams();
     const roomId = params.roomId as string;
+    const { user } = useAuth();
+    const { deadlines, loading: deadlinesLoading } = useStudentDeadlines(roomId, user?.uid || '');
+
+    const handleDownloadCSV = () => {
+        if (deadlinesLoading || deadlines.length === 0) {
+            toast({
+                variant: 'destructive',
+                title: 'No Data Available',
+                description: 'There is no statement data to download.',
+            });
+            return;
+        }
+
+        const headers = ['Deadline', 'Due Date', 'Amount Required', 'Amount Paid', 'Status'];
+        const data = deadlines.map(d => ({
+            'Deadline': d.description,
+            'Due Date': d.dueDate ? format(d.dueDate.toDate(), 'yyyy-MM-dd') : 'N/A',
+            'Amount Required': d.amount.toFixed(2),
+            'Amount Paid': d.amountPaid.toFixed(2),
+            'Status': d.status
+        }));
+        
+        exportToCSV(data, headers, `personal-statement-${roomId}.csv`);
+        
+        toast({
+            title: 'Download Started',
+            description: 'Your personal statement CSV has started downloading.',
+        });
+    }
 
     const handleActionClick = (label: string) => {
         if (label === 'View') {
             router.push(`/dashboard/rooms/${roomId}/statements/personal`);
             return;
         }
+        if (label === 'Excel') {
+            handleDownloadCSV();
+            return;
+        }
 
         let description = '';
         switch(label) {
             case 'PDF':
-                description = 'Your PDF download will begin shortly.';
-                break;
-            case 'Excel':
-                description = 'Your Excel file download will begin shortly.';
+                description = 'PDF downloads are coming soon!';
                 break;
             default:
                 description = 'Your request is being processed.';
         }
         toast({
-            title: 'Generating Statement...',
+            title: label === 'PDF' ? 'Feature Not Available' : 'Generating Statement...',
             description: description,
+            variant: label === 'PDF' ? 'destructive' : 'default'
         });
     };
 
     const studentActions = [
         { label: 'View', icon: <Eye className="mr-2 h-4 w-4" />, disabled: false },
         { label: 'PDF', icon: <FileText className="mr-2 h-4 w-4" />, disabled: false },
-        { label: 'Excel', icon: <FileSpreadsheet className="mr-2 h-4 w-4" />, disabled: false },
+        { label: 'Excel', icon: <FileSpreadsheet className="mr-2 h-4 w-4" />, disabled: deadlinesLoading },
       ];
 
     return (
@@ -245,7 +279,7 @@ function StudentStatementsPage() {
                 <CardHeader>
                     <CardTitle>Coming Soon!</CardTitle>
                     <CardDescription>
-                        Full statement generation and download functionality for PDF and Excel is currently under construction.
+                        Full PDF statement generation and download functionality is currently under construction.
                     </CardDescription>
                 </CardHeader>
             </Card>
