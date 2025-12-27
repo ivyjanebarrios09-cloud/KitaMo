@@ -8,6 +8,7 @@ import { useRoom } from './use-room';
 
 export function useRoomStudents(roomId: string) {
   const [students, setStudents] = useState<any[]>([]);
+  const [chairperson, setChairperson] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const { room } = useRoom(roomId);
 
@@ -15,18 +16,32 @@ export function useRoomStudents(roomId: string) {
     const fetchStudents = async () => {
       if (!room || !room.members || room.members.length === 0) {
         setStudents([]);
+        setChairperson(null);
         setLoading(false);
         return;
       }
 
       setLoading(true);
       try {
+        // Fetch Chairperson details first
+        const chairpersonRef = doc(db, 'users', room.createdBy);
+        const chairpersonSnap = await getDoc(chairpersonRef);
+        if (chairpersonSnap.exists()) {
+            setChairperson({ id: chairpersonSnap.id, ...chairpersonSnap.data() });
+        }
+
+        const studentIds = room.members.filter(id => id !== room.createdBy);
+        
+        if (studentIds.length === 0) {
+            setStudents([]);
+            setLoading(false);
+            return;
+        }
+
         const usersRef = collection(db, 'users');
-        // Firestore 'in' queries are limited to 30 values per batch.
-        // We'll process in chunks if there are more than 30 members.
         const memberChunks: string[][] = [];
-        for (let i = 0; i < room.members.length; i += 30) {
-          memberChunks.push(room.members.slice(i, i + 30));
+        for (let i = 0; i < studentIds.length; i += 30) {
+          memberChunks.push(studentIds.slice(i, i + 30));
         }
         
         const allStudents: any[] = [];
@@ -39,10 +54,13 @@ export function useRoomStudents(roomId: string) {
             const studentDataPromises = studentDocs.docs.map(async (userDoc) => {
                 const studentDetailsRef = doc(db, 'rooms', roomId, 'students', userDoc.id);
                 const studentDetailsSnap = await getDoc(studentDetailsRef);
+                const totalOwed = studentDetailsSnap.exists() ? studentDetailsSnap.data().totalOwed : 0;
+                
                 return {
                     id: userDoc.id,
                     ...userDoc.data(),
-                    ...(studentDetailsSnap.exists() ? studentDetailsSnap.data() : { totalPaid: 0, totalOwed: 0 })
+                    ...(studentDetailsSnap.exists() ? studentDetailsSnap.data() : { totalPaid: 0, totalOwed: 0 }),
+                    totalOwed: Math.max(0, totalOwed)
                 };
             });
         
@@ -63,5 +81,5 @@ export function useRoomStudents(roomId: string) {
 
   }, [roomId, room]);
 
-  return { students, loading };
+  return { students, chairperson, loading };
 }

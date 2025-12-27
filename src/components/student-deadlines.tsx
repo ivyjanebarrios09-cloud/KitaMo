@@ -65,7 +65,7 @@ export function StudentDeadlines({ roomId, student }) {
                 <TableCell>{d.dueDate ? format(d.dueDate.toDate(), 'PP') : 'N/A'}</TableCell>
                 <TableCell>₱{d.amount.toFixed(2)}</TableCell>
                 <TableCell>
-                  <Badge variant={d.status === 'Paid' ? 'secondary' : 'destructive'}>
+                  <Badge variant={d.status === 'Paid' ? 'secondary' : 'destructive'} className={d.status === 'Paid' ? 'bg-green-100 text-green-800' : ''}>
                     {d.status}
                   </Badge>
                 </TableCell>
