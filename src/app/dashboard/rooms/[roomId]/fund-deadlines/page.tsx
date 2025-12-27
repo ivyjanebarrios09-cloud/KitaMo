@@ -57,7 +57,7 @@ import { useUserProfile } from '@/hooks/use-user-profile';
 const deadlineSchema = z.object({
     description: z.string().min(1, 'Description is required'),
     amount: z.coerce.number().min(0.01, 'Amount must be greater than 0'),
-    dueDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    dueDate: z.string().refine((val) => !isNaN(Date.parse(val)) && val, {
       message: "Please enter a valid date",
     }),
   });
@@ -75,6 +75,7 @@ function NewDeadlineModal({ roomId }: { roomId: string }) {
     defaultValues: {
       description: '',
       amount: 0,
+      dueDate: '',
     },
   });
 
