@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { PiggyBank, Receipt, Users, Home, Wallet, CreditCard } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useParams } from 'next/navigation';
