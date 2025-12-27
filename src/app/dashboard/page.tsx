@@ -82,7 +82,7 @@ function ChairpersonDashboard() {
                 </p>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard title="Total Collected" value={stats.totalCollected.toFixed(2)} icon={PiggyBank} loading={loading}/>
                 <StatCard title="Total Expenses" value={stats.totalExpenses.toFixed(2)} icon={Receipt} loading={loading} />
                 <StatCard title="Net Balance" value={stats.netBalance.toFixed(2)} icon={Scale} loading={loading} />
@@ -103,59 +103,61 @@ function ChairpersonDashboard() {
                 </p>
                 </CardHeader>
                 <CardContent>
-                <Table>
-                    <TableHeader>
-                    <TableRow>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Room</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                    </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                    {loading ? (
-                        <TableRow>
-                            <TableCell colSpan={5} className="text-center">
-                                <div className="flex justify-center p-8"><Loader/></div>
-                            </TableCell>
-                        </TableRow>
-                    ) : transactions.length > 0 ? (
-                        transactions.map((transaction) => (
-                        <TableRow key={transaction.id}>
-                            <TableCell>
-                            <Badge
-                                variant={
-                                transaction.type === 'debit'
-                                    ? 'destructive'
-                                    : 'secondary'
-                                }
-                                className="capitalize"
-                            >
-                                {transaction.type}
-                            </Badge>
-                            </TableCell>
-                            <TableCell>{transaction.createdAt ? format(transaction.createdAt.toDate(), 'PP') : 'N/A'}</TableCell>
-                            <TableCell>
-                            <Link href={`/dashboard/rooms/${transaction.roomId}`} className="text-primary hover:underline">
-                                {getRoomName(transaction.roomId)}
-                            </Link>
-                            </TableCell>
-                            <TableCell>{transaction.description}</TableCell>
-                            <TableCell className="text-right font-medium">
-                            ₱{transaction.amount.toFixed(2)}
-                            </TableCell>
-                        </TableRow>
-                        ))
-                    ) : (
-                        <TableRow>
-                        <TableCell colSpan={5} className="text-center h-24">
-                            No recent transactions found.
-                        </TableCell>
-                        </TableRow>
-                    )}
-                    </TableBody>
-                </Table>
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                            <TableRow>
+                                <TableHead>Type</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Room</TableHead>
+                                <TableHead>Description</TableHead>
+                                <TableHead className="text-right">Amount</TableHead>
+                            </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                            {loading ? (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center">
+                                        <div className="flex justify-center p-8"><Loader/></div>
+                                    </TableCell>
+                                </TableRow>
+                            ) : transactions.length > 0 ? (
+                                transactions.map((transaction) => (
+                                <TableRow key={transaction.id}>
+                                    <TableCell>
+                                    <Badge
+                                        variant={
+                                        transaction.type === 'debit'
+                                            ? 'destructive'
+                                            : 'secondary'
+                                        }
+                                        className="capitalize"
+                                    >
+                                        {transaction.type}
+                                    </Badge>
+                                    </TableCell>
+                                    <TableCell>{transaction.createdAt ? format(transaction.createdAt.toDate(), 'PP') : 'N/A'}</TableCell>
+                                    <TableCell>
+                                    <Link href={`/dashboard/rooms/${transaction.roomId}`} className="text-primary hover:underline">
+                                        {getRoomName(transaction.roomId)}
+                                    </Link>
+                                    </TableCell>
+                                    <TableCell>{transaction.description}</TableCell>
+                                    <TableCell className="text-right font-medium">
+                                    ₱{transaction.amount.toFixed(2)}
+                                    </TableCell>
+                                </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                <TableCell colSpan={5} className="text-center h-24">
+                                    No recent transactions found.
+                                </TableCell>
+                                </TableRow>
+                            )}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </CardContent>
             </Card>
         </div>
@@ -194,57 +196,59 @@ function StudentDashboard() {
                 </p>
                 </CardHeader>
                 <CardContent>
-                <Table>
-                    <TableHeader>
-                    <TableRow>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Room</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                    </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                    {loading ? (
-                        <TableRow>
-                            <TableCell colSpan={5} className="text-center">
-                                <div className="flex justify-center p-8"><Loader/></div>
-                            </TableCell>
-                        </TableRow>
-                    ) : transactions.length > 0 ? (
-                        transactions.map((transaction) => (
-                        <TableRow key={transaction.id}>
-                            <TableCell>
-                            <Badge
-                                variant={
-                                transaction.type === 'debit'
-                                    ? 'destructive'
-                                    : transaction.type === 'deadline' ? 'outline' : 'secondary'
-                                }
-                                className="capitalize"
-                            >
-                                {transaction.type}
-                            </Badge>
-                            </TableCell>
-                            <TableCell>{transaction.createdAt ? format(transaction.createdAt.toDate(), 'PP') : 'N/A'}</TableCell>
-                            <TableCell>
-                                {getRoomName(transaction.roomId)}
-                            </TableCell>
-                            <TableCell>{transaction.description}</TableCell>
-                            <TableCell className="text-right font-medium">
-                            ₱{transaction.amount.toFixed(2)}
-                            </TableCell>
-                        </TableRow>
-                        ))
-                    ) : (
-                        <TableRow>
-                        <TableCell colSpan={5} className="text-center h-24">
-                            No recent transactions found.
-                        </TableCell>
-                        </TableRow>
-                    )}
-                    </TableBody>
-                </Table>
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                            <TableRow>
+                                <TableHead>Type</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Room</TableHead>
+                                <TableHead>Description</TableHead>
+                                <TableHead className="text-right">Amount</TableHead>
+                            </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                            {loading ? (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center">
+                                        <div className="flex justify-center p-8"><Loader/></div>
+                                    </TableCell>
+                                </TableRow>
+                            ) : transactions.length > 0 ? (
+                                transactions.map((transaction) => (
+                                <TableRow key={transaction.id}>
+                                    <TableCell>
+                                    <Badge
+                                        variant={
+                                        transaction.type === 'debit'
+                                            ? 'destructive'
+                                            : transaction.type === 'deadline' ? 'outline' : 'secondary'
+                                        }
+                                        className="capitalize"
+                                    >
+                                        {transaction.type}
+                                    </Badge>
+                                    </TableCell>
+                                    <TableCell>{transaction.createdAt ? format(transaction.createdAt.toDate(), 'PP') : 'N/A'}</TableCell>
+                                    <TableCell>
+                                        {getRoomName(transaction.roomId)}
+                                    </TableCell>
+                                    <TableCell>{transaction.description}</TableCell>
+                                    <TableCell className="text-right font-medium">
+                                    ₱{transaction.amount.toFixed(2)}
+                                    </TableCell>
+                                </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                <TableCell colSpan={5} className="text-center h-24">
+                                    No recent transactions found.
+                                </TableCell>
+                                </TableRow>
+                            )}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </CardContent>
             </Card>
         </div>

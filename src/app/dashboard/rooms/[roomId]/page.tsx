@@ -43,7 +43,7 @@ function ChairpersonRoomDashboard({ room, loading }) {
                 <Home className="w-6 h-6" />
                 <h1 className="text-2xl font-bold">Dashboard</h1>
             </div>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <StatCard
                     title="Total Balance"
                     value={totalBalance.toFixed(2)}
@@ -85,7 +85,7 @@ function StudentRoomDashboard({ roomId, userId }) {
                 <Home className="w-6 h-6" />
                 <h1 className="text-2xl font-bold">My Dashboard</h1>
             </div>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                  <StatCard
                     title="Total Unpaid"
                     value={Math.max(0, studentDetails?.totalOwed || 0).toFixed(2)}
@@ -102,7 +102,7 @@ function StudentRoomDashboard({ roomId, userId }) {
                     loading={loading}
                     currency="₱"
                 />
-                <Card className="shadow-sm hover:shadow-md transition-shadow">
+                <Card className="shadow-sm hover:shadow-md transition-shadow md:col-span-2 lg:col-span-1">
                     <CardHeader>
                         <CardTitle className="text-sm font-medium">Overall Payment Progress</CardTitle>
                     </CardHeader>
@@ -122,36 +122,38 @@ function StudentRoomDashboard({ roomId, userId }) {
                     <CardDescription>A record of all payments you have made in this room.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Note / For</TableHead>
-                                <TableHead className="text-right">Amount</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {loading ? (
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
                                 <TableRow>
-                                    <TableCell colSpan={3} className="text-center h-24">
-                                        <div className="flex justify-center"><Loader /></div>
-                                    </TableCell>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Note / For</TableHead>
+                                    <TableHead className="text-right">Amount</TableHead>
                                 </TableRow>
-                            ) : payments.length > 0 ? (
-                                payments.map(payment => (
-                                    <TableRow key={payment.id}>
-                                        <TableCell>{payment.createdAt ? format(payment.createdAt.toDate(), 'PP') : 'N/A'}</TableCell>
-                                        <TableCell>{payment.description}</TableCell>
-                                        <TableCell className="text-right font-medium">₱{payment.amount.toFixed(2)}</TableCell>
+                            </TableHeader>
+                            <TableBody>
+                                {loading ? (
+                                    <TableRow>
+                                        <TableCell colSpan={3} className="text-center h-24">
+                                            <div className="flex justify-center"><Loader /></div>
+                                        </TableCell>
                                     </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={3} className="text-center h-24">No payments made yet.</TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
+                                ) : payments.length > 0 ? (
+                                    payments.map(payment => (
+                                        <TableRow key={payment.id}>
+                                            <TableCell>{payment.createdAt ? format(payment.createdAt.toDate(), 'PP') : 'N/A'}</TableCell>
+                                            <TableCell>{payment.description}</TableCell>
+                                            <TableCell className="text-right font-medium">₱{payment.amount.toFixed(2)}</TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={3} className="text-center h-24">No payments made yet.</TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </CardContent>
             </Card>
         </div>
