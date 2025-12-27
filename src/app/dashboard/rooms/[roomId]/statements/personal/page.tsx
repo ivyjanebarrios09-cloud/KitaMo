@@ -101,6 +101,7 @@ export default function PersonalStatementPage() {
     if (downloadAction === 'pdf' && !loading) {
       handleDownloadPdf();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [downloadAction, loading]);
 
   return (
@@ -160,9 +161,9 @@ export default function PersonalStatementPage() {
                             <TableRow>
                                 <TableHead>Deadline</TableHead>
                                 <TableHead>Due Date</TableHead>
-                                <TableHead>Amount Required</TableHead>
-                                <TableHead>Amount Paid</TableHead>
-                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Amount Required</TableHead>
+                                <TableHead className="text-right">Amount Paid</TableHead>
+                                <TableHead className="text-right">Status</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -171,9 +172,9 @@ export default function PersonalStatementPage() {
                             <TableRow key={deadline.id}>
                                 <TableCell className="font-medium">{deadline.description}</TableCell>
                                 <TableCell>{deadline.dueDate ? format(deadline.dueDate.toDate(), 'PP') : 'N/A'}</TableCell>
-                                <TableCell>₱{deadline.amount.toFixed(2)}</TableCell>
-                                <TableCell>₱{deadline.amountPaid.toFixed(2)}</TableCell>
-                                <TableCell>
+                                <TableCell className="text-right">₱{deadline.amount.toFixed(2)}</TableCell>
+                                <TableCell className="text-right">₱{deadline.amountPaid.toFixed(2)}</TableCell>
+                                <TableCell className="text-right">
                                     <Badge variant={deadline.status === 'Paid' ? 'secondary' : 'destructive'} className={deadline.status === 'Paid' ? 'bg-green-100 text-green-800' : ''}>
                                         {deadline.status}
                                     </Badge>
