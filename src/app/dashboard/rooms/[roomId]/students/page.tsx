@@ -10,25 +10,22 @@ import {
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Crown, Users } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { useRoomStudents } from '@/hooks/use-room-students';
 import { useParams } from 'next/navigation';
 import { Loader } from '@/components/loader';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { StudentDeadlines } from '@/components/student-deadlines';
+import { useAuth } from '@/context/auth-context';
+import { useRoom } from '@/hooks/use-room';
 
-export default function StudentsPage() {
+function ChairpersonStudentsPage() {
   const params = useParams();
   const roomId = params.roomId as string;
   const { students, chairperson, loading } = useRoomStudents(roomId);
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex items-center gap-2">
-        <Users className="w-6 h-6" />
-        <h1 className="text-2xl font-bold">Members</h1>
-      </div>
-
+    <>
       {loading && !chairperson ? (
          <div className="flex justify-center p-8"><Loader/></div>
       ) : chairperson && (
@@ -114,6 +111,85 @@ export default function StudentsPage() {
             )}
         </CardContent>
       </Card>
+    </>
+  );
+}
+
+function StudentMembersPage() {
+    const params = useParams();
+    const roomId = params.roomId as string;
+    const { students, chairperson, loading } = useRoomStudents(roomId);
+
+    const MemberRow = ({ user, isChairperson = false }) => (
+        <div className="flex items-center gap-4 py-4 px-6 border-b">
+             <Avatar className='h-12 w-12'>
+                <AvatarImage src={user.profilePic || `https://avatar.vercel.sh/${user.email}.png`} alt={user.name} />
+                <AvatarFallback>{user.name?.charAt(0) || 'U'}</AvatarFallback>
+            </Avatar>
+            <div className='flex-1'>
+                <p className="font-semibold">{user.name}</p>
+                <p className="text-sm text-muted-foreground">
+                    {user.email}
+                </p>
+            </div>
+            {isChairperson && <Badge variant="secondary">Chairperson</Badge>}
+        </div>
+    )
+
+    return (
+        <Card className="shadow-md">
+            <CardHeader>
+                <CardTitle>Room Members</CardTitle>
+                <CardDescription>
+                    A list of all members in this room.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className='p-0'>
+                {loading ? (
+                    <div className="flex justify-center p-8"><Loader /></div>
+                ) : (
+                    <div>
+                        {chairperson && <MemberRow user={chairperson} isChairperson={true} />}
+                        {students.length > 0 ? (
+                            students.map(student => <MemberRow key={student.id} user={student} />)
+                        ) : (
+                           !chairperson && (
+                             <div className="text-center text-muted-foreground py-16">
+                                <p>No members found in this room.</p>
+                            </div>
+                           )
+                        )}
+                         {students.length === 0 && chairperson && (
+                            <div className="text-center text-muted-foreground py-16 px-6">
+                                <p>No other members have joined this room yet.</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    )
+}
+
+export default function StudentsPage() {
+  const params = useParams();
+  const roomId = params.roomId as string;
+  const { user } = useAuth();
+  const { room, loading: roomLoading } = useRoom(roomId);
+
+  if (roomLoading) {
+    return <div className="flex justify-center p-8"><Loader /></div>;
+  }
+  
+  const isChairperson = user?.uid === room?.createdBy;
+
+  return (
+    <div className="flex flex-col gap-8">
+      <div className="flex items-center gap-2">
+        <Users className="w-6 h-6" />
+        <h1 className="text-2xl font-bold">Members</h1>
+      </div>
+      {isChairperson ? <ChairpersonStudentsPage /> : <StudentMembersPage />}
     </div>
   );
 }
