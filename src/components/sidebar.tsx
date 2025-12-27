@@ -227,7 +227,7 @@ export function Header({onMenuClick}: {onMenuClick?: () => void}) {
                     <DropdownMenuItem asChild>
                         <Link href="/dashboard/settings">
                             <Settings className="mr-2 h-4 w-4" />
-                            <span>Settings</span>
+                            <span>Profile Settings</span>
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -250,7 +250,7 @@ export function BottomNavBar({userProfile}) {
   const isRoomRoute = pathname.startsWith('/dashboard/rooms/');
   const roomId = isRoomRoute ? pathname.split('/')[3] : null;
 
-  let navItemsToShow = sidebarNavItems;
+  let navItemsToShow = sidebarNavItems.filter(item => item.href !== '/dashboard/settings');
 
   if (isRoomRoute && roomId) {
     const roomNavs = isChairperson 
