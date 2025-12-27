@@ -156,25 +156,6 @@ export function Sidebar({isMobileSheet = false, userProfile}: {isMobileSheet?: b
             <NavContent isMobile={isMobileSheet} userProfile={userProfile}/>
         </nav>
       </div>
-
-       {!isMobileSheet && (
-         <div className="mt-auto p-2 border-t">
-          <TooltipProvider delayDuration={0}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link href="#">
-                  <div className="flex items-center justify-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary">
-                    <Settings className="h-5 w-5" />
-                  </div>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p>Settings</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      )}
     </>
   );
 
@@ -201,47 +182,6 @@ export function MobileSidebar({isSidebarOpen, setSidebarOpen, userProfile}: {isS
                       <SheetTitle>Menu</SheetTitle>
                     </SheetHeader>
                     <Sidebar isMobileSheet={true} userProfile={userProfile}/>
-                    <div className="p-2 border-t mt-auto">
-                    {user && userProfile && (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="w-full justify-start h-auto p-2">
-                            <Avatar className="h-9 w-9">
-                            <AvatarImage
-                                src={userProfile.profilePic || `https://avatar.vercel.sh/${user.email}.png`}
-                                alt={userProfile.name}
-                            />
-                            <AvatarFallback>{userInitial}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex flex-col items-start overflow-hidden ml-2">
-                                <span className="text-sm font-medium leading-none truncate">{userProfile.name}</span>
-                                <span className="text-xs text-muted-foreground leading-none truncate">{user.email}</span>
-                            </div>
-                        </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-56" align="end" forceMount>
-                        <DropdownMenuLabel className="font-normal">
-                            <div className="flex flex-col space-y-1">
-                            <p className="text-sm font-medium leading-none">{userProfile.name}</p>
-                            <p className="text-xs leading-none text-muted-foreground">
-                                {user.email}
-                            </p>
-                            </div>
-                        </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>
-                            <Settings className="mr-2 h-4 w-4" />
-                            <span>Settings</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={logout}>
-                            <LogOut className="mr-2 h-4 w-4" />
-                            <span>Log out</span>
-                        </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    )}
-                </div>
                 </SheetContent>
             </Sheet>
         </div>
@@ -284,9 +224,11 @@ export function Header({onMenuClick, showMenuButton}: {onMenuClick?: () => void,
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Settings</span>
+                    <DropdownMenuItem asChild>
+                        <Link href="/dashboard/profile">
+                            <Settings className="mr-2 h-4 w-4" />
+                            <span>Profile Settings</span>
+                        </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={logout}>
@@ -308,14 +250,14 @@ export function BottomNavBar({userProfile}) {
   const isRoomRoute = pathname.startsWith('/dashboard/rooms/');
   const roomId = isRoomRoute ? pathname.split('/')[3] : null;
 
-  let navItems = sidebarNavItems;
+  let navItemsToShow = sidebarNavItems;
 
   if (isRoomRoute && roomId) {
     const roomNavs = isChairperson 
       ? roomSubNavItems
       : roomSubNavItems.filter(item => !item.chairpersonOnly);
 
-    navItems = roomNavs.map(item => ({
+    navItemsToShow = roomNavs.map(item => ({
         ...item,
         href: `/dashboard/rooms/${roomId}${item.href}`
     })).slice(0, 5);
@@ -325,7 +267,7 @@ export function BottomNavBar({userProfile}) {
   return (
     <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-card border-t z-40">
       <div className="flex justify-around items-center h-16">
-        {navItems.map((item) => {
+        {navItemsToShow.map((item) => {
             const href = item.href || `/dashboard/rooms/${roomId}`;
             const isActive = href === `/dashboard/rooms/${roomId}`
               ? pathname === href
