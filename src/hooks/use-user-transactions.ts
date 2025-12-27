@@ -3,10 +3,10 @@
 
 import { useState, useEffect } from 'react';
 import {
-  collectionGroup,
+  collection,
   query,
-  where,
   onSnapshot,
+  orderBy,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -23,36 +23,39 @@ export function useUserTransactions(roomIds: string[], count = 10) {
 
     setLoading(true);
 
-    const q = query(
-      collectionGroup(db, 'transactions'),
-      where('roomId', 'in', roomIds)
-    );
+    // Keep track of all transactions from all listeners
+    const allTransactionsMap = new Map<string, any>();
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const transactionsData: any[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        // Ensure createdAt exists before pushing
-        if (data.createdAt) {
-            transactionsData.push({
-                id: doc.id,
-                ...data,
-            });
-        }
+    const unsubscribes = roomIds.map(roomId => {
+      const transactionsRef = collection(db, 'rooms', roomId, 'transactions');
+      const q = query(transactionsRef, orderBy('createdAt', 'desc'));
+
+      return onSnapshot(q, (querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            if (data.createdAt) {
+                allTransactionsMap.set(doc.id, { id: doc.id, ...data });
+            }
+        });
+
+        const combinedTransactions = Array.from(allTransactionsMap.values());
+        
+        // Sort on the client-side
+        combinedTransactions.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
+
+        // Limit the results
+        setTransactions(combinedTransactions.slice(0, count));
+        setLoading(false);
+
+      }, (error) => {
+        console.error(`Error fetching transactions for room ${roomId}: `, error);
+        setLoading(false);
       });
-      
-      // Sort on the client-side
-      transactionsData.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
-
-      // Limit the results
-      setTransactions(transactionsData.slice(0, count));
-      setLoading(false);
-    }, (error) => {
-      console.error('Error fetching user transactions in real-time: ', error);
-      setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribes.forEach(unsub => unsub());
+    };
 
   }, [JSON.stringify(roomIds), count]);
 
