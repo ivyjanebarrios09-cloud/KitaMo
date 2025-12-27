@@ -6,7 +6,7 @@ import {
   collectionGroup,
   query,
   where,
-  onSnapshot,
+  getDocs,
   orderBy,
   limit,
 } from 'firebase/firestore';
@@ -22,38 +22,45 @@ export function useUserTransactions(roomIds: string[], count = 10) {
       setTransactions([]);
       return;
     }
-    setLoading(true);
 
-    // Firestore 'in' queries are limited to 30 values.
-    // For more rooms, we'd need to run multiple queries.
-    const q = query(
-      collectionGroup(db, 'transactions'),
-      where('roomId', 'in', roomIds)
-    );
+    const fetchTransactions = async () => {
+        setLoading(true);
+        try {
+            // Firestore 'in' queries are limited to 30 values.
+            const q = query(
+                collectionGroup(db, 'transactions'),
+                where('roomId', 'in', roomIds),
+                orderBy('createdAt', 'desc'),
+                limit(count)
+            );
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const transactionsData: any[] = [];
-      querySnapshot.forEach((doc) => {
-        transactionsData.push({
-          id: doc.id,
-          ...doc.data(),
-        });
-      });
-      // Sort and limit on the client side
-      const sortedAndLimited = transactionsData
-        .sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate())
-        .slice(0, count);
-        
-      setTransactions(sortedAndLimited);
-      setLoading(false);
-    }, (error) => {
-      console.error('Error fetching user transactions: ', error);
-      setLoading(false);
-    });
+            const querySnapshot = await getDocs(q);
+            const transactionsData: any[] = [];
+            querySnapshot.forEach((doc) => {
+                transactionsData.push({
+                id: doc.id,
+                ...doc.data(),
+                });
+            });
+            
+            // Sorting is already done by the query, but if we fetch more than the limit and slice, we'd sort client-side.
+            // With limit() in the query, this client-side sort is redundant but harmless.
+            const sortedAndLimited = transactionsData
+                .sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate())
+                .slice(0, count);
 
-    return () => unsubscribe();
+            setTransactions(sortedAndLimited);
+        } catch (error) {
+            console.error('Error fetching user transactions: ', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  }, [JSON.stringify(roomIds), count]); // Use JSON.stringify to compare array values
+    fetchTransactions();
+
+    // The dependency array ensures this effect runs when roomIds change.
+  }, [JSON.stringify(roomIds), count]);
 
   return { transactions, loading };
 }
