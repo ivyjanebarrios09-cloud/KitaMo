@@ -40,6 +40,7 @@ import { useUserProfile } from '@/hooks/use-user-profile';
 const sidebarNavItems = [
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
     { href: '/dashboard/rooms', icon: Archive, label: 'Rooms' },
+    { href: '/dashboard/settings', icon: Settings, label: 'Settings' },
   ];
 
 const roomSubNavItems = [
@@ -174,8 +175,11 @@ export function MobileSidebar({isSidebarOpen, setSidebarOpen, userProfile}: {isS
         <div className="lg:hidden">
              <Sheet open={isSidebarOpen} onOpenChange={setSidebarOpen}>
                 <SheetContent side="left" className="flex flex-col p-0 w-72">
-                    <SheetHeader className="p-4">
-                      <SheetTitle>Menu</SheetTitle>
+                    <SheetHeader className="p-4 border-b">
+                        <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-lg">
+                           <Logo />
+                           <SheetTitle>KitaMo!</SheetTitle>
+                        </Link>
                     </SheetHeader>
                     <Sidebar isMobileSheet={true} userProfile={userProfile}/>
                 </SheetContent>
@@ -267,21 +271,21 @@ export function BottomNavBar({userProfile}) {
     <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-card border-t z-40">
       <div className="flex justify-around items-center h-16">
         {navItemsToShow.map((item) => {
-            const href = item.href || `/dashboard/rooms/${roomId}`;
-            const isActive = href === `/dashboard/rooms/${roomId}`
-              ? pathname === href
-              : (item.href === '/dashboard' && pathname === item.href) || (item.href !== '/dashboard' && pathname.startsWith(href));
-
+            const href = (isRoomRoute && roomId && item.href !== '/dashboard/rooms' && item.href !== '/dashboard') ? `/dashboard/rooms/${roomId}${item.href}` : item.href;
+            
+            const isActive = (pathname === href) || (href !== '/dashboard' && pathname.startsWith(href) && href.length > 10);
+            
             return (
                 <Link
                     key={item.label}
                     href={href}
                     className={cn(
-                    'flex flex-col items-center justify-center text-muted-foreground transition-all w-full h-full',
+                    'flex flex-col items-center justify-center text-muted-foreground transition-all w-full h-full gap-1 p-1 text-xs',
                     isActive && 'text-primary bg-muted/50'
                     )}
                 >
-                    <item.icon className="h-6 w-6" />
+                    <item.icon className="h-5 w-5" />
+                    <span className='truncate'>{item.label}</span>
                 </Link>
             )
         })}
