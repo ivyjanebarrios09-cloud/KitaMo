@@ -42,6 +42,7 @@ const baseSidebarNavItems = [
     { href: '/dashboard/rooms', icon: Archive, label: 'Rooms' },
   ];
 
+const personalStatementsNavItem = { href: '/dashboard/personal-statements', icon: ClipboardList, label: 'Statements' };
 const settingsNavItem = { href: '/dashboard/settings', icon: Settings, label: 'Settings' };
 
 const roomSubNavItems = [
@@ -79,7 +80,9 @@ function NavContent({ isMobile = false, userProfile }) {
 
     const isChairperson = userProfile?.role === 'chairperson';
     
-    const sidebarNavItems = isChairperson ? [...baseSidebarNavItems, settingsNavItem] : baseSidebarNavItems;
+    const sidebarNavItems = isChairperson
+      ? baseSidebarNavItems
+      : [...baseSidebarNavItems, personalStatementsNavItem];
 
 
     const renderLink = (item: any, isSubItem = false) => {
@@ -254,7 +257,9 @@ export function BottomNavBar({userProfile}) {
   const pathname = usePathname();
   const isChairperson = userProfile?.role === 'chairperson';
   
-  const sidebarNavItems = isChairperson ? [...baseSidebarNavItems, settingsNavItem] : baseSidebarNavItems;
+  const sidebarNavItems = isChairperson
+    ? baseSidebarNavItems
+    : [...baseSidebarNavItems, personalStatementsNavItem];
 
   const isRoomRoute = pathname.startsWith('/dashboard/rooms/');
   const roomId = isRoomRoute ? pathname.split('/')[3] : null;
