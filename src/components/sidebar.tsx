@@ -15,7 +15,6 @@ import {
   BarChart3,
   Settings,
   Megaphone,
-  FileText,
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import {
@@ -230,12 +229,6 @@ export function MobileSidebar({isSidebarOpen, setSidebarOpen, userProfile}: {isS
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                          <Link href="/dashboard/personal-statements">
-                            <FileText className="mr-2 h-4 w-4" />
-                            <span>Personal Statements</span>
-                          </Link>
-                        </DropdownMenuItem>
                         <DropdownMenuItem>
                             <Settings className="mr-2 h-4 w-4" />
                             <span>Settings</span>
@@ -291,12 +284,6 @@ export function Header({onMenuClick, showMenuButton}: {onMenuClick?: () => void,
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/dashboard/personal-statements">
-                        <FileText className="mr-2 h-4 w-4" />
-                        <span>Personal Statements</span>
-                      </Link>
-                    </DropdownMenuItem>
                     <DropdownMenuItem>
                         <Settings className="mr-2 h-4 w-4" />
                         <span>Settings</span>
@@ -331,7 +318,7 @@ export function BottomNavBar({userProfile}) {
     navItems = roomNavs.map(item => ({
         ...item,
         href: `/dashboard/rooms/${roomId}${item.href}`
-    })).slice(0, 4); // Limit to 4 for bottom nav
+    })).slice(0, 5);
   }
 
 
