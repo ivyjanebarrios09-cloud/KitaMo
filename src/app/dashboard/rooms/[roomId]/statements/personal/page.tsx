@@ -29,7 +29,7 @@ const StatementSummary = ({ studentDetails, deadlines, loading }) => {
     }
 
     return (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
                 <CardHeader>
                     <CardTitle className="text-sm font-medium">Total Dues</CardTitle>
@@ -105,7 +105,7 @@ export default function PersonalStatementPage() {
 
   return (
     <div className="flex flex-col gap-6">
-        <div className="flex items-center justify-between print:hidden">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 print:hidden">
             <div className="flex items-center gap-4">
                 <Link
                 href={`/dashboard/rooms/${roomId}/statements`}
@@ -114,13 +114,13 @@ export default function PersonalStatementPage() {
                 <ArrowLeft className="h-6 w-6" />
                 </Link>
                 <div>
-                <h1 className="text-3xl font-bold">Personal Statement</h1>
-                <p className="text-muted-foreground">
+                <h1 className="text-2xl sm:text-3xl font-bold">Personal Statement</h1>
+                <p className="text-muted-foreground text-sm sm:text-base">
                     Your financial summary for {room?.name || '...'}
                 </p>
                 </div>
             </div>
-            <Button onClick={handleDownloadPdf} variant="outline" disabled={isDownloading}>
+            <Button onClick={handleDownloadPdf} variant="outline" disabled={isDownloading} className="w-full sm:w-auto">
                 {isDownloading ? <Loader className="mr-2 h-4 w-4"/> : <Download className="mr-2 h-4 w-4"/>}
                 {isDownloading ? 'Downloading...' : 'Download PDF'}
             </Button>
@@ -128,19 +128,19 @@ export default function PersonalStatementPage() {
 
       <div ref={statementRef} className="bg-background">
         <Card className="shadow-lg print:shadow-none print:border-none">
-          <CardHeader className="bg-muted/30 print:bg-transparent rounded-t-lg">
-            <div className="flex justify-between items-start">
+          <CardHeader className="bg-muted/30 print:bg-transparent rounded-t-lg p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
               <div>
-                <CardTitle className="text-2xl">{room?.name || 'Room Statement'}</CardTitle>
+                <CardTitle className="text-xl sm:text-2xl">{room?.name || 'Room Statement'}</CardTitle>
                 <CardDescription>Generated on {format(new Date(), 'PPP')}</CardDescription>
               </div>
-              <div className="text-right">
+              <div className="text-left sm:text-right">
                   <p className="font-semibold">{userProfile?.name}</p>
                   <p className="text-sm text-muted-foreground">{userProfile?.email}</p>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             {loading ? (
               <div className="flex justify-center p-8"><Loader/></div>
             ) : (
@@ -154,40 +154,42 @@ export default function PersonalStatementPage() {
 
                 <div>
                   <h3 className="text-lg font-semibold mb-4">Contributions & Dues</h3>
-                  <Table>
-                      <TableHeader>
-                          <TableRow>
-                              <TableHead>Deadline</TableHead>
-                              <TableHead>Due Date</TableHead>
-                              <TableHead>Amount Required</TableHead>
-                              <TableHead>Amount Paid</TableHead>
-                              <TableHead>Status</TableHead>
-                          </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                      {deadlines.length > 0 ? (
-                          deadlines.map((deadline) => (
-                          <TableRow key={deadline.id}>
-                              <TableCell className="font-medium">{deadline.description}</TableCell>
-                              <TableCell>{deadline.dueDate ? format(deadline.dueDate.toDate(), 'PP') : 'N/A'}</TableCell>
-                              <TableCell>₱{deadline.amount.toFixed(2)}</TableCell>
-                              <TableCell>₱{deadline.amountPaid.toFixed(2)}</TableCell>
-                              <TableCell>
-                                  <Badge variant={deadline.status === 'Paid' ? 'secondary' : 'destructive'} className={deadline.status === 'Paid' ? 'bg-green-100 text-green-800' : ''}>
-                                      {deadline.status}
-                                  </Badge>
-                              </TableCell>
-                          </TableRow>
-                          ))
-                      ) : (
-                          <TableRow>
-                          <TableCell colSpan={5} className="text-center h-24">
-                              No deadlines or contributions found.
-                          </TableCell>
-                          </TableRow>
-                      )}
-                      </TableBody>
-                  </Table>
+                  <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Deadline</TableHead>
+                                <TableHead>Due Date</TableHead>
+                                <TableHead>Amount Required</TableHead>
+                                <TableHead>Amount Paid</TableHead>
+                                <TableHead>Status</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                        {deadlines.length > 0 ? (
+                            deadlines.map((deadline) => (
+                            <TableRow key={deadline.id}>
+                                <TableCell className="font-medium">{deadline.description}</TableCell>
+                                <TableCell>{deadline.dueDate ? format(deadline.dueDate.toDate(), 'PP') : 'N/A'}</TableCell>
+                                <TableCell>₱{deadline.amount.toFixed(2)}</TableCell>
+                                <TableCell>₱{deadline.amountPaid.toFixed(2)}</TableCell>
+                                <TableCell>
+                                    <Badge variant={deadline.status === 'Paid' ? 'secondary' : 'destructive'} className={deadline.status === 'Paid' ? 'bg-green-100 text-green-800' : ''}>
+                                        {deadline.status}
+                                    </Badge>
+                                </TableCell>
+                            </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                            <TableCell colSpan={5} className="text-center h-24">
+                                No deadlines or contributions found.
+                            </TableCell>
+                            </TableRow>
+                        )}
+                        </TableBody>
+                    </Table>
+                  </div>
                 </div>
               </div>
             )}
