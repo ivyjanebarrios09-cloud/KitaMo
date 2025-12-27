@@ -3,7 +3,7 @@
 
 import { ArrowLeft, Printer } from 'lucide-react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useRoom } from '@/hooks/use-room';
 import { useAuth } from '@/context/auth-context';
 import { useUserProfile } from '@/hooks/use-user-profile';
@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { useEffect } from 'react';
 
 const StatementSummary = ({ studentDetails, deadlines, loading }) => {
     const totalDues = deadlines.reduce((acc, d) => acc + d.amount, 0);
@@ -59,6 +60,8 @@ const StatementSummary = ({ studentDetails, deadlines, loading }) => {
 
 export default function PersonalStatementPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
+  const shouldPrint = searchParams.get('print') === 'true';
   const roomId = params.roomId as string;
   const { user } = useAuth();
   const { room, loading: roomLoading } = useRoom(roomId);
@@ -70,6 +73,12 @@ export default function PersonalStatementPage() {
   const handlePrint = () => {
     window.print();
   }
+
+  useEffect(() => {
+    if (shouldPrint && !loading) {
+      handlePrint();
+    }
+  }, [shouldPrint, loading]);
 
   return (
     <div className="flex flex-col gap-6">

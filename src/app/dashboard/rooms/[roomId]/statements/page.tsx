@@ -245,20 +245,10 @@ function StudentStatementsPage() {
             handleDownloadCSV();
             return;
         }
-
-        let description = '';
-        switch(label) {
-            case 'PDF':
-                description = 'PDF downloads are coming soon!';
-                break;
-            default:
-                description = 'Your request is being processed.';
+        if (label === 'PDF') {
+            router.push(`/dashboard/rooms/${roomId}/statements/personal?print=true`);
+            return;
         }
-        toast({
-            title: label === 'PDF' ? 'Feature Not Available' : 'Generating Statement...',
-            description: description,
-            variant: label === 'PDF' ? 'destructive' : 'default'
-        });
     };
 
     const studentActions = [
@@ -299,14 +289,6 @@ function StudentStatementsPage() {
                         ))}
                     </div>
                 </CardContent>
-            </Card>
-             <Card>
-                <CardHeader>
-                    <CardTitle>Coming Soon!</CardTitle>
-                    <CardDescription>
-                        Full PDF statement generation and download functionality is currently under construction.
-                    </CardDescription>
-                </CardHeader>
             </Card>
         </div>
     )
