@@ -7,7 +7,6 @@ import {
   query,
   where,
   onSnapshot,
-  orderBy,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -26,20 +25,26 @@ export function useUserTransactions(roomIds: string[], count = 10) {
 
     const q = query(
       collectionGroup(db, 'transactions'),
-      where('roomId', 'in', roomIds),
-      orderBy('createdAt', 'desc')
+      where('roomId', 'in', roomIds)
     );
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const transactionsData: any[] = [];
       querySnapshot.forEach((doc) => {
-        transactionsData.push({
-          id: doc.id,
-          ...doc.data(),
-        });
+        const data = doc.data();
+        // Ensure createdAt exists before pushing
+        if (data.createdAt) {
+            transactionsData.push({
+                id: doc.id,
+                ...data,
+            });
+        }
       });
       
-      // onSnapshot gives us sorted data, so we just need to limit it.
+      // Sort on the client-side
+      transactionsData.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
+
+      // Limit the results
       setTransactions(transactionsData.slice(0, count));
       setLoading(false);
     }, (error) => {
