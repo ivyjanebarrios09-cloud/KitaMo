@@ -55,7 +55,7 @@ const StatementCard = ({
       {children && <div className="grid gap-4 mb-6">{children}</div>}
       <div className="flex items-center justify-end gap-2">
         {actions.map((action, index) => (
-          <Button key={index} variant="outline" disabled>
+          <Button key={index} variant="outline" onClick={action.onClick} disabled={action.disabled}>
             {action.icon}
             {action.label}
           </Button>
@@ -66,9 +66,9 @@ const StatementCard = ({
 );
 
 const actions = [
-  { label: 'View', icon: <Eye className="mr-2 h-4 w-4" /> },
-  { label: 'PDF', icon: <FileText className="mr-2 h-4 w-4" /> },
-  { label: 'Excel', icon: <FileSpreadsheet className="mr-2 h-4 w-4" /> },
+  { label: 'View', icon: <Eye className="mr-2 h-4 w-4" /> , disabled: true},
+  { label: 'PDF', icon: <FileText className="mr-2 h-4 w-4" /> , disabled: true},
+  { label: 'Excel', icon: <FileSpreadsheet className="mr-2 h-4 w-4" />, disabled: true },
 ];
 
 function ChairpersonStatementsPage() {
@@ -185,10 +185,7 @@ function StudentStatementsPage() {
 
     const downloadCSV = (data: any[], headers: string[], filename: string) => {
         const csvRows = [];
-        // Add headers
         csvRows.push(headers.join(','));
-
-        // Add data rows
         for (const row of data) {
             const values = headers.map(header => {
                 const escaped = ('' + row[header]).replace(/"/g, '\\"');
@@ -246,15 +243,15 @@ function StudentStatementsPage() {
             return;
         }
         if (label === 'PDF') {
-            router.push(`/dashboard/rooms/${roomId}/statements/personal?print=true`);
+            router.push(`/dashboard/rooms/${roomId}/statements/personal?download=pdf`);
             return;
         }
     };
 
     const studentActions = [
-        { label: 'View', icon: <Eye className="mr-2 h-4 w-4" />, disabled: false },
-        { label: 'PDF', icon: <FileText className="mr-2 h-4 w-4" />, disabled: false },
-        { label: 'Excel', icon: <FileSpreadsheet className="mr-2 h-4 w-4" />, disabled: deadlinesLoading },
+        { label: 'View', icon: <Eye className="mr-2 h-4 w-4" />, disabled: false, onClick: () => handleActionClick('View') },
+        { label: 'PDF', icon: <FileText className="mr-2 h-4 w-4" />, disabled: false, onClick: () => handleActionClick('PDF') },
+        { label: 'Excel', icon: <FileSpreadsheet className="mr-2 h-4 w-4" />, disabled: deadlinesLoading, onClick: () => handleActionClick('Excel') },
       ];
 
     return (
@@ -282,7 +279,7 @@ function StudentStatementsPage() {
                 <CardContent>
                      <div className="flex items-center justify-end gap-2">
                         {studentActions.map((action, index) => (
-                        <Button key={index} variant="outline" onClick={() => handleActionClick(action.label)} disabled={action.disabled}>
+                        <Button key={index} variant="outline" onClick={action.onClick} disabled={action.disabled}>
                             {action.icon}
                             {action.label}
                         </Button>

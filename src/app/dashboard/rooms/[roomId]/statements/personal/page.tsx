@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft, Printer, Download } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useRoom } from '@/hooks/use-room';
@@ -15,7 +15,9 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const StatementSummary = ({ studentDetails, deadlines, loading }) => {
     const totalDues = deadlines.reduce((acc, d) => acc + d.amount, 0);
@@ -61,24 +63,45 @@ const StatementSummary = ({ studentDetails, deadlines, loading }) => {
 export default function PersonalStatementPage() {
   const params = useParams();
   const searchParams = useSearchParams();
-  const shouldPrint = searchParams.get('print') === 'true';
+  const downloadAction = searchParams.get('download');
   const roomId = params.roomId as string;
   const { user } = useAuth();
   const { room, loading: roomLoading } = useRoom(roomId);
   const { userProfile, loading: profileLoading } = useUserProfile(user?.uid);
   const { deadlines, loading: deadlinesLoading } = useStudentDeadlines(roomId, user?.uid || '');
+  const [isDownloading, setIsDownloading] = useState(false);
+  const statementRef = useRef<HTMLDivElement>(null);
 
   const loading = roomLoading || profileLoading || deadlinesLoading;
 
-  const handlePrint = () => {
-    window.print();
-  }
+  const handleDownloadPdf = async () => {
+    if (!statementRef.current || isDownloading) return;
+
+    setIsDownloading(true);
+    try {
+        const canvas = await html2canvas(statementRef.current, { scale: 2 });
+        const imgData = canvas.toDataURL('image/png');
+        
+        const pdf = new jsPDF({
+            orientation: 'p',
+            unit: 'px',
+            format: [canvas.width, canvas.height]
+        });
+
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save(`personal-statement-${roomId}.pdf`);
+    } catch(err) {
+        console.error("Error generating PDF", err);
+    } finally {
+        setIsDownloading(false);
+    }
+  };
 
   useEffect(() => {
-    if (shouldPrint && !loading) {
-      handlePrint();
+    if (downloadAction === 'pdf' && !loading) {
+      handleDownloadPdf();
     }
-  }, [shouldPrint, loading]);
+  }, [downloadAction, loading]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -97,78 +120,80 @@ export default function PersonalStatementPage() {
                 </p>
                 </div>
             </div>
-            <Button onClick={handlePrint} variant="outline">
-                <Printer className="mr-2 h-4 w-4"/>
-                Print Statement
+            <Button onClick={handleDownloadPdf} variant="outline" disabled={isDownloading}>
+                {isDownloading ? <Loader className="mr-2 h-4 w-4"/> : <Download className="mr-2 h-4 w-4"/>}
+                {isDownloading ? 'Downloading...' : 'Download PDF'}
             </Button>
       </div>
 
-      <Card className="shadow-lg print:shadow-none print:border-none">
-        <CardHeader className="bg-muted/30 print:bg-transparent rounded-t-lg">
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle className="text-2xl">{room?.name || 'Room Statement'}</CardTitle>
-              <CardDescription>Generated on {format(new Date(), 'PPP')}</CardDescription>
-            </div>
-            <div className="text-right">
-                <p className="font-semibold">{userProfile?.name}</p>
-                <p className="text-sm text-muted-foreground">{userProfile?.email}</p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-6">
-          {loading ? (
-             <div className="flex justify-center p-8"><Loader/></div>
-          ) : (
-            <div className="space-y-8">
+      <div ref={statementRef} className="bg-background">
+        <Card className="shadow-lg print:shadow-none print:border-none">
+          <CardHeader className="bg-muted/30 print:bg-transparent rounded-t-lg">
+            <div className="flex justify-between items-start">
               <div>
-                <h3 className="text-lg font-semibold mb-4">Summary</h3>
-                <StatementSummary studentDetails={userProfile} deadlines={deadlines} loading={loading}/>
+                <CardTitle className="text-2xl">{room?.name || 'Room Statement'}</CardTitle>
+                <CardDescription>Generated on {format(new Date(), 'PPP')}</CardDescription>
               </div>
-              
-              <Separator />
+              <div className="text-right">
+                  <p className="font-semibold">{userProfile?.name}</p>
+                  <p className="text-sm text-muted-foreground">{userProfile?.email}</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            {loading ? (
+              <div className="flex justify-center p-8"><Loader/></div>
+            ) : (
+              <div className="space-y-8">
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Summary</h3>
+                  <StatementSummary studentDetails={userProfile} deadlines={deadlines} loading={loading}/>
+                </div>
+                
+                <Separator />
 
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Contributions & Dues</h3>
-                 <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Deadline</TableHead>
-                            <TableHead>Due Date</TableHead>
-                            <TableHead>Amount Required</TableHead>
-                            <TableHead>Amount Paid</TableHead>
-                            <TableHead>Status</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                    {deadlines.length > 0 ? (
-                        deadlines.map((deadline) => (
-                        <TableRow key={deadline.id}>
-                            <TableCell className="font-medium">{deadline.description}</TableCell>
-                            <TableCell>{deadline.dueDate ? format(deadline.dueDate.toDate(), 'PP') : 'N/A'}</TableCell>
-                            <TableCell>₱{deadline.amount.toFixed(2)}</TableCell>
-                            <TableCell>₱{deadline.amountPaid.toFixed(2)}</TableCell>
-                            <TableCell>
-                                <Badge variant={deadline.status === 'Paid' ? 'secondary' : 'destructive'} className={deadline.status === 'Paid' ? 'bg-green-100 text-green-800' : ''}>
-                                    {deadline.status}
-                                </Badge>
-                            </TableCell>
-                        </TableRow>
-                        ))
-                    ) : (
-                        <TableRow>
-                        <TableCell colSpan={5} className="text-center h-24">
-                            No deadlines or contributions found.
-                        </TableCell>
-                        </TableRow>
-                    )}
-                    </TableBody>
-                </Table>
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Contributions & Dues</h3>
+                  <Table>
+                      <TableHeader>
+                          <TableRow>
+                              <TableHead>Deadline</TableHead>
+                              <TableHead>Due Date</TableHead>
+                              <TableHead>Amount Required</TableHead>
+                              <TableHead>Amount Paid</TableHead>
+                              <TableHead>Status</TableHead>
+                          </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                      {deadlines.length > 0 ? (
+                          deadlines.map((deadline) => (
+                          <TableRow key={deadline.id}>
+                              <TableCell className="font-medium">{deadline.description}</TableCell>
+                              <TableCell>{deadline.dueDate ? format(deadline.dueDate.toDate(), 'PP') : 'N/A'}</TableCell>
+                              <TableCell>₱{deadline.amount.toFixed(2)}</TableCell>
+                              <TableCell>₱{deadline.amountPaid.toFixed(2)}</TableCell>
+                              <TableCell>
+                                  <Badge variant={deadline.status === 'Paid' ? 'secondary' : 'destructive'} className={deadline.status === 'Paid' ? 'bg-green-100 text-green-800' : ''}>
+                                      {deadline.status}
+                                  </Badge>
+                              </TableCell>
+                          </TableRow>
+                          ))
+                      ) : (
+                          <TableRow>
+                          <TableCell colSpan={5} className="text-center h-24">
+                              No deadlines or contributions found.
+                          </TableCell>
+                          </TableRow>
+                      )}
+                      </TableBody>
+                  </Table>
+                </div>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <style jsx global>{`
         @media print {
