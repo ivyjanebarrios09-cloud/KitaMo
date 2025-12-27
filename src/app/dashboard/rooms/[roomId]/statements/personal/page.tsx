@@ -23,14 +23,14 @@ const StatementSummary = ({ deadlines, loading }) => {
     const balance = totalDues - totalPaid;
 
     if (loading) {
-        return <Loader />;
+        return <div className="flex justify-end pt-8"><Loader /></div>;
     }
 
     return (
-        <div className="mt-8 space-y-2 text-right">
-            <p><span className="font-semibold">Total Amount Due:</span> PHP {totalDues.toFixed(2)}</p>
-            <p><span className="font-semibold">Total Amount Paid:</span> PHP {totalPaid.toFixed(2)}</p>
-            <p className="font-bold text-lg"><span className="font-semibold">Remaining Balance:</span> PHP {balance.toFixed(2)}</p>
+        <div className="mt-8 space-y-2 text-right text-sm">
+            <p><span className="text-muted-foreground">Total Amount Due:</span> <span className='font-semibold'>PHP {totalDues.toFixed(2)}</span></p>
+            <p><span className="text-muted-foreground">Total Amount Paid:</span> <span className='font-semibold'>PHP {totalPaid.toFixed(2)}</span></p>
+            <p className="font-bold text-base"><span className="text-muted-foreground">Remaining Balance:</span> <span>PHP {balance.toFixed(2)}</span></p>
         </div>
     )
 }
@@ -53,30 +53,42 @@ export default function PersonalStatementPage() {
     if (!statementRef.current || isDownloading) return;
 
     setIsDownloading(true);
+    const element = statementRef.current;
     try {
-        const canvas = await html2canvas(statementRef.current, {
+        // Temporarily change background for capture
+        const originalBg = element.style.backgroundColor;
+        element.style.backgroundColor = 'white';
+        
+        const canvas = await html2canvas(element, {
             scale: 2,
-            useCORS: true, 
+            useCORS: true,
         });
+        
+        // Restore original background color
+        element.style.backgroundColor = originalBg;
+
         const imgData = canvas.toDataURL('image/png');
         
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
+
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
-        const ratio = canvasWidth / canvasHeight;
         
-        let imgWidth = pdfWidth;
-        let imgHeight = imgWidth / ratio;
+        const canvasAspectRatio = canvasWidth / canvasHeight;
+        const pageAspectRatio = pdfWidth / pdfHeight;
 
-        if (imgHeight > pdfHeight) {
-            imgHeight = pdfHeight;
-            imgWidth = imgHeight * ratio;
+        let imgWidth = pdfWidth - 20; // with margin
+        let imgHeight = imgWidth / canvasAspectRatio;
+
+        if (imgHeight > pdfHeight - 20) {
+            imgHeight = pdfHeight - 20; // with margin
+            imgWidth = imgHeight * canvasAspectRatio;
         }
 
         const x = (pdfWidth - imgWidth) / 2;
-        const y = (pdfHeight - imgHeight) / 2;
+        const y = 10;
         
         pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
         pdf.save(`personal-statement-${roomId}.pdf`);
@@ -117,20 +129,20 @@ export default function PersonalStatementPage() {
                 {isDownloading ? 'Downloading...' : 'Download PDF'}
             </Button>
       </div>
-
-      <div ref={statementRef} className="bg-background p-4 sm:p-8">
-            {loading ? (
-              <div className="flex justify-center p-8"><Loader/></div>
-            ) : (
+      
+        {loading ? (
+            <div className="flex justify-center p-8"><Loader/></div>
+        ) : (
+            <div ref={statementRef} className="bg-white rounded-lg shadow-md p-6 sm:p-10 text-black">
               <div className="space-y-8 max-w-4xl mx-auto">
                 <div>
-                    <h1 className="text-3xl font-bold">KitaMo! Personal Statement</h1>
+                    <h1 className="text-2xl font-bold text-primary">KitaMo! Personal Statement</h1>
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1 text-sm">
                     <p><span className="font-semibold">Student:</span> {userProfile?.name}</p>
                     <p><span className="font-semibold">Room:</span> {room?.name}</p>
                     <p><span className="font-semibold">Statement Type:</span> Personal Expense Report</p>
-                    <p className="text-sm text-muted-foreground">Generated on: {format(new Date(), 'PP p')}</p>
+                    <p className="text-xs text-gray-500">Generated on: {format(new Date(), 'PP p')}</p>
                 </div>
 
                 <div>
@@ -142,7 +154,7 @@ export default function PersonalStatementPage() {
                                 <TableHead className="text-primary-foreground">Due Date</TableHead>
                                 <TableHead className="text-right text-primary-foreground">Amount Due (PHP)</TableHead>
                                 <TableHead className="text-right text-primary-foreground">Amount Paid (PHP)</TableHead>
-                                <TableHead className="text-right text-primary-foreground">Status</TableHead>
+                                <TableHead className="text-center text-primary-foreground">Status</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -153,7 +165,7 @@ export default function PersonalStatementPage() {
                                 <TableCell>{deadline.dueDate ? format(deadline.dueDate.toDate(), 'PP') : 'N/A'}</TableCell>
                                 <TableCell className="text-right">₱{deadline.amount.toFixed(2)}</TableCell>
                                 <TableCell className="text-right">₱{deadline.amountPaid.toFixed(2)}</TableCell>
-                                <TableCell className="text-right">
+                                <TableCell className="text-center">
                                     <Badge variant={deadline.status === 'Paid' ? 'secondary' : 'outline'} className={deadline.status === 'Paid' ? 'bg-green-100 text-green-800' : 'border-destructive text-destructive'}>
                                         {deadline.status}
                                     </Badge>
@@ -175,8 +187,8 @@ export default function PersonalStatementPage() {
                   <StatementSummary deadlines={deadlines} loading={loading}/>
                 </div>
               </div>
-            )}
-      </div>
+            </div>
+        )}
 
       <style jsx global>{`
         @media print {
@@ -191,4 +203,3 @@ export default function PersonalStatementPage() {
     </div>
   );
 }
-
