@@ -139,8 +139,7 @@ function ChairpersonStatementsPage() {
                     <SelectContent>
                     <SelectItem value="2025">2025</SelectItem>
                     <SelectItem value="2024">2024</SelectItem>
-                    <SelectItem value="2023">2023</SelectItem>
-                    </SelectContent>
+                    <SelectItem value="2023">2023</SelectContent>
                 </Select>
                 </div>
             </div>
@@ -204,8 +203,8 @@ function StudentStatementsPage() {
 
     const studentActions = [
         { label: 'View', icon: <Eye className="mr-2 h-4 w-4" />, disabled: false },
-        { label: 'PDF', icon: <FileText className="mr-2 h-4 w-4" />, disabled: true },
-        { label: 'Excel', icon: <FileSpreadsheet className="mr-2 h-4 w-4" />, disabled: true },
+        { label: 'PDF', icon: <FileText className="mr-2 h-4 w-4" />, disabled: false },
+        { label: 'Excel', icon: <FileSpreadsheet className="mr-2 h-4 w-4" />, disabled: false },
       ];
 
     return (
