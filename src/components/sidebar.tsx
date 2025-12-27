@@ -258,7 +258,6 @@ export function MobileSidebar({isSidebarOpen, setSidebarOpen, userProfile}: {isS
 export function Header({onMenuClick, showMenuButton}: {onMenuClick?: () => void, showMenuButton?: boolean}) {
     const { user, logout } = useAuth();
     const { userProfile } = useUserProfile(user?.uid);
-    const userInitial = userProfile?.name?.charAt(0).toUpperCase() || '?';
 
     return (
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-16 lg:px-6 sticky top-0 z-30">
@@ -278,14 +277,8 @@ export function Header({onMenuClick, showMenuButton}: {onMenuClick?: () => void,
               {user && userProfile && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                      <Avatar className="h-9 w-9">
-                        <AvatarImage
-                          src={userProfile.profilePic || `https://avatar.vercel.sh/${user.email}.png`}
-                          alt={userProfile.name}
-                        />
-                        <AvatarFallback>{userInitial}</AvatarFallback>
-                      </Avatar>
+                    <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full">
+                      <UserIcon className="h-5 w-5" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -323,8 +316,6 @@ export function Header({onMenuClick, showMenuButton}: {onMenuClick?: () => void,
 
 export function BottomNavBar({userProfile}) {
   const pathname = usePathname();
-  const { user } = useAuth();
-  const userInitial = userProfile?.name?.charAt(0).toUpperCase() || '?';
   const isChairperson = userProfile?.role === 'chairperson';
   
   const isRoomRoute = pathname.startsWith('/dashboard/rooms/');
