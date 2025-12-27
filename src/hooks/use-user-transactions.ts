@@ -28,9 +28,7 @@ export function useUserTransactions(roomIds: string[], count = 10) {
     // For more rooms, we'd need to run multiple queries.
     const q = query(
       collectionGroup(db, 'transactions'),
-      where('roomId', 'in', roomIds),
-      orderBy('createdAt', 'desc'),
-      limit(count)
+      where('roomId', 'in', roomIds)
     );
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -41,7 +39,12 @@ export function useUserTransactions(roomIds: string[], count = 10) {
           ...doc.data(),
         });
       });
-      setTransactions(transactionsData);
+      // Sort and limit on the client side
+      const sortedAndLimited = transactionsData
+        .sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate())
+        .slice(0, count);
+        
+      setTransactions(sortedAndLimited);
       setLoading(false);
     }, (error) => {
       console.error('Error fetching user transactions: ', error);
