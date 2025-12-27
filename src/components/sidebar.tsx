@@ -48,8 +48,8 @@ const roomSubNavItems = [
     { href: '/announcement', label: 'Announcement', icon: Megaphone, chairpersonOnly: false },
     { href: '/expenses', label: 'Expenses', icon: Wallet, chairpersonOnly: false },
     { href: '/fund-deadlines', label: 'Fund Deadlines', icon: Calendar, chairpersonOnly: false },
+    { href: '/statements', label: 'Statements', icon: ClipboardList, chairpersonOnly: false },
     { href: '/students', label: 'Members', icon: UserIcon, chairpersonOnly: true },
-    { href: '/statements', label: 'Statements', icon: ClipboardList, chairpersonOnly: true },
     { href: '/analytics', label: 'Expense Analytics', icon: BarChart3, chairpersonOnly: true },
 ];
 
