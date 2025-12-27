@@ -40,7 +40,6 @@ import { useUserProfile } from '@/hooks/use-user-profile';
 const sidebarNavItems = [
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
     { href: '/dashboard/rooms', icon: Archive, label: 'Rooms' },
-    { href: '/dashboard/settings', icon: Settings, label: 'Settings' },
   ];
 
 const roomSubNavItems = [
@@ -250,7 +249,7 @@ export function BottomNavBar({userProfile}) {
   const isRoomRoute = pathname.startsWith('/dashboard/rooms/');
   const roomId = isRoomRoute ? pathname.split('/')[3] : null;
 
-  let navItemsToShow = sidebarNavItems.filter(item => item.href !== '/dashboard/settings');
+  let navItemsToShow = sidebarNavItems;
 
   if (isRoomRoute && roomId) {
     const roomNavs = isChairperson 
