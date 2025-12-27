@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -357,19 +358,18 @@ export function BottomNavBar({userProfile}) {
                     key={item.label}
                     href={href}
                     className={cn(
-                    'flex flex-col items-center justify-center gap-1 text-muted-foreground transition-all w-full h-full',
+                    'flex flex-col items-center justify-center text-muted-foreground transition-all w-full h-full',
                     isActive && 'text-primary bg-muted/50'
                     )}
                 >
-                    <item.icon className="h-5 w-5" />
-                    <span className="text-xs truncate">{item.label}</span>
+                    <item.icon className="h-6 w-6" />
                 </Link>
             )
         })}
          {user && userProfile && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <div className="flex flex-col items-center justify-center gap-1 text-muted-foreground w-full h-full cursor-pointer">
+              <div className="flex flex-col items-center justify-center text-muted-foreground w-full h-full cursor-pointer">
                   <Avatar className="h-6 w-6">
                     <AvatarImage
                       src={userProfile.profilePic || `https://avatar.vercel.sh/${user.email}.png`}
@@ -377,7 +377,6 @@ export function BottomNavBar({userProfile}) {
                     />
                     <AvatarFallback className="text-xs">{userInitial}</AvatarFallback>
                   </Avatar>
-                  <span className="text-xs truncate">More</span>
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56 mb-2" align="end" forceMount>
