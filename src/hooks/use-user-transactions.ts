@@ -6,9 +6,8 @@ import {
   collectionGroup,
   query,
   where,
-  getDocs,
+  onSnapshot,
   orderBy,
-  limit,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -23,42 +22,33 @@ export function useUserTransactions(roomIds: string[], count = 10) {
       return;
     }
 
-    const fetchTransactions = async () => {
-        setLoading(true);
-        try {
-            // Firestore 'in' queries are limited to 30 values.
-            // Removed orderBy('createdAt') to avoid needing a composite index.
-            // Sorting will be done on the client.
-            const q = query(
-                collectionGroup(db, 'transactions'),
-                where('roomId', 'in', roomIds)
-            );
+    setLoading(true);
 
-            const querySnapshot = await getDocs(q);
-            const transactionsData: any[] = [];
-            querySnapshot.forEach((doc) => {
-                transactionsData.push({
-                id: doc.id,
-                ...doc.data(),
-                });
-            });
-            
-            // Sort and limit the results on the client side.
-            const sortedAndLimited = transactionsData
-                .sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate())
-                .slice(0, count);
+    const q = query(
+      collectionGroup(db, 'transactions'),
+      where('roomId', 'in', roomIds),
+      orderBy('createdAt', 'desc')
+    );
 
-            setTransactions(sortedAndLimited);
-        } catch (error) {
-            console.error('Error fetching user transactions: ', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const transactionsData: any[] = [];
+      querySnapshot.forEach((doc) => {
+        transactionsData.push({
+          id: doc.id,
+          ...doc.data(),
+        });
+      });
+      
+      // onSnapshot gives us sorted data, so we just need to limit it.
+      setTransactions(transactionsData.slice(0, count));
+      setLoading(false);
+    }, (error) => {
+      console.error('Error fetching user transactions in real-time: ', error);
+      setLoading(false);
+    });
 
-    fetchTransactions();
+    return () => unsubscribe();
 
-    // The dependency array ensures this effect runs when roomIds change.
   }, [JSON.stringify(roomIds), count]);
 
   return { transactions, loading };
