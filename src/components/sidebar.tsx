@@ -37,11 +37,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useUserProfile } from '@/hooks/use-user-profile';
 
 
-const sidebarNavItems = [
+const baseSidebarNavItems = [
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
     { href: '/dashboard/rooms', icon: Archive, label: 'Rooms' },
-    { href: '/dashboard/settings', icon: Settings, label: 'Settings' },
   ];
+
+const settingsNavItem = { href: '/dashboard/settings', icon: Settings, label: 'Settings' };
 
 const roomSubNavItems = [
     { href: '', label: 'Room Dashboard', icon: Home, chairpersonOnly: false },
@@ -77,6 +78,9 @@ function NavContent({ isMobile = false, userProfile }) {
     const roomId = isRoomRoute ? pathname.split('/')[3] : null;
 
     const isChairperson = userProfile?.role === 'chairperson';
+    
+    const sidebarNavItems = isChairperson ? [...baseSidebarNavItems, settingsNavItem] : baseSidebarNavItems;
+
 
     const renderLink = (item: any, isSubItem = false) => {
       const href = isSubItem && roomId ? `/dashboard/rooms/${roomId}${item.href}` : item.href;
@@ -250,6 +254,8 @@ export function BottomNavBar({userProfile}) {
   const pathname = usePathname();
   const isChairperson = userProfile?.role === 'chairperson';
   
+  const sidebarNavItems = isChairperson ? [...baseSidebarNavItems, settingsNavItem] : baseSidebarNavItems;
+
   const isRoomRoute = pathname.startsWith('/dashboard/rooms/');
   const roomId = isRoomRoute ? pathname.split('/')[3] : null;
 
