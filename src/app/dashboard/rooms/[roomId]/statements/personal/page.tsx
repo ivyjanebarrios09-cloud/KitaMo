@@ -28,9 +28,9 @@ const StatementSummary = ({ deadlines, loading }) => {
 
     return (
         <div className="mt-8 space-y-2 text-right">
-            <p>Total Amount Due: PHP {totalDues.toFixed(2)}</p>
-            <p>Total Amount Paid: PHP {totalPaid.toFixed(2)}</p>
-            <p className="font-bold text-lg">Remaining Balance: PHP {balance.toFixed(2)}</p>
+            <p><span className="font-semibold">Total Amount Due:</span> PHP {totalDues.toFixed(2)}</p>
+            <p><span className="font-semibold">Total Amount Paid:</span> PHP {totalPaid.toFixed(2)}</p>
+            <p className="font-bold text-lg"><span className="font-semibold">Remaining Balance:</span> PHP {balance.toFixed(2)}</p>
         </div>
     )
 }
@@ -54,17 +54,33 @@ export default function PersonalStatementPage() {
 
     setIsDownloading(true);
     try {
-        const canvas = await html2canvas(statementRef.current, { scale: 2 });
+        const canvas = await html2canvas(statementRef.current, {
+            scale: 2,
+            useCORS: true, 
+        });
         const imgData = canvas.toDataURL('image/png');
         
-        const pdf = new jsPDF({
-            orientation: 'p',
-            unit: 'px',
-            format: [canvas.width, canvas.height]
-        });
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const ratio = canvasWidth / canvasHeight;
+        
+        let imgWidth = pdfWidth;
+        let imgHeight = imgWidth / ratio;
 
-        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        if (imgHeight > pdfHeight) {
+            imgHeight = pdfHeight;
+            imgWidth = imgHeight * ratio;
+        }
+
+        const x = (pdfWidth - imgWidth) / 2;
+        const y = (pdfHeight - imgHeight) / 2;
+        
+        pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
         pdf.save(`personal-statement-${roomId}.pdf`);
+
     } catch(err) {
         console.error("Error generating PDF", err);
     } finally {
@@ -73,7 +89,7 @@ export default function PersonalStatementPage() {
   };
 
   useEffect(() => {
-    if (downloadAction === 'pdf' && !loading) {
+    if (downloadAction === 'pdf' && !loading && !isDownloading) {
       handleDownloadPdf();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
