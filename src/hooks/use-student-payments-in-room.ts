@@ -16,9 +16,9 @@ export function useStudentPaymentsInRoom(roomId: string, studentId: string) {
     }
 
     const paymentsRef = collection(db, 'rooms', roomId, 'transactions');
+    // Query only by userId and order by creation date. We will filter by type on the client.
     const q = query(
         paymentsRef, 
-        where('type', '==', 'credit'), 
         where('userId', '==', studentId),
         orderBy('createdAt', 'desc')
     );
@@ -26,7 +26,11 @@ export function useStudentPaymentsInRoom(roomId: string, studentId: string) {
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const data: any[] = [];
       querySnapshot.forEach((doc) => {
-        data.push({ id: doc.id, ...doc.data() });
+        const transaction = { id: doc.id, ...doc.data() };
+        // Filter for 'credit' transactions on the client
+        if (transaction.type === 'credit') {
+          data.push(transaction);
+        }
       });
       setPayments(data);
       setLoading(false);
