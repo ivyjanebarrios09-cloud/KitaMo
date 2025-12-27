@@ -48,7 +48,7 @@ const roomSubNavItems = [
     { href: '/expenses', label: 'Expenses', icon: Wallet, chairpersonOnly: false },
     { href: '/fund-deadlines', label: 'Fund Deadlines', icon: Calendar, chairpersonOnly: false },
     { href: '/statements', label: 'Statements', icon: ClipboardList, chairpersonOnly: false },
-    { href: '/students', label: 'Members', icon: UserIcon, chairpersonOnly: true },
+    { href: '/students', label: 'Members', icon: UserIcon, chairpersonOnly: false },
     { href: '/analytics', label: 'Expense Analytics', icon: BarChart3, chairpersonOnly: true },
 ];
 
@@ -193,7 +193,7 @@ export function Header({onMenuClick}: {onMenuClick?: () => void}) {
 
     return (
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-16 lg:px-6 sticky top-0 z-30">
-            {isRoomRoute && onMenuClick && <Button
+            {onMenuClick && <Button
               variant="ghost"
               size="icon"
               className="lg:hidden"
