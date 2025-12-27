@@ -35,6 +35,7 @@ const StatCard = ({ title, value, subtext, icon: Icon, currency = '₱', loading
 
 function ChairpersonRoomDashboard({ room, loading }) {
     const totalBalance = (room?.totalCollected || 0) - (room?.totalExpenses || 0);
+    const memberCount = (room?.members?.length || 1) - 1;
 
     return (
         <div className="flex flex-col gap-8">
@@ -52,8 +53,8 @@ function ChairpersonRoomDashboard({ room, loading }) {
                 />
                 <StatCard
                     title="Members"
-                    value={room?.members?.length || '0'}
-                    subtext={`${room?.members?.length || 0} members have joined this room`}
+                    value={memberCount}
+                    subtext={`${memberCount} students have joined this room`}
                     icon={Users}
                     currency=""
                     loading={loading}
