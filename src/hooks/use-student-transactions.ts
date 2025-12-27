@@ -3,13 +3,14 @@
 
 import { useState, useEffect } from 'react';
 import {
-  collectionGroup,
+  collection,
   query,
   where,
   onSnapshot,
   orderBy,
   limit,
   getDocs,
+  collectionGroup,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -34,7 +35,6 @@ export function useStudentTransactions(roomIds: string[], count = 10) {
                 collectionGroup(db, 'transactions'),
                 where('roomId', 'in', roomIds),
                 orderBy('createdAt', 'desc'),
-                limit(count)
               );
         
               const querySnapshot = await getDocs(q);
@@ -46,7 +46,7 @@ export function useStudentTransactions(roomIds: string[], count = 10) {
                 });
               });
       
-              setTransactions(transactionsData);
+              setTransactions(transactionsData.slice(0, count));
 
         } catch (error) {
             console.error('Error fetching student transactions: ', error);
