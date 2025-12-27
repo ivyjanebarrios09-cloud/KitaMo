@@ -27,11 +27,11 @@ export function useUserTransactions(roomIds: string[], count = 10) {
         setLoading(true);
         try {
             // Firestore 'in' queries are limited to 30 values.
+            // Removed orderBy('createdAt') to avoid needing a composite index.
+            // Sorting will be done on the client.
             const q = query(
                 collectionGroup(db, 'transactions'),
-                where('roomId', 'in', roomIds),
-                orderBy('createdAt', 'desc'),
-                limit(count)
+                where('roomId', 'in', roomIds)
             );
 
             const querySnapshot = await getDocs(q);
@@ -43,8 +43,7 @@ export function useUserTransactions(roomIds: string[], count = 10) {
                 });
             });
             
-            // Sorting is already done by the query, but if we fetch more than the limit and slice, we'd sort client-side.
-            // With limit() in the query, this client-side sort is redundant but harmless.
+            // Sort and limit the results on the client side.
             const sortedAndLimited = transactionsData
                 .sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate())
                 .slice(0, count);
