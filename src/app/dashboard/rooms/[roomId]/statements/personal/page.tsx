@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, Printer, Download } from 'lucide-react';
+import { ArrowLeft, Download } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useRoom } from '@/hooks/use-room';
@@ -9,19 +9,17 @@ import { useAuth } from '@/context/auth-context';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { useStudentDeadlines } from '@/hooks/use-student-deadlines';
 import { Loader } from '@/components/loader';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { useEffect, useRef, useState } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
-const StatementSummary = ({ studentDetails, deadlines, loading }) => {
+const StatementSummary = ({ deadlines, loading }) => {
     const totalDues = deadlines.reduce((acc, d) => acc + d.amount, 0);
-    const totalPaid = studentDetails?.totalPaid || 0;
+    const totalPaid = deadlines.reduce((acc, d) => acc + d.amountPaid, 0);
     const balance = totalDues - totalPaid;
 
     if (loading) {
@@ -29,33 +27,10 @@ const StatementSummary = ({ studentDetails, deadlines, loading }) => {
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-sm font-medium">Total Dues</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-2xl font-bold">₱{totalDues.toFixed(2)}</p>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-sm font-medium">Total Paid</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-2xl font-bold">₱{totalPaid.toFixed(2)}</p>
-                </CardContent>
-            </Card>
-            <Card className={balance > 0 ? "border-destructive" : ""}>
-                <CardHeader>
-                    <CardTitle className="text-sm font-medium">Remaining Balance</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p className={`text-2xl font-bold ${balance > 0 ? "text-destructive" : ""}`}>
-                        ₱{balance.toFixed(2)}
-                    </p>
-                </CardContent>
-            </Card>
+        <div className="mt-8 space-y-2 text-right">
+            <p>Total Amount Due: PHP {totalDues.toFixed(2)}</p>
+            <p>Total Amount Paid: PHP {totalPaid.toFixed(2)}</p>
+            <p className="font-bold text-lg">Remaining Balance: PHP {balance.toFixed(2)}</p>
         </div>
     )
 }
@@ -127,43 +102,31 @@ export default function PersonalStatementPage() {
             </Button>
       </div>
 
-      <div ref={statementRef} className="bg-background">
-        <Card className="shadow-lg print:shadow-none print:border-none">
-          <CardHeader className="bg-muted/30 print:bg-transparent rounded-t-lg p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
-              <div>
-                <CardTitle className="text-xl sm:text-2xl">{room?.name || 'Room Statement'}</CardTitle>
-                <CardDescription>Generated on {format(new Date(), 'PPP')}</CardDescription>
-              </div>
-              <div className="text-left sm:text-right">
-                  <p className="font-semibold">{userProfile?.name}</p>
-                  <p className="text-sm text-muted-foreground">{userProfile?.email}</p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-4 sm:p-6">
+      <div ref={statementRef} className="bg-background p-4 sm:p-8">
             {loading ? (
               <div className="flex justify-center p-8"><Loader/></div>
             ) : (
-              <div className="space-y-8">
+              <div className="space-y-8 max-w-4xl mx-auto">
                 <div>
-                  <h3 className="text-lg font-semibold mb-4">Summary</h3>
-                  <StatementSummary studentDetails={userProfile} deadlines={deadlines} loading={loading}/>
+                    <h1 className="text-3xl font-bold">KitaMo! Personal Statement</h1>
                 </div>
-                
-                <Separator />
+                <div className="space-y-1">
+                    <p><span className="font-semibold">Student:</span> {userProfile?.name}</p>
+                    <p><span className="font-semibold">Room:</span> {room?.name}</p>
+                    <p><span className="font-semibold">Statement Type:</span> Personal Expense Report</p>
+                    <p className="text-sm text-muted-foreground">Generated on: {format(new Date(), 'PP p')}</p>
+                </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold mb-4">Contributions & Dues</h3>
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto border rounded-lg">
                     <Table>
                         <TableHeader>
-                            <TableRow>
-                                <TableHead>Deadline</TableHead>
-                                <TableHead>Due Date</TableHead>
-                                <TableHead className="text-right">Amount Required</TableHead>
-                                <TableHead className="text-right">Amount Paid</TableHead>
-                                <TableHead className="text-right">Status</TableHead>
+                            <TableRow className="bg-primary hover:bg-primary/90">
+                                <TableHead className="text-primary-foreground">Deadline Title</TableHead>
+                                <TableHead className="text-primary-foreground">Due Date</TableHead>
+                                <TableHead className="text-right text-primary-foreground">Amount Due (PHP)</TableHead>
+                                <TableHead className="text-right text-primary-foreground">Amount Paid (PHP)</TableHead>
+                                <TableHead className="text-right text-primary-foreground">Status</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -175,7 +138,7 @@ export default function PersonalStatementPage() {
                                 <TableCell className="text-right">₱{deadline.amount.toFixed(2)}</TableCell>
                                 <TableCell className="text-right">₱{deadline.amountPaid.toFixed(2)}</TableCell>
                                 <TableCell className="text-right">
-                                    <Badge variant={deadline.status === 'Paid' ? 'secondary' : 'destructive'} className={deadline.status === 'Paid' ? 'bg-green-100 text-green-800' : ''}>
+                                    <Badge variant={deadline.status === 'Paid' ? 'secondary' : 'outline'} className={deadline.status === 'Paid' ? 'bg-green-100 text-green-800' : 'border-destructive text-destructive'}>
                                         {deadline.status}
                                     </Badge>
                                 </TableCell>
@@ -192,10 +155,11 @@ export default function PersonalStatementPage() {
                     </Table>
                   </div>
                 </div>
+                <div>
+                  <StatementSummary deadlines={deadlines} loading={loading}/>
+                </div>
               </div>
             )}
-          </CardContent>
-        </Card>
       </div>
 
       <style jsx global>{`
@@ -206,17 +170,9 @@ export default function PersonalStatementPage() {
           .print\:hidden {
             display: none;
           }
-          .print\:shadow-none {
-            box-shadow: none;
-          }
-           .print\:border-none {
-            border: none;
-          }
-          .print\:bg-transparent {
-            background-color: transparent;
-          }
         }
       `}</style>
     </div>
   );
 }
+
