@@ -177,9 +177,23 @@ function StudentStatementsPage() {
     const { toast } = useToast();
 
     const handleActionClick = (label: string) => {
+        let description = '';
+        switch(label) {
+            case 'View':
+                description = 'Your statement is being prepared and will be displayed shortly.';
+                break;
+            case 'PDF':
+                description = 'Your PDF download will begin shortly.';
+                break;
+            case 'Excel':
+                description = 'Your Excel file download will begin shortly.';
+                break;
+            default:
+                description = 'Your request is being processed.';
+        }
         toast({
-        title: 'Generating Statement...',
-        description: `Your ${label} download will begin shortly.`,
+            title: 'Generating Statement...',
+            description: description,
         });
     };
 
