@@ -32,7 +32,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { Loader } from '@/components/loader';
 import { useToast } from '@/hooks/use-toast';
 import { useStudentDeadlines } from '@/hooks/use-student-deadlines';
-import { exportToCSV } from 'csv-export';
 import { format } from 'date-fns';
 
 const StatementCard = ({
@@ -136,14 +135,14 @@ function ChairpersonStatementsPage() {
                 <div className="space-y-2">
                 <label className="text-sm font-medium">Select Year</label>
                 <Select defaultValue="2025">
-                <SelectTrigger>
-                    <SelectValue placeholder="Select a year" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="2025">2025</SelectItem>
-                    <SelectItem value="2024">2024</SelectItem>
-                    <SelectItem value="2023">2023</SelectItem>
-                </SelectContent>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="2025">2025</SelectItem>
+                        <SelectItem value="2024">2024</SelectItem>
+                        <SelectItem value="2023">2023</SelectItem>
+                    </SelectContent>
                 </Select>
                 </div>
             </div>
@@ -184,6 +183,32 @@ function StudentStatementsPage() {
     const { user } = useAuth();
     const { deadlines, loading: deadlinesLoading } = useStudentDeadlines(roomId, user?.uid || '');
 
+    const downloadCSV = (data: any[], headers: string[], filename: string) => {
+        const csvRows = [];
+        // Add headers
+        csvRows.push(headers.join(','));
+
+        // Add data rows
+        for (const row of data) {
+            const values = headers.map(header => {
+                const escaped = ('' + row[header]).replace(/"/g, '\\"');
+                return `"${escaped}"`;
+            });
+            csvRows.push(values.join(','));
+        }
+
+        const csvString = csvRows.join('\n');
+        const blob = new Blob([csvString], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('hidden', '');
+        a.setAttribute('href', url);
+        a.setAttribute('download', filename);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
     const handleDownloadCSV = () => {
         if (deadlinesLoading || deadlines.length === 0) {
             toast({
@@ -203,7 +228,7 @@ function StudentStatementsPage() {
             'Status': d.status
         }));
         
-        exportToCSV(data, headers, `personal-statement-${roomId}.csv`);
+        downloadCSV(data, headers, `personal-statement-${roomId}.csv`);
         
         toast({
             title: 'Download Started',
