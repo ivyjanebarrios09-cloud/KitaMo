@@ -119,6 +119,7 @@ export const addDeadline = async (roomId: string, userId: string, userName: stri
       throw new Error('Room does not exist!');
     }
     const members = roomDoc.data().members || [];
+    const createdBy = roomDoc.data().createdBy;
 
     // 1. Add deadline transaction
     const transactionRef = doc(collection(db, 'rooms', roomId, 'transactions'));
@@ -137,7 +138,7 @@ export const addDeadline = async (roomId: string, userId: string, userName: stri
 
     // 2. Update totalOwed for all members in the room (in the /students subcollection)
     for (const memberId of members) {
-      if (memberId !== userId) { // Don't make the chairperson owe themselves
+      if (memberId !== createdBy) { 
         const studentToUpdateRef = doc(db, 'rooms', roomId, 'students', memberId);
         transaction.update(studentToUpdateRef, {
           totalOwed: increment(data.amount),
@@ -174,8 +175,14 @@ export const joinRoom = async (roomCode: string, userId: string, userName: strin
 
     const roomDoc = querySnapshot.docs[0];
     const roomId = roomDoc.id;
+    const roomData = roomDoc.data();
     const roomRef = doc(db, 'rooms', roomId);
     const userRef = doc(db, 'users', userId);
+
+    // Can't join if you're the creator
+    if (roomData.createdBy === userId) {
+        throw new Error("You are the creator of this room and cannot join as a student.");
+    }
 
     await runTransaction(db, async (transaction) => {
         const roomTransactionDoc = await transaction.get(roomRef);
@@ -183,6 +190,16 @@ export const joinRoom = async (roomCode: string, userId: string, userName: strin
         if (members.includes(userId)) {
             throw new Error("You are already a member of this room.");
         }
+
+        // --- Calculate initial debt ---
+        const deadlinesRef = collection(db, 'rooms', roomId, 'transactions');
+        const deadlinesQuery = query(deadlinesRef, where('type', '==', 'deadline'));
+        const deadlinesSnapshot = await getDocs(deadlinesQuery);
+        let initialOwed = 0;
+        deadlinesSnapshot.forEach(doc => {
+            initialOwed += doc.data().amount;
+        });
+        // --- End calculation ---
 
         // Add user to room's members list
         transaction.update(roomRef, {
@@ -198,7 +215,7 @@ export const joinRoom = async (roomCode: string, userId: string, userName: strin
         const studentRef = doc(db, 'rooms', roomId, 'students', userId);
         transaction.set(studentRef, {
             totalPaid: 0,
-            totalOwed: 0, // Will be updated by a cloud function when they join based on existing deadlines
+            totalOwed: initialOwed,
         });
     });
 };
@@ -206,27 +223,37 @@ export const joinRoom = async (roomCode: string, userId: string, userName: strin
 export const addPayment = async (roomId: string, studentId: string, chairpersonName: string, deadlineId: string, amount: number, deadlineDescription: string) => {
     const roomRef = doc(db, 'rooms', roomId);
     const studentRef = doc(db, 'rooms', roomId, 'students', studentId);
+    const roomDocSnap = await getDoc(roomRef);
+    const roomData = roomDocSnap.data();
+
+    if (!roomData) throw new Error("Room not found");
 
     try {
         await runTransaction(db, async (transaction) => {
             const studentDoc = await transaction.get(studentRef);
             if (!studentDoc.exists()) {
-                throw "Student does not exist!";
+                // If student doc doesn't exist, create it. This can happen if they were a member before the 'students' subcollection was introduced.
+                transaction.set(studentRef, { totalPaid: 0, totalOwed: 0});
             }
+
+             const studentData = studentDoc.data()
+            const userDocSnap = await getDoc(doc(db, 'users', studentId));
+            const studentName = userDocSnap.data()?.name || 'Unknown Student';
+
 
             // 1. Create a payment transaction record ('credit')
             const paymentRef = doc(collection(db, 'rooms', roomId, 'transactions'));
             transaction.set(paymentRef, {
                 roomId: roomId,
                 userId: studentId,
-                userName: studentDoc.data()?.name || 'Unknown Student',
+                userName: studentName,
                 amount: amount,
                 type: 'credit',
                 description: `Payment for ${deadlineDescription}`,
                 deadlineId: deadlineId,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
-                seenBy: [studentId, roomDoc.data()?.createdBy]
+                seenBy: [studentId, roomData.createdBy]
             });
 
             // 2. Update the student's totals

@@ -394,7 +394,7 @@ function StudentRoomsPage() {
         if (!user || !userProfile) return;
         setFormLoading(true);
         try {
-            await joinRoom(values.code, user.uid, userProfile.name, userProfile.email);
+            await joinRoom(values.code, user.uid, userProfile.name, user.email!);
             toast({
                 title: "Successfully Joined!",
                 description: "You have been added to the room.",
