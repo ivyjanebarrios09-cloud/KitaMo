@@ -1,3 +1,4 @@
+
 'use client';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -16,14 +17,12 @@ import {
 } from '@/components/ui/table';
 import { useAuth } from '@/context/auth-context';
 import { PiggyBank, Receipt, Scale, Users } from 'lucide-react';
-import { useUserRooms } from '@/hooks/use-user-rooms';
 import { Loader } from '@/components/loader';
 import Link from 'next/link';
-import { useUserTransactions } from '@/hooks/use-user-transactions';
 import { format } from 'date-fns';
 import { useUserProfile } from '@/hooks/use-user-profile';
-import { useStudentRooms } from '@/hooks/use-student-rooms';
-import { useStudentTransactions } from '@/hooks/use-student-transactions';
+import { useUserRooms } from '@/hooks/use-user-rooms';
+import { useUserTransactions } from '@/hooks/use-user-transactions';
 
 const StatCard = ({ title, value, icon: Icon, currency = '₱', loading = false }) => (
   <Card className="shadow-sm hover:shadow-md transition-shadow">
@@ -45,21 +44,26 @@ const StatCard = ({ title, value, icon: Icon, currency = '₱', loading = false 
 
 function ChairpersonDashboard() {
     const { user } = useAuth();
-    const { rooms, loading: roomsLoading } = useUserRooms(user?.uid);
-    const { transactions, loading: transactionsLoading } = useUserTransactions(user?.uid);
-    const chairpersonName = user?.displayName || user?.email?.split('@')[0] || 'Chairperson';
+    const { rooms, loading: roomsLoading } = useUserRooms(user?.uid, true);
+    const roomIds = rooms.map(r => r.id);
+    const { transactions, loading: transactionsLoading } = useUserTransactions(roomIds);
+    const { userProfile } = useUserProfile(user?.uid);
+    
+    const chairpersonName = userProfile?.name || user?.email?.split('@')[0] || 'Chairperson';
 
     const loading = roomsLoading || transactionsLoading;
 
     const stats = rooms.reduce((acc, room) => {
-        acc.totalCollected += room.totalCollected || 0;
-        acc.totalExpenses += room.totalExpenses || 0;
-        acc.totalStudents += room.studentCount || 0;
+        const collected = room.totalCollected || 0;
+        const expenses = room.totalExpenses || 0;
+        acc.totalCollected += collected;
+        acc.totalExpenses += expenses;
+        acc.totalMembers += room.members?.length || 0;
         return acc;
     }, {
         totalCollected: 0,
         totalExpenses: 0,
-        totalStudents: 0
+        totalMembers: 0,
     });
 
     stats.netBalance = stats.totalCollected - stats.totalExpenses;
@@ -83,8 +87,8 @@ function ChairpersonDashboard() {
                 <StatCard title="Total Expenses" value={stats.totalExpenses.toFixed(2)} icon={Receipt} loading={loading} />
                 <StatCard title="Net Balance" value={stats.netBalance.toFixed(2)} icon={Scale} loading={loading} />
                 <StatCard
-                title="Total Students"
-                value={stats.totalStudents}
+                title="Total Members"
+                value={stats.totalMembers}
                 icon={Users}
                 currency=""
                 loading={loading}
@@ -122,7 +126,7 @@ function ChairpersonDashboard() {
                             <TableCell>
                             <Badge
                                 variant={
-                                transaction.type === 'expense'
+                                transaction.type === 'debit'
                                     ? 'destructive'
                                     : 'secondary'
                                 }
@@ -131,13 +135,13 @@ function ChairpersonDashboard() {
                                 {transaction.type}
                             </Badge>
                             </TableCell>
-                            <TableCell>{transaction.date ? format(transaction.date.toDate(), 'PP') : 'N/A'}</TableCell>
+                            <TableCell>{transaction.createdAt ? format(transaction.createdAt.toDate(), 'PP') : 'N/A'}</TableCell>
                             <TableCell>
                             <Link href={`/dashboard/rooms/${transaction.roomId}`} className="text-primary hover:underline">
                                 {getRoomName(transaction.roomId)}
                             </Link>
                             </TableCell>
-                            <TableCell>{transaction.name}</TableCell>
+                            <TableCell>{transaction.description}</TableCell>
                             <TableCell className="text-right font-medium">
                             ₱{transaction.amount.toFixed(2)}
                             </TableCell>
@@ -160,9 +164,12 @@ function ChairpersonDashboard() {
 
 function StudentDashboard() {
     const { user } = useAuth();
-    const { rooms, loading: roomsLoading } = useStudentRooms(user?.uid);
-    const { transactions, loading: transactionsLoading } = useStudentTransactions(rooms.map(r => r.id));
-    const studentName = user?.displayName || user?.email?.split('@')[0] || 'Student';
+    const { userProfile } = useUserProfile(user?.uid);
+    const { rooms, loading: roomsLoading } = useUserRooms(user?.uid, false);
+    const roomIds = userProfile?.rooms || [];
+    const { transactions, loading: transactionsLoading } = useUserTransactions(roomIds);
+    
+    const studentName = userProfile?.name || user?.email?.split('@')[0] || 'Student';
 
     const loading = roomsLoading || transactionsLoading;
 
@@ -210,20 +217,20 @@ function StudentDashboard() {
                             <TableCell>
                             <Badge
                                 variant={
-                                transaction.type === 'expense'
+                                transaction.type === 'debit'
                                     ? 'destructive'
-                                    : 'secondary'
+                                    : transaction.type === 'deadline' ? 'outline' : 'secondary'
                                 }
                                 className="capitalize"
                             >
                                 {transaction.type}
                             </Badge>
                             </TableCell>
-                            <TableCell>{transaction.date ? format(transaction.date.toDate(), 'PP') : 'N/A'}</TableCell>
+                            <TableCell>{transaction.createdAt ? format(transaction.createdAt.toDate(), 'PP') : 'N/A'}</TableCell>
                             <TableCell>
                                 {getRoomName(transaction.roomId)}
                             </TableCell>
-                            <TableCell>{transaction.name}</TableCell>
+                            <TableCell>{transaction.description}</TableCell>
                             <TableCell className="text-right font-medium">
                             ₱{transaction.amount.toFixed(2)}
                             </TableCell>

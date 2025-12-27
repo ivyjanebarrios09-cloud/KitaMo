@@ -1,7 +1,8 @@
-'use client';
 
+'use client';
+// This hook is deprecated and will be removed. Use use-room-transactions instead.
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export function useRoomExpenses(roomId) {
@@ -14,17 +15,15 @@ export function useRoomExpenses(roomId) {
       return;
     }
 
-    const expensesRef = collection(db, 'rooms', roomId, 'transactions');
-    const q = query(expensesRef, orderBy('date', 'desc'));
+    const transactionsRef = collection(db, 'rooms', roomId, 'transactions');
+    const q = query(transactionsRef, where('type', '==', 'debit'), orderBy('createdAt', 'desc'));
 
     const unsubscribe = onSnapshot(
       q,
       (querySnapshot) => {
         const data: any[] = [];
         querySnapshot.forEach((doc) => {
-          if (doc.data().type === 'expense') {
             data.push({ id: doc.id, ...doc.data() });
-          }
         });
         setExpenses(data);
         setLoading(false);

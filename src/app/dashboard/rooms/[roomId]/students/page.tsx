@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Users, ChevronDown } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { useRoomStudents } from '@/hooks/use-room-students';
 import { useParams } from 'next/navigation';
 import { Loader } from '@/components/loader';
@@ -26,13 +26,13 @@ export default function StudentsPage() {
     <div className="flex flex-col gap-8">
       <div className="flex items-center gap-2">
         <Users className="w-6 h-6" />
-        <h1 className="text-2xl font-bold">Students</h1>
+        <h1 className="text-2xl font-bold">Members</h1>
       </div>
       <Card className="shadow-md">
         <CardHeader>
-          <CardTitle>Manage Students</CardTitle>
+          <CardTitle>Manage Members</CardTitle>
           <CardDescription>
-            A list of all students who have joined this room. Click to view and manage their deadlines.
+            A list of all members who have joined this room. Click to view and manage their deadlines.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -46,7 +46,7 @@ export default function StudentsPage() {
                                  <div className="flex items-center justify-between w-full">
                                     <div className="flex items-center gap-4">
                                         <Avatar>
-                                            <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} alt={student.name} />
+                                            <AvatarImage src={student.profilePic || `https://avatar.vercel.sh/${student.email}.png`} alt={student.name} />
                                             <AvatarFallback>{student.name?.charAt(0) || 'S'}</AvatarFallback>
                                         </Avatar>
                                         <div>
@@ -82,7 +82,7 @@ export default function StudentsPage() {
                 </Accordion>
             ) : (
                 <div className="text-center text-muted-foreground py-16">
-                    <p>No students have joined this room yet.</p>
+                    <p>No members have joined this room yet.</p>
                 </div>
             )}
         </CardContent>

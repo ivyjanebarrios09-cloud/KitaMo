@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -19,12 +20,12 @@ import { Wallet } from 'lucide-react';
 import { format } from 'date-fns';
 import { useParams } from 'next/navigation';
 import { Loader } from '@/components/loader';
-import { useRoomExpenses } from '@/hooks/use-room-expenses';
+import { useRoomTransactions } from '@/hooks/use-room-transactions';
 
 export default function ExpensesPage() {
   const params = useParams();
   const roomId = params.roomId as string;
-  const { expenses, loading } = useRoomExpenses(roomId);
+  const { transactions: expenses, loading } = useRoomTransactions(roomId, 'debit');
 
   return (
     <div className="flex flex-col gap-8">
@@ -45,7 +46,7 @@ export default function ExpensesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
-                <TableHead>Title</TableHead>
+                <TableHead>Description</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
               </TableRow>
             </TableHeader>
@@ -62,11 +63,11 @@ export default function ExpensesPage() {
                 expenses.map((expense) => (
                   <TableRow key={expense.id}>
                     <TableCell>
-                      {expense.date
-                        ? format(expense.date.toDate(), 'PP')
+                      {expense.createdAt
+                        ? format(expense.createdAt.toDate(), 'PP')
                         : 'N/A'}
                     </TableCell>
-                    <TableCell className="font-medium">{expense.name}</TableCell>
+                    <TableCell className="font-medium">{expense.description}</TableCell>
                     <TableCell className="text-right font-medium">
                       ₱{expense.amount.toFixed(2)}
                     </TableCell>

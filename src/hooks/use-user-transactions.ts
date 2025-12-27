@@ -1,78 +1,56 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import {
-  collection,
+  collectionGroup,
   query,
   where,
-  getDocs,
+  onSnapshot,
   orderBy,
   limit,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-export function useUserTransactions(userId, count = 10) {
+export function useUserTransactions(roomIds: string[], count = 10) {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!userId) {
+    if (!roomIds || roomIds.length === 0) {
       setLoading(false);
+      setTransactions([]);
       return;
     }
+    setLoading(true);
 
-    const fetchTransactions = async () => {
-      setLoading(true);
-      try {
-        // 1. Find all rooms owned by the user
-        const roomsQuery = query(collection(db, 'rooms'), where('ownerId', '==', userId));
-        const roomsSnapshot = await getDocs(roomsQuery);
-        const roomIds = roomsSnapshot.docs.map(doc => doc.id);
+    // Firestore 'in' queries are limited to 30 values.
+    // For more rooms, we'd need to run multiple queries.
+    const q = query(
+      collectionGroup(db, 'transactions'),
+      where('roomId', 'in', roomIds),
+      orderBy('createdAt', 'desc'),
+      limit(count)
+    );
 
-        if (roomIds.length === 0) {
-          setTransactions([]);
-          setLoading(false);
-          return;
-        }
-
-        // 2. Fetch transactions for each room
-        const allTransactions: any[] = [];
-        for (const roomId of roomIds) {
-          const transactionsQuery = query(
-            collection(db, 'rooms', roomId, 'transactions'),
-            orderBy('createdAt', 'desc'),
-            limit(count)
-          );
-          const transactionsSnapshot = await getDocs(transactionsQuery);
-          transactionsSnapshot.forEach((doc) => {
-            allTransactions.push({
-              id: doc.id,
-              roomId: roomId,
-              ...doc.data(),
-            });
-          });
-        }
-        
-        // 3. Sort all transactions by date and take the latest 'count'
-        allTransactions.sort((a, b) => {
-            const dateA = a.createdAt?.toDate() || 0;
-            const dateB = b.createdAt?.toDate() || 0;
-            return dateB - dateA;
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const transactionsData: any[] = [];
+      querySnapshot.forEach((doc) => {
+        transactionsData.push({
+          id: doc.id,
+          ...doc.data(),
         });
+      });
+      setTransactions(transactionsData);
+      setLoading(false);
+    }, (error) => {
+      console.error('Error fetching user transactions: ', error);
+      setLoading(false);
+    });
 
-        setTransactions(allTransactions.slice(0, count));
-      } catch (error) {
-        console.error('Error fetching transactions: ', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    return () => unsubscribe();
 
-    fetchTransactions();
-    // This is not a real-time listener, but it fetches on component mount/userId change.
-    // A real-time version of this would be much more complex and involve many listeners.
-
-  }, [userId, count]);
+  }, [JSON.stringify(roomIds), count]); // Use JSON.stringify to compare array values
 
   return { transactions, loading };
 }

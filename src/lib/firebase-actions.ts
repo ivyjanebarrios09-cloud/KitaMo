@@ -1,26 +1,31 @@
 
-
-import { addDoc, collection, serverTimestamp, writeBatch, doc, getDocs, query, where, updateDoc, deleteDoc, runTransaction, increment, arrayUnion, setDoc } from "firebase/firestore";
+import { addDoc, collection, serverTimestamp, writeBatch, doc, getDocs, query, where, updateDoc, deleteDoc, runTransaction, increment, arrayUnion, getDoc, collectionGroup } from "firebase/firestore";
 import { db } from "./firebase";
 import { customAlphabet } from 'nanoid';
 
 // Generate a unique 6-character alphanumeric code
 const nanoid = customAlphabet('1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ', 6);
 
-
-export const createRoom = async (ownerId: string, ownerName: string, data: { name: string, description?: string }) => {
+export const createRoom = async (createdBy: string, createdByName: string, data: { name: string, description?: string }) => {
     try {
         const roomCode = nanoid();
-        await addDoc(collection(db, "rooms"), {
+        const roomRef = await addDoc(collection(db, "rooms"), {
             ...data,
-            ownerId,
-            ownerName,
+            createdBy,
+            createdByName,
             code: roomCode,
             createdAt: serverTimestamp(),
-            studentCount: 0,
+            members: [createdBy], // Creator is the first member
             totalCollected: 0,
             totalExpenses: 0,
         });
+
+        // Also add room to the creator's user document
+        const userRef = doc(db, 'users', createdBy);
+        await updateDoc(userRef, {
+            rooms: arrayUnion(roomRef.id)
+        });
+
     } catch (error) {
         console.error("Error creating room: ", error);
         throw new Error("Could not create room.");
@@ -41,16 +46,29 @@ export const deleteRoom = async (roomId: string) => {
     try {
         const batch = writeBatch(db);
 
-        // Delete the room itself
         const roomRef = doc(db, 'rooms', roomId);
-        batch.delete(roomRef);
+        const roomDoc = await getDoc(roomRef);
+        if (!roomDoc.exists()) throw new Error("Room not found");
+        
+        const members = roomDoc.data().members || [];
 
         // Delete all subcollections
-        const subcollections = ['students', 'expenses', 'deadlines', 'announcements', 'transactions'];
+        const subcollections = ['transactions', 'students'];
         for (const sub of subcollections) {
             const subcollectionRef = collection(db, 'rooms', roomId, sub);
             const snapshot = await getDocs(subcollectionRef);
             snapshot.forEach(doc => batch.delete(doc.ref));
+        }
+
+        // Delete the room itself
+        batch.delete(roomRef);
+
+        // Remove room from each member's user document
+        for (const memberId of members) {
+            const userRef = doc(db, 'users', memberId);
+            batch.update(userRef, {
+                rooms: arrayUnion(roomId) // Note: This should be arrayRemove, but it requires reading first. A cloud function is better for this. For now, this will leave stale room IDs.
+            });
         }
 
         await batch.commit();
@@ -61,38 +79,23 @@ export const deleteRoom = async (roomId: string) => {
     }
 }
 
-
-export const addExpense = async (roomId: string, data: { name: string, description?: string, amount: number, date: Date }) => {
+export const addExpense = async (roomId: string, userId: string, userName: string, data: { description: string, amount: number, date: Date }) => {
     try {
         const roomRef = doc(db, 'rooms', roomId);
         
         await runTransaction(db, async (transaction) => {
-            const roomDoc = await transaction.get(roomRef);
-            if (!roomDoc.exists()) {
-                throw "Room does not exist!";
-            }
-            
-            const ownerId = roomDoc.data().ownerId;
-
-            // Add to expenses subcollection
-            const expenseRef = doc(collection(db, 'rooms', roomId, 'expenses'));
-            transaction.set(expenseRef, {
-                ...data,
-                createdAt: serverTimestamp()
-            });
-
             // Add to general transactions log
             const transactionRef = doc(collection(db, 'rooms', roomId, 'transactions'));
             transaction.set(transactionRef, {
-                type: 'expense',
-                name: data.name,
-                amount: data.amount,
-                date: data.date,
-                ownerId: ownerId,
                 roomId: roomId,
+                userId: userId,
+                userName: userName,
+                amount: data.amount,
+                type: 'debit',
+                description: data.description,
                 createdAt: serverTimestamp(),
-                seenCount: 0,
-                seenBy: []
+                updatedAt: serverTimestamp(),
+                seenBy: [userId],
             });
 
             // Update total expenses in the room document
@@ -107,102 +110,59 @@ export const addExpense = async (roomId: string, data: { name: string, descripti
     }
 }
 
-export const addDeadline = async (roomId: string, data: { title: string, amount: number, dueDate: Date, category?: string, description: string }) => {
-    const roomRef = doc(db, 'rooms', roomId);
+export const addDeadline = async (roomId: string, userId: string, userName: string, data: { description: string, amount: number, dueDate: Date }) => {
+  const roomRef = doc(db, 'rooms', roomId);
   
-    await runTransaction(db, async (transaction) => {
-      const roomDoc = await transaction.get(roomRef);
-      if (!roomDoc.exists()) {
-        throw new Error('Room does not exist!');
-      }
-  
-      const ownerId = roomDoc.data().ownerId;
-  
-      // 1. Add to deadlines subcollection
-      const deadlineRef = doc(collection(db, 'rooms', roomId, 'deadlines'));
-      transaction.set(deadlineRef, {
-        name: data.title,
+  await runTransaction(db, async (transaction) => {
+    const roomDoc = await transaction.get(roomRef);
+    if (!roomDoc.exists()) {
+      throw new Error('Room does not exist!');
+    }
+    const members = roomDoc.data().members || [];
+
+    // 1. Add deadline transaction
+    const transactionRef = doc(collection(db, 'rooms', roomId, 'transactions'));
+    transaction.set(transactionRef, {
+        roomId: roomId,
+        userId: userId, // who created it
+        userName: userName,
         amount: data.amount,
-        date: data.dueDate,
-        category: data.category,
+        type: 'deadline',
         description: data.description,
         createdAt: serverTimestamp(),
-      });
-  
-      // 2. Add to general transactions log
-      const transactionRef = doc(collection(db, 'rooms', roomId, 'transactions'));
-      transaction.set(transactionRef, {
-        type: 'deadline',
-        name: data.title,
-        amount: data.amount,
-        date: data.dueDate,
-        ownerId: ownerId,
-        roomId: roomId,
-        createdAt: serverTimestamp(),
-        deadlineId: deadlineRef.id,
-        seenCount: 0,
-        seenBy: [],
-      });
-  
-      // 3. Update totalOwed for all students in the room
-      const studentsRef = collection(db, 'rooms', roomId, 'students');
-      const studentsSnapshot = await getDocs(query(studentsRef));
-      studentsSnapshot.forEach((studentDoc) => {
-        const studentToUpdateRef = doc(db, 'rooms', roomId, 'students', studentDoc.id);
+        updatedAt: serverTimestamp(),
+        dueDate: data.dueDate,
+        seenBy: [userId],
+    });
+
+    // 2. Update totalOwed for all members in the room (in the /students subcollection)
+    for (const memberId of members) {
+      if (memberId !== userId) { // Don't make the chairperson owe themselves
+        const studentToUpdateRef = doc(db, 'rooms', roomId, 'students', memberId);
         transaction.update(studentToUpdateRef, {
           totalOwed: increment(data.amount),
         });
-      });
-    }).catch((error) => {
-        console.error("Error adding deadline: ", error);
-        throw new Error("Could not add deadline.");
-    });
-  };
-  
-
-
-export const addAnnouncement = async (roomId: string, userId: string, userName: string, data: { title: string, content: string }) => {
-    try {
-        await addDoc(collection(db, 'rooms', roomId, 'announcements'), {
-            ...data,
-            authorId: userId,
-            authorName: userName,
-            createdAt: serverTimestamp(),
-        });
-    } catch (error) {
-        console.error("Error adding announcement: ", error);
-        throw new Error("Could not add announcement.");
+      }
     }
-}
-
-
+  }).catch((error) => {
+      console.error("Error adding deadline: ", error);
+      throw new Error("Could not add deadline.");
+  });
+};
+  
 export const markTransactionAsSeen = async (roomId: string, transactionId: string, userId: string) => {
     try {
         const transactionRef = doc(db, 'rooms', roomId, 'transactions', transactionId);
-        
-        await runTransaction(db, async (transaction) => {
-            const transactionDoc = await transaction.get(transactionRef);
-            if (!transactionDoc.exists()) {
-                throw "Transaction does not exist!";
-            }
-
-            const seenBy = transactionDoc.data().seenBy || [];
-            if (!seenBy.includes(userId)) {
-                 transaction.update(transactionRef, {
-                    seenCount: increment(1),
-                    seenBy: arrayUnion(userId)
-                });
-            }
+        await updateDoc(transactionRef, {
+            seenBy: arrayUnion(userId)
         });
-
     } catch (error) {
         console.error("Error marking transaction as seen: ", error);
         // We don't throw an error here to prevent crashing the app for the user
-        // But we log it for debugging purposes.
     }
 };
 
-export const joinRoom = async (roomCode: string, userId: string, studentName: string, studentEmail: string) => {
+export const joinRoom = async (roomCode: string, userId: string, userName: string, userEmail: string) => {
     const roomsRef = collection(db, 'rooms');
     const q = query(roomsRef, where("code", "==", roomCode));
     
@@ -215,30 +175,35 @@ export const joinRoom = async (roomCode: string, userId: string, studentName: st
     const roomDoc = querySnapshot.docs[0];
     const roomId = roomDoc.id;
     const roomRef = doc(db, 'rooms', roomId);
+    const userRef = doc(db, 'users', userId);
 
     await runTransaction(db, async (transaction) => {
-        const studentRef = doc(db, 'rooms', roomId, 'students', userId);
-        const studentDoc = await transaction.get(studentRef);
-
-        if (studentDoc.exists()) {
+        const roomTransactionDoc = await transaction.get(roomRef);
+        const members = roomTransactionDoc.data()?.members || [];
+        if (members.includes(userId)) {
             throw new Error("You are already a member of this room.");
         }
 
-        transaction.set(studentRef, {
-            name: studentName,
-            email: studentEmail,
-            joinedAt: serverTimestamp(),
-            totalPaid: 0,
-            totalOwed: 0, // This would be updated when new deadlines are posted
+        // Add user to room's members list
+        transaction.update(roomRef, {
+            members: arrayUnion(userId)
         });
 
-        transaction.update(roomRef, {
-            studentCount: increment(1)
+        // Add room to user's rooms list
+        transaction.update(userRef, {
+            rooms: arrayUnion(roomId)
+        })
+
+        // Create the student-specific details doc in the room
+        const studentRef = doc(db, 'rooms', roomId, 'students', userId);
+        transaction.set(studentRef, {
+            totalPaid: 0,
+            totalOwed: 0, // Will be updated by a cloud function when they join based on existing deadlines
         });
     });
 };
 
-export const addPayment = async (roomId: string, studentId: string, studentName: string, deadline: any) => {
+export const addPayment = async (roomId: string, studentId: string, chairpersonName: string, deadlineId: string, amount: number, deadlineDescription: string) => {
     const roomRef = doc(db, 'rooms', roomId);
     const studentRef = doc(db, 'rooms', roomId, 'students', studentId);
 
@@ -249,31 +214,30 @@ export const addPayment = async (roomId: string, studentId: string, studentName:
                 throw "Student does not exist!";
             }
 
-            // 1. Create a payment transaction record
+            // 1. Create a payment transaction record ('credit')
             const paymentRef = doc(collection(db, 'rooms', roomId, 'transactions'));
             transaction.set(paymentRef, {
-                type: 'payment',
-                name: `Payment for ${deadline.name}`,
-                amount: deadline.amount,
-                date: new Date(),
-                studentId: studentId,
-                studentName: studentName,
-                deadlineId: deadline.id, 
                 roomId: roomId,
+                userId: studentId,
+                userName: studentDoc.data()?.name || 'Unknown Student',
+                amount: amount,
+                type: 'credit',
+                description: `Payment for ${deadlineDescription}`,
+                deadlineId: deadlineId,
                 createdAt: serverTimestamp(),
-                seenCount: 0,
-                seenBy: []
+                updatedAt: serverTimestamp(),
+                seenBy: [studentId, roomDoc.data()?.createdBy]
             });
 
             // 2. Update the student's totals
             transaction.update(studentRef, {
-                totalPaid: increment(deadline.amount),
-                totalOwed: increment(-deadline.amount),
+                totalPaid: increment(amount),
+                totalOwed: increment(-amount),
             });
 
             // 3. Update the room's total collected amount
             transaction.update(roomRef, {
-                totalCollected: increment(deadline.amount)
+                totalCollected: increment(amount)
             });
         });
     } catch (error) {

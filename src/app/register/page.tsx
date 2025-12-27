@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -35,6 +36,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const formSchema = z
   .object({
+    name: z.string().min(1, { message: 'Name is required' }),
     email: z.string().email({
       message: 'Please enter a valid email address.',
     }),
@@ -78,6 +80,7 @@ export default function RegisterPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -100,9 +103,12 @@ export default function RegisterPage() {
       );
       
       await setDoc(doc(db, 'users', userCredential.user.uid), {
+        name: values.name,
         email: values.email,
         role: values.role,
         createdAt: serverTimestamp(),
+        rooms: [],
+        profilePic: `https://avatar.vercel.sh/${values.email}.png`
       });
 
       toast({
@@ -141,6 +147,19 @@ export default function RegisterPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Juan Dela Cruz" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="email"

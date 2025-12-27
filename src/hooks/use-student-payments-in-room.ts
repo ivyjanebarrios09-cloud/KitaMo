@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-export function useStudentPaymentsInRoom(roomId, studentId) {
+export function useStudentPaymentsInRoom(roomId: string, studentId: string) {
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -17,9 +18,9 @@ export function useStudentPaymentsInRoom(roomId, studentId) {
     const paymentsRef = collection(db, 'rooms', roomId, 'transactions');
     const q = query(
         paymentsRef, 
-        where('type', '==', 'payment'), 
-        where('studentId', '==', studentId),
-        orderBy('date', 'desc')
+        where('type', '==', 'credit'), 
+        where('userId', '==', studentId),
+        orderBy('createdAt', 'desc')
     );
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {

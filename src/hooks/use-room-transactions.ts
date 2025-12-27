@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-export function useRoomTransactions(roomId, type = null) {
+export function useRoomTransactions(roomId: string, type: string | null = null) {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -22,7 +22,7 @@ export function useRoomTransactions(roomId, type = null) {
         q = query(
             transactionsRef,
             where('type', '==', type),
-            orderBy('date', 'desc')
+            orderBy('createdAt', 'desc')
         );
     } else {
         q = query(

@@ -2,11 +2,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot, query, orderBy, getDocs, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 // This hook combines deadlines with student-specific payment information
-export function useStudentDeadlines(roomId, studentId) {
+export function useStudentDeadlines(roomId: string, studentId: string) {
   const [deadlines, setDeadlines] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -15,17 +15,18 @@ export function useStudentDeadlines(roomId, studentId) {
       setLoading(false);
       return;
     }
+    setLoading(true);
 
-    const deadlinesRef = collection(db, 'rooms', roomId, 'deadlines');
-    const deadlinesQuery = query(deadlinesRef, orderBy('date', 'desc'));
+    const deadlinesRef = collection(db, 'rooms', roomId, 'transactions');
+    const deadlinesQuery = query(deadlinesRef, where('type', '==', 'deadline'), orderBy('dueDate', 'desc'));
 
     const unsubscribeDeadlines = onSnapshot(deadlinesQuery, (deadlinesSnapshot) => {
         const allDeadlines = deadlinesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         const paymentsRef = collection(db, 'rooms', roomId, 'transactions');
         const paymentsQuery = query(paymentsRef, 
-            where('studentId', '==', studentId), 
-            where('type', '==', 'payment')
+            where('userId', '==', studentId), 
+            where('type', '==', 'credit')
         );
 
         const unsubscribePayments = onSnapshot(paymentsQuery, (paymentsSnapshot) => {

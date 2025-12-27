@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader } from '@/components/loader';
-import { Megaphone, Receipt, Calendar as CalendarIcon, Eye, Heart, Users, Building } from 'lucide-react';
+import { Megaphone, Receipt, Building, Users as UsersIcon, Heart, Eye } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useRoomTransactions } from '@/hooks/use-room-transactions';
 import { format } from 'date-fns';
@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/auth-context';
 import { markTransactionAsSeen } from '@/lib/firebase-actions';
 import { useRoom } from '@/hooks/use-room';
+import { useUserProfile } from '@/hooks/use-user-profile';
 
 
 const TransactionIcon = ({ type }) => {
@@ -23,17 +24,17 @@ const TransactionIcon = ({ type }) => {
     let iconColor = 'text-muted-foreground';
 
     switch (type) {
-      case 'expense':
+      case 'debit': // Expense
         icon = <Building className="h-6 w-6" />;
         bgColor = 'bg-red-100 dark:bg-red-900/30';
         iconColor = 'text-red-600 dark:text-red-400';
         break;
       case 'deadline':
-        icon = <Users className="h-6 w-6" />;
+        icon = <UsersIcon className="h-6 w-6" />;
         bgColor = 'bg-blue-100 dark:bg-blue-900/30';
         iconColor = 'text-blue-600 dark:text-blue-400';
         break;
-      case 'payment':
+      case 'credit': // Payment
           icon = <Receipt className="h-6 w-6" />;
           bgColor = 'bg-green-100 dark:bg-green-900/30';
           iconColor = 'text-green-600 dark:text-green-400';
@@ -54,9 +55,10 @@ export default function AnnouncementPage() {
   const roomId = params.roomId as string;
   const { transactions, loading } = useRoomTransactions(roomId);
   const { user } = useAuth();
+  const { userProfile } = useUserProfile(user?.uid);
   const { room } = useRoom(roomId);
 
-  const isChairperson = user?.uid === room?.ownerId;
+  const isChairperson = user?.uid === room?.createdBy;
 
   const handleSeen = (transactionId: string) => {
     if (!user) return;
@@ -72,12 +74,14 @@ export default function AnnouncementPage() {
       let subtitle = "New "
       if (transaction.type === 'deadline') {
           subtitle += "Fund Deadline";
+      } else if (transaction.type === 'debit') {
+          subtitle += "Expense";
       } else {
-          subtitle += transaction.type;
+        subtitle += "Payment"
       }
 
-      if(transaction.date) {
-        subtitle += ` - ${format(transaction.date.toDate(), 'MMMM do, yyyy')}`
+      if(transaction.createdAt) {
+        subtitle += ` - ${format(transaction.createdAt.toDate(), 'MMMM do, yyyy')}`
       }
       return subtitle;
   }
@@ -103,14 +107,14 @@ export default function AnnouncementPage() {
                         <div className="flex-1">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <h3 className="font-bold text-lg">{transaction.name}</h3>
+                                    <h3 className="font-bold text-lg">{transaction.description}</h3>
                                     <p className="text-sm text-muted-foreground">{getTransactionSubtitle(transaction)}</p>
                                 </div>
                                 <Badge
                                     variant={
-                                    transaction.type === 'expense'
+                                    transaction.type === 'debit'
                                         ? 'destructive'
-                                        : transaction.type === 'payment' ? 'secondary' : 'outline'
+                                        : transaction.type === 'credit' ? 'secondary' : 'outline'
                                     }
                                     className="capitalize"
                                 >
@@ -118,19 +122,18 @@ export default function AnnouncementPage() {
                                 </Badge>
                             </div>
 
-                            <p className="text-muted-foreground mt-2">{transaction.category || 'General'}</p>
                             <p className="text-2xl font-bold mt-1">₱{transaction.amount.toFixed(2)}</p>
                            
-                            {transaction.studentName && (
+                            {transaction.userName && (
                                 <p className="text-sm text-muted-foreground mt-1">
-                                    Paid by: {transaction.studentName}
+                                    {transaction.type === 'credit' ? 'Paid by:' : 'Added by:'} {transaction.userName}
                                 </p>
                             )}
                              <div className="flex items-center justify-between mt-4">
                                 {isChairperson ? (
                                     <div className="flex items-center text-sm text-muted-foreground">
                                         <Eye className="w-4 h-4 mr-1"/>
-                                        <span>{transaction.seenCount || 0} seen</span>
+                                        <span>{transaction.seenBy?.length || 0} seen</span>
                                     </div>
                                 ) : (
                                     <Button 
@@ -141,7 +144,7 @@ export default function AnnouncementPage() {
                                         className={hasSeen(transaction) ? "bg-primary/10 text-primary-foreground" : ""}
                                     >
                                         <Heart className={`w-4 h-4 mr-2 ${hasSeen(transaction) ? 'fill-primary' : ''}`}/>
-                                        {hasSeen(transaction) ? "Seen" : "Seen"}
+                                        {hasSeen(transaction) ? "Seen" : "Mark as Seen"}
                                     </Button>
                                 )}
                             </div>

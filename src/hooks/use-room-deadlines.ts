@@ -2,10 +2,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-export function useRoomDeadlines(roomId) {
+export function useRoomDeadlines(roomId: string) {
   const [deadlines, setDeadlines] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -15,8 +15,8 @@ export function useRoomDeadlines(roomId) {
       return;
     }
 
-    const deadlinesRef = collection(db, 'rooms', roomId, 'deadlines');
-    const q = query(deadlinesRef, orderBy('date', 'desc'));
+    const transactionsRef = collection(db, 'rooms', roomId, 'transactions');
+    const q = query(transactionsRef, where('type', '==', 'deadline'), orderBy('dueDate', 'desc'));
 
     const unsubscribe = onSnapshot(
       q,

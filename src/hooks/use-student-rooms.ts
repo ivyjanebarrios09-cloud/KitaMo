@@ -1,11 +1,11 @@
 
 'use client';
-
+// This hook is deprecated and will be removed. Use use-user-rooms instead.
 import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, getDocs, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-export function useStudentRooms(userId) {
+export function useStudentRooms(userId: string) {
   const [rooms, setRooms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -15,32 +15,30 @@ export function useStudentRooms(userId) {
       return;
     }
 
-    const fetchRooms = async () => {
-        setLoading(true);
-        const roomsRef = collection(db, 'rooms');
-        const q = query(collection(db, 'rooms'));
-        const querySnapshot = await getDocs(q);
+    const q = query(collection(db, 'rooms'), where('members', 'array-contains', userId));
 
-        const studentRooms: any[] = [];
-        for (const roomDoc of querySnapshot.docs) {
-            const studentRef = doc(db, 'rooms', roomDoc.id, 'students', userId);
-            const studentSnap = await getDocs(query(collection(db, 'rooms', roomDoc.id, 'students'), where('__name__', '==', userId)));
-            if (!studentSnap.empty) {
-                studentRooms.push({ id: roomDoc.id, ...roomDoc.data() });
-            }
+    const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+      const roomsData: any[] = [];
+      for (const doc of querySnapshot.docs) {
+        const roomData = { id: doc.id, ...doc.data() };
+        // Fetch creator's name
+        const userRef = doc(db, 'users', roomData.createdBy);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          roomData.createdByName = userSnap.data().name;
+        } else {
+          roomData.createdByName = "Unknown";
         }
-        setRooms(studentRooms);
-        setLoading(false);
-    }
-
-    // We can't use onSnapshot here easily without listening to every room's subcollection
-    // For now, we fetch once. If real-time is needed, a more complex listener setup is required.
-    fetchRooms().catch(error => {
+        roomsData.push(roomData);
+      }
+      setRooms(roomsData);
+      setLoading(false);
+    }, (error) => {
         console.error("Error fetching student rooms: ", error);
         setLoading(false);
     });
-    
 
+    return () => unsubscribe();
   }, [userId]);
 
   return { rooms, loading };

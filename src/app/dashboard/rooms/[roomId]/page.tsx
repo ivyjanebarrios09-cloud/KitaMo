@@ -1,6 +1,7 @@
+
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PiggyBank, Receipt, Users, Home, Wallet, CreditCard } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useParams } from 'next/navigation';
@@ -50,9 +51,9 @@ function ChairpersonRoomDashboard({ room, loading }) {
                     loading={loading}
                 />
                 <StatCard
-                    title="Students"
-                    value={room?.studentCount || '0'}
-                    subtext={`${room?.studentCount || 0} members have joined this room`}
+                    title="Members"
+                    value={room?.members?.length || '0'}
+                    subtext={`${room?.members?.length || 0} members have joined this room`}
                     icon={Users}
                     currency=""
                     loading={loading}
@@ -60,7 +61,7 @@ function ChairpersonRoomDashboard({ room, loading }) {
                 <StatCard
                     title="Total Collected"
                     value={room?.totalCollected?.toFixed(2) || '0.00'}
-                    subtext="Total funds received from students"
+                    subtext="Total funds received from members"
                     icon={Receipt}
                     loading={loading}
                 />
@@ -138,8 +139,8 @@ function StudentRoomDashboard({ roomId, userId }) {
                             ) : payments.length > 0 ? (
                                 payments.map(payment => (
                                     <TableRow key={payment.id}>
-                                        <TableCell>{payment.date ? format(payment.date.toDate(), 'PP') : 'N/A'}</TableCell>
-                                        <TableCell>{payment.name}</TableCell>
+                                        <TableCell>{payment.createdAt ? format(payment.createdAt.toDate(), 'PP') : 'N/A'}</TableCell>
+                                        <TableCell>{payment.description}</TableCell>
                                         <TableCell className="text-right font-medium">₱{payment.amount.toFixed(2)}</TableCell>
                                     </TableRow>
                                 ))
@@ -166,7 +167,7 @@ export default function RoomDashboardPage() {
         return <div className="flex justify-center p-8"><Loader /></div>
     }
 
-    const isChairperson = user?.uid === room?.ownerId;
+    const isChairperson = user?.uid === room?.createdBy;
 
     if (isChairperson) {
         return <ChairpersonRoomDashboard room={room} loading={loading} />;

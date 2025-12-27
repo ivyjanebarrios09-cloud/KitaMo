@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -12,7 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-export function useStudentTransactions(roomIds, count = 10) {
+export function useStudentTransactions(roomIds: string[], count = 10) {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -24,6 +25,9 @@ export function useStudentTransactions(roomIds, count = 10) {
     }
 
     setLoading(true);
+    
+    // Firestore 'in' queries on different fields are not supported in collection group queries.
+    // We must fetch and merge. For now, we'll just query by roomIds which is supported.
     const fetchTransactions = async () => {
         try {
             const q = query(
@@ -38,7 +42,6 @@ export function useStudentTransactions(roomIds, count = 10) {
               querySnapshot.forEach((doc) => {
                 transactionsData.push({
                   id: doc.id,
-                  roomId: doc.data().roomId,
                   ...doc.data(),
                 });
               });

@@ -9,21 +9,25 @@ import { Badge } from './ui/badge';
 import { addPayment } from '@/lib/firebase-actions';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
+import { useAuth } from '@/context/auth-context';
+import { useUserProfile } from '@/hooks/use-user-profile';
 
 export function StudentDeadlines({ roomId, student }) {
   const { deadlines, loading } = useStudentDeadlines(roomId, student.id);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { userProfile } = useUserProfile(user?.uid);
   const [payingDeadline, setPayingDeadline] = useState<string | null>(null);
 
   const handleMarkAsPaid = async (deadline: any) => {
-    if (deadline.status === 'Paid') return;
+    if (deadline.status === 'Paid' || !userProfile) return;
     
     setPayingDeadline(deadline.id);
     try {
-      await addPayment(roomId, student.id, student.name, deadline);
+      await addPayment(roomId, student.id, userProfile.name, deadline.id, deadline.amount, deadline.description);
       toast({
         title: 'Payment Recorded',
-        description: `Marked '${deadline.name}' as paid for ${student.name}.`,
+        description: `Marked '${deadline.description}' as paid for ${student.name}.`,
       });
     } catch (error) {
       toast({
@@ -57,8 +61,8 @@ export function StudentDeadlines({ roomId, student }) {
           {deadlines.length > 0 ? (
             deadlines.map((d) => (
               <TableRow key={d.id}>
-                <TableCell>{d.name}</TableCell>
-                <TableCell>{d.date ? format(d.date.toDate(), 'PP') : 'N/A'}</TableCell>
+                <TableCell>{d.description}</TableCell>
+                <TableCell>{d.dueDate ? format(d.dueDate.toDate(), 'PP') : 'N/A'}</TableCell>
                 <TableCell>₱{d.amount.toFixed(2)}</TableCell>
                 <TableCell>
                   <Badge variant={d.status === 'Paid' ? 'secondary' : 'destructive'}>

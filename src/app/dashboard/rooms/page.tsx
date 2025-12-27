@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -48,9 +47,8 @@ import React from 'react';
 import { createRoom, deleteRoom, updateRoom, joinRoom } from '@/lib/firebase-actions';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useUserProfile } from '@/hooks/use-user-profile';
-import { useStudentRooms } from '@/hooks/use-student-rooms';
 import { Badge } from '@/components/ui/badge';
 
 
@@ -69,19 +67,19 @@ const RoomCard = ({ room, onEdit, onDelete, isChairperson }) => (
       <CardHeader>
         <div className="flex justify-between items-start">
             <CardTitle className="text-xl">{room.name}</CardTitle>
-            {room.code && <Badge variant="outline">CODE: {room.code}</Badge>}
+            {isChairperson && room.code && <Badge variant="outline">CODE: {room.code}</Badge>}
         </div>
         <CardDescription className="h-10">{room.description}</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow">
         <div className="text-sm text-muted-foreground">
-            Created by: {room.ownerName}
+            Created by: {room.createdByName}
         </div>
       </CardContent>
       <CardFooter className="flex justify-between items-center text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4" />
-          <span>{room.studentCount || 0} Students</span>
+          <span>{room.members?.length || 0} Members</span>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" asChild>
@@ -247,7 +245,8 @@ const JoinRoomModal = ({ open, onOpenChange, onSubmit, formLoading }) => {
 
 function ChairpersonRoomsPage() {
     const { user } = useAuth();
-    const { rooms, loading } = useUserRooms(user?.uid);
+    const { userProfile } = useUserProfile(user?.uid);
+    const { rooms, loading } = useUserRooms(user?.uid, true); // isChairperson = true
     const [modalOpen, setModalOpen] = React.useState(false);
     const [formLoading, setFormLoading] = React.useState(false);
     const [selectedRoom, setSelectedRoom] = React.useState(null);
@@ -291,7 +290,7 @@ function ChairpersonRoomsPage() {
   
   
     const onSubmit = async (values: z.infer<typeof roomSchema>) => {
-      if (!user) return;
+      if (!user || !userProfile) return;
       setFormLoading(true);
   
       const isEditing = !!selectedRoom;
@@ -304,8 +303,7 @@ function ChairpersonRoomsPage() {
                   description: `${values.name} has been successfully updated.`,
               });
           } else {
-              const ownerName = user.displayName || user.email?.split('@')[0] || 'Anonymous';
-              await createRoom(user.uid, ownerName, values);
+              await createRoom(user.uid, userProfile.name, values);
               toast({
                   title: 'Room Created!',
                   description: `${values.name} has been successfully created.`,
@@ -352,7 +350,7 @@ function ChairpersonRoomsPage() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the room "{selectedRoom?.name}" and all of its associated data, including students, expenses, and deadlines.
+                            This action cannot be undone. This will permanently delete the room "{selectedRoom?.name}" and all of its associated data, including members and transactions.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -386,18 +384,17 @@ function ChairpersonRoomsPage() {
 
 function StudentRoomsPage() {
     const { user } = useAuth();
-    const { rooms, loading } = useStudentRooms(user?.uid);
+    const { userProfile } = useUserProfile(user?.uid);
+    const { rooms, loading } = useUserRooms(user?.uid, false);
     const { toast } = useToast();
     const [modalOpen, setModalOpen] = React.useState(false);
     const [formLoading, setFormLoading] = React.useState(false);
 
     const onJoinSubmit = async (values: z.infer<typeof joinRoomSchema>) => {
-        if (!user) return;
+        if (!user || !userProfile) return;
         setFormLoading(true);
         try {
-            const studentName = user.displayName || user.email?.split('@')[0] || 'Anonymous';
-            const studentEmail = user.email || '';
-            await joinRoom(values.code, user.uid, studentName, studentEmail);
+            await joinRoom(values.code, user.uid, userProfile.name, userProfile.email);
             toast({
                 title: "Successfully Joined!",
                 description: "You have been added to the room.",

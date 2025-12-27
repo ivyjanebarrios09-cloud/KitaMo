@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -20,7 +21,7 @@ export default function RoomDetailLayout({
   const { room, loading } = useRoom(roomId as string);
   const { user } = useAuth();
 
-  const isChairperson = user?.uid === room?.ownerId;
+  const isChairperson = user?.uid === room?.createdBy;
 
   return (
     <div className="flex flex-col h-full">

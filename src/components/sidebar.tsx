@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import Link from 'next/link';
@@ -36,6 +35,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useUserProfile } from '@/hooks/use-user-profile';
 
 
 const sidebarNavItems = [
@@ -44,13 +44,13 @@ const sidebarNavItems = [
   ];
 
 const roomSubNavItems = [
-    { href: '', label: 'Room Dashboard', icon: Home },
-    { href: '/announcement', label: 'Announcement', icon: Megaphone },
-    { href: '/expenses', label: 'Expenses', icon: Wallet },
-    { href: '/fund-deadlines', label: 'Fund Deadlines', icon: Calendar },
-    { href: '/students', label: 'Students', icon: UserIcon },
-    { href: '/statements', label: 'Statements', icon: ClipboardList },
-    { href: '/analytics', label: 'Expense Analytics', icon: BarChart3 },
+    { href: '', label: 'Room Dashboard', icon: Home, chairpersonOnly: false },
+    { href: '/announcement', label: 'Announcement', icon: Megaphone, chairpersonOnly: false },
+    { href: '/expenses', label: 'Expenses', icon: Wallet, chairpersonOnly: true },
+    { href: '/fund-deadlines', label: 'Fund Deadlines', icon: Calendar, chairpersonOnly: false },
+    { href: '/students', label: 'Members', icon: UserIcon, chairpersonOnly: true },
+    { href: '/statements', label: 'Statements', icon: ClipboardList, chairpersonOnly: true },
+    { href: '/analytics', label: 'Expense Analytics', icon: BarChart3, chairpersonOnly: true },
 ];
 
 const Logo = () => (
@@ -71,10 +71,12 @@ const Logo = () => (
     </svg>
   );
 
-function NavContent({ isMobile = false }: { isMobile?: boolean }) {
+function NavContent({ isMobile = false, userProfile }) {
     const pathname = usePathname();
     const isRoomRoute = pathname.startsWith('/dashboard/rooms/');
     const roomId = isRoomRoute ? pathname.split('/')[3] : null;
+
+    const isChairperson = userProfile?.role === 'chairperson';
 
     const renderLink = (item: any, isSubItem = false) => {
       const href = isSubItem && roomId ? `/dashboard/rooms/${roomId}${item.href}` : item.href;
@@ -116,6 +118,10 @@ function NavContent({ isMobile = false }: { isMobile?: boolean }) {
       );
     };
 
+    const roomNavs = isChairperson 
+      ? roomSubNavItems
+      : roomSubNavItems.filter(item => !item.chairpersonOnly);
+
     return (
         <>
          {sidebarNavItems.map((item) => renderLink(item))}
@@ -124,7 +130,7 @@ function NavContent({ isMobile = false }: { isMobile?: boolean }) {
                  {!isMobile && <p className="px-3 py-2 text-xs font-semibold text-muted-foreground/80 uppercase text-center">Room</p>}
                  {isMobile && <div className="pl-4 mt-2 space-y-1 border-l ml-3"><p className="px-3 py-2 text-xs font-semibold text-muted-foreground/80 uppercase">Room Menu</p></div>}
                  <div className={cn(isMobile && "pl-4 mt-2 space-y-1 border-l ml-3")}>
-                    {roomSubNavItems.map((item) => renderLink(item, true))}
+                    {roomNavs.map((item) => renderLink(item, true))}
                  </div>
                </div>
             )}
@@ -133,7 +139,7 @@ function NavContent({ isMobile = false }: { isMobile?: boolean }) {
 }
 
 
-export function Sidebar({isMobileSheet = false}: {isMobileSheet?: boolean}) {
+export function Sidebar({isMobileSheet = false, userProfile}: {isMobileSheet?: boolean, userProfile: any}) {
 
   const sidebarContent = (
     <>
@@ -147,7 +153,7 @@ export function Sidebar({isMobileSheet = false}: {isMobileSheet?: boolean}) {
             </Link>
         </div>
         <nav className="flex-1 py-4 px-2 space-y-2">
-            <NavContent isMobile={isMobileSheet}/>
+            <NavContent isMobile={isMobileSheet} userProfile={userProfile}/>
         </nav>
       </div>
 
@@ -183,10 +189,9 @@ export function Sidebar({isMobileSheet = false}: {isMobileSheet?: boolean}) {
   );
 }
 
-export function MobileSidebar({isSidebarOpen, setSidebarOpen}: {isSidebarOpen: boolean, setSidebarOpen: (open: boolean) => void}) {
+export function MobileSidebar({isSidebarOpen, setSidebarOpen, userProfile}: {isSidebarOpen: boolean, setSidebarOpen: (open: boolean) => void, userProfile: any}) {
     const { user, logout } = useAuth();
-    const userInitial = user?.email?.charAt(0).toUpperCase() || '?';
-    const chairpersonName = user?.displayName || user?.email?.split('@')[0] || 'Chairperson';
+    const userInitial = userProfile?.name?.charAt(0).toUpperCase() || '?';
 
     return (
         <div className="lg:hidden">
@@ -195,21 +200,21 @@ export function MobileSidebar({isSidebarOpen, setSidebarOpen}: {isSidebarOpen: b
                     <SheetHeader className="p-4">
                       <SheetTitle>Menu</SheetTitle>
                     </SheetHeader>
-                    <Sidebar isMobileSheet={true} />
+                    <Sidebar isMobileSheet={true} userProfile={userProfile}/>
                     <div className="p-2 border-t mt-auto">
-                    {user && (
+                    {user && userProfile && (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="w-full justify-start h-auto p-2">
                             <Avatar className="h-9 w-9">
                             <AvatarImage
-                                src={`https://avatar.vercel.sh/${user.email}.png`}
-                                alt={user.email!}
+                                src={userProfile.profilePic || `https://avatar.vercel.sh/${user.email}.png`}
+                                alt={userProfile.name}
                             />
                             <AvatarFallback>{userInitial}</AvatarFallback>
                             </Avatar>
                             <div className="flex flex-col items-start overflow-hidden ml-2">
-                                <span className="text-sm font-medium leading-none truncate">{chairpersonName}</span>
+                                <span className="text-sm font-medium leading-none truncate">{userProfile.name}</span>
                                 <span className="text-xs text-muted-foreground leading-none truncate">{user.email}</span>
                             </div>
                         </Button>
@@ -217,7 +222,7 @@ export function MobileSidebar({isSidebarOpen, setSidebarOpen}: {isSidebarOpen: b
                         <DropdownMenuContent className="w-56" align="end" forceMount>
                         <DropdownMenuLabel className="font-normal">
                             <div className="flex flex-col space-y-1">
-                            <p className="text-sm font-medium leading-none">{chairpersonName}</p>
+                            <p className="text-sm font-medium leading-none">{userProfile.name}</p>
                             <p className="text-xs leading-none text-muted-foreground">
                                 {user.email}
                             </p>
@@ -249,12 +254,14 @@ export function MobileSidebar({isSidebarOpen, setSidebarOpen}: {isSidebarOpen: b
     )
 }
 
-export function Header({onMenuClick}: {onMenuClick?: () => void}) {
+export function Header({onMenuClick, showMenuButton}: {onMenuClick?: () => void, showMenuButton?: boolean}) {
     const { user, logout } = useAuth();
-    const chairpersonName = user?.displayName || user?.email?.split('@')[0] || 'Chairperson';
+    const { userProfile } = useUserProfile(user?.uid);
+    const userInitial = userProfile?.name?.charAt(0).toUpperCase() || '?';
+
     return (
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-16 lg:px-6 sticky top-0 z-30">
-            {onMenuClick && <Button
+            {showMenuButton && onMenuClick && <Button
               variant="ghost"
               size="icon"
               className="lg:hidden"
@@ -267,23 +274,23 @@ export function Header({onMenuClick}: {onMenuClick?: () => void}) {
                 {/* Optional: Add search or other header elements here */}
             </div>
             <div className="flex items-center gap-4">
-              {user && (
+              {user && userProfile && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                       <Avatar className="h-9 w-9">
                         <AvatarImage
-                          src={`https://avatar.vercel.sh/${user.email}.png`}
-                          alt={user.email!}
+                          src={userProfile.profilePic || `https://avatar.vercel.sh/${user.email}.png`}
+                          alt={userProfile.name}
                         />
-                        <AvatarFallback>{user?.email?.charAt(0).toUpperCase() || '?'}</AvatarFallback>
+                        <AvatarFallback>{userInitial}</AvatarFallback>
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="end" forceMount>
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{chairpersonName}</p>
+                        <p className="text-sm font-medium leading-none">{userProfile.name}</p>
                         <p className="text-xs leading-none text-muted-foreground">
                           {user.email}
                         </p>
@@ -313,20 +320,23 @@ export function Header({onMenuClick}: {onMenuClick?: () => void}) {
     )
 }
 
-export function BottomNavBar() {
+export function BottomNavBar({userProfile}) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
-  const userInitial = user?.email?.charAt(0).toUpperCase() || '?';
-  const chairpersonName = user?.displayName || user?.email?.split('@')[0] || 'Chairperson';
-
+  const userInitial = userProfile?.name?.charAt(0).toUpperCase() || '?';
+  const isChairperson = userProfile?.role === 'chairperson';
+  
   const isRoomRoute = pathname.startsWith('/dashboard/rooms/');
   const roomId = isRoomRoute ? pathname.split('/')[3] : null;
 
   let navItems = sidebarNavItems;
 
   if (isRoomRoute && roomId) {
-    // In a room, we show room-specific nav, plus a back button
-    navItems = roomSubNavItems.map(item => ({
+    const roomNavs = isChairperson 
+      ? roomSubNavItems
+      : roomSubNavItems.filter(item => !item.chairpersonOnly);
+
+    navItems = roomNavs.map(item => ({
         ...item,
         href: `/dashboard/rooms/${roomId}${item.href}`
     })).slice(0, 4); // Limit to 4 for bottom nav
@@ -356,14 +366,14 @@ export function BottomNavBar() {
                 </Link>
             )
         })}
-         {user && (
+         {user && userProfile && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="flex flex-col items-center justify-center gap-1 text-muted-foreground w-full h-full cursor-pointer">
                   <Avatar className="h-6 w-6">
                     <AvatarImage
-                      src={`https://avatar.vercel.sh/${user.email}.png`}
-                      alt={user.email!}
+                      src={userProfile.profilePic || `https://avatar.vercel.sh/${user.email}.png`}
+                      alt={userProfile.name}
                     />
                     <AvatarFallback className="text-xs">{userInitial}</AvatarFallback>
                   </Avatar>
@@ -373,7 +383,7 @@ export function BottomNavBar() {
             <DropdownMenuContent className="w-56 mb-2" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{chairpersonName}</p>
+                  <p className="text-sm font-medium leading-none">{userProfile.name}</p>
                   <p className="text-xs leading-none text-muted-foreground">
                     {user.email}
                   </p>

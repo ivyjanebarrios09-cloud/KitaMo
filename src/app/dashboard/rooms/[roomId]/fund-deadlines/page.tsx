@@ -1,5 +1,4 @@
 
-
 'use client';
 import 'react-day-picker/dist/style.css';
 import {
@@ -52,42 +51,43 @@ import { useRoom } from '@/hooks/use-room';
 import { Badge } from '@/components/ui/badge';
 import { useRoomDeadlines } from '@/hooks/use-room-deadlines';
 import { useStudentDeadlines } from '@/hooks/use-student-deadlines';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
-import { Calendar } from '@/components/ui/calendar';
+import { useUserProfile } from '@/hooks/use-user-profile';
+
 
 const deadlineSchema = z.object({
-  title: z.string().min(1, 'Deadline title is required'),
-  amount: z.coerce.number().min(0.01, 'Amount must be greater than 0'),
-  dueDate: z.date({ required_error: 'Please select a due date' }),
-  category: z.string().optional(),
-  description: z.string().min(1, 'Description is required'),
-});
+    description: z.string().min(1, 'Description is required'),
+    amount: z.coerce.number().min(0.01, 'Amount must be greater than 0'),
+    dueDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+      message: "Please enter a valid date",
+    }),
+  });
+  
 
 function NewDeadlineModal({ roomId }: { roomId: string }) {
   const [open, setOpen] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { userProfile } = useUserProfile(user?.uid);
 
   const form = useForm<z.infer<typeof deadlineSchema>>({
     resolver: zodResolver(deadlineSchema),
     defaultValues: {
-      title: '',
-      amount: 0,
-      category: '',
       description: '',
+      amount: 0,
     },
   });
 
   const onSubmit = async (values: z.infer<typeof deadlineSchema>) => {
+    if (!user || !userProfile) return;
     setFormLoading(true);
     try {
-      await addDeadline(roomId, values);
+      await addDeadline(roomId, user.uid, userProfile.name, { ...values, dueDate: new Date(values.dueDate) });
       toast({
         title: 'Deadline Posted!',
-        description: `${values.title} has been posted for all students.`,
+        description: `${values.description} has been posted for all members.`,
       });
-      form.reset({ title: '', amount: 0, dueDate: undefined, category: '', description: '' });
+      form.reset();
       setOpen(false);
     } catch (error) {
       toast({
@@ -112,19 +112,22 @@ function NewDeadlineModal({ roomId }: { roomId: string }) {
         <DialogHeader>
           <DialogTitle>Post a New Fund Deadline</DialogTitle>
           <DialogDescription>
-            Create a deadline and notify students in the activity feed.
+            Create a deadline and notify members in the activity feed.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="title"
+              name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Deadline Title</FormLabel>
+                  <FormLabel>Description / Announcement</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Spring Formal Tickets" {...field} />
+                    <Textarea
+                      placeholder="e.g., Spring Formal Tickets"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -135,7 +138,7 @@ function NewDeadlineModal({ roomId }: { roomId: string }) {
               name="amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Amount per Student (₱)</FormLabel>
+                  <FormLabel>Amount per Member (₱)</FormLabel>
                   <FormControl>
                     <Input type="number" placeholder="0" {...field} />
                   </FormControl>
@@ -143,58 +146,14 @@ function NewDeadlineModal({ roomId }: { roomId: string }) {
                 </FormItem>
               )}
             />
-             <FormField
-                control={form.control}
-                name="dueDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Due Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={'outline'}
-                            className={cn(
-                              'w-full pl-3 text-left font-normal',
-                              !field.value && 'text-muted-foreground'
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, 'PPP')
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                         <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date < new Date(new Date().setHours(0,0,0,0))
-                            }
-                            initialFocus
-                         />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             <FormField
               control={form.control}
-              name="description"
+              name="dueDate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description / Announcement</FormLabel>
+                  <FormLabel>Due Date</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="Write your announcement here..."
-                      {...field}
-                    />
+                    <Input type="date" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -254,10 +213,10 @@ function ChairpersonFundDeadlines({ roomId }: { roomId: string }) {
               ) : deadlines.length > 0 ? (
                 deadlines.map((deadline) => (
                   <TableRow key={deadline.id}>
-                    <TableCell className="font-medium">{deadline.name}</TableCell>
+                    <TableCell className="font-medium">{deadline.description}</TableCell>
                     <TableCell>
-                      {deadline.date
-                        ? format(deadline.date.toDate(), 'PP')
+                      {deadline.dueDate
+                        ? format(deadline.dueDate.toDate(), 'PP')
                         : 'N/A'}
                     </TableCell>
                     <TableCell className="text-right font-medium">
@@ -315,8 +274,8 @@ function StudentFundDeadlines({ roomId, studentId }: { roomId: string, studentId
                         ) : deadlines.length > 0 ? (
                             deadlines.map((deadline) => (
                             <TableRow key={deadline.id}>
-                                <TableCell className="font-medium">{deadline.name}</TableCell>
-                                <TableCell>{deadline.date ? format(deadline.date.toDate(), 'PP') : 'N/A'}</TableCell>
+                                <TableCell className="font-medium">{deadline.description}</TableCell>
+                                <TableCell>{deadline.dueDate ? format(deadline.dueDate.toDate(), 'PP') : 'N/A'}</TableCell>
                                 <TableCell>₱{deadline.amount.toFixed(2)}</TableCell>
                                 <TableCell>₱{deadline.amountPaid.toFixed(2)}</TableCell>
                                 <TableCell>
@@ -351,7 +310,7 @@ export default function FundDeadlinesPage() {
     return <div className="flex justify-center p-8"><Loader /></div>
   }
 
-  const isChairperson = user?.uid === room?.ownerId;
+  const isChairperson = user?.uid === room?.createdBy;
 
   if (isChairperson) {
     return <ChairpersonFundDeadlines roomId={roomId} />;
