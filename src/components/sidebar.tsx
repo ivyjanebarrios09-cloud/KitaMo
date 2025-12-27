@@ -25,7 +25,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -41,6 +40,7 @@ import { useUserProfile } from '@/hooks/use-user-profile';
 const sidebarNavItems = [
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
     { href: '/dashboard/rooms', icon: Archive, label: 'Rooms' },
+    { href: '/dashboard/settings', icon: Settings, label: 'Settings' },
   ];
 
 const roomSubNavItems = [
@@ -171,9 +171,6 @@ export function Sidebar({isMobileSheet = false, userProfile}: {isMobileSheet?: b
 }
 
 export function MobileSidebar({isSidebarOpen, setSidebarOpen, userProfile}: {isSidebarOpen: boolean, setSidebarOpen: (open: boolean) => void, userProfile: any}) {
-    const { user, logout } = useAuth();
-    const userInitial = userProfile?.name?.charAt(0).toUpperCase() || '?';
-
     return (
         <div className="lg:hidden">
              <Sheet open={isSidebarOpen} onOpenChange={setSidebarOpen}>
@@ -188,13 +185,16 @@ export function MobileSidebar({isSidebarOpen, setSidebarOpen, userProfile}: {isS
     )
 }
 
-export function Header({onMenuClick, showMenuButton}: {onMenuClick?: () => void, showMenuButton?: boolean}) {
+export function Header({onMenuClick}: {onMenuClick?: () => void}) {
     const { user, logout } = useAuth();
     const { userProfile } = useUserProfile(user?.uid);
+    const pathname = usePathname();
+    const isRoomRoute = pathname.startsWith('/dashboard/rooms/');
+
 
     return (
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-16 lg:px-6 sticky top-0 z-30">
-            {showMenuButton && onMenuClick && <Button
+            {isRoomRoute && onMenuClick && <Button
               variant="ghost"
               size="icon"
               className="lg:hidden"
@@ -225,9 +225,9 @@ export function Header({onMenuClick, showMenuButton}: {onMenuClick?: () => void,
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                        <Link href="/dashboard/profile">
+                        <Link href="/dashboard/settings">
                             <Settings className="mr-2 h-4 w-4" />
-                            <span>Profile Settings</span>
+                            <span>Settings</span>
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
