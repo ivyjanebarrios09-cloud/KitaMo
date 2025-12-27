@@ -19,20 +19,22 @@ export function useStudentPaymentsInRoom(roomId: string, studentId: string) {
         setLoading(true);
         try {
             const paymentsRef = collection(db, 'rooms', roomId, 'transactions');
+            // Query only by studentId and type, then sort client-side.
             const q = query(
                 paymentsRef, 
                 where('userId', '==', studentId),
-                orderBy('createdAt', 'desc')
+                where('type', '==', 'credit')
             );
             
             const querySnapshot = await getDocs(q);
             const data: any[] = [];
             querySnapshot.forEach((doc) => {
-                const transaction = { id: doc.id, ...doc.data() };
-                if (transaction.type === 'credit') {
-                  data.push(transaction);
-                }
+                data.push({ id: doc.id, ...doc.data() });
             });
+            
+            // Sort on the client
+            data.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
+
             setPayments(data);
         } catch (error) {
             console.error(`Error fetching student payments: `, error);
