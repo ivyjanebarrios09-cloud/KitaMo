@@ -87,7 +87,7 @@ function StudentRoomDashboard({ roomId, userId }) {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                  <StatCard
                     title="Total Unpaid"
-                    value={(studentDetails?.totalOwed || 0).toFixed(2)}
+                    value={Math.max(0, studentDetails?.totalOwed || 0).toFixed(2)}
                     subtext="Your outstanding balance for this room."
                     icon={Wallet}
                     loading={loading}
