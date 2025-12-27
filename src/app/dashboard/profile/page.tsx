@@ -20,6 +20,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -74,30 +75,28 @@ export default function ProfileSettingsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex items-center gap-2">
-        <User className="w-6 h-6" />
-        <h1 className="text-2xl font-bold">Profile Settings</h1>
-      </div>
-      <Card className="shadow-md max-w-2xl">
-        <CardHeader>
-          <CardTitle>Account Information</CardTitle>
-          <CardDescription>
-            Update your personal details here.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4 mb-8">
+    <div className="flex flex-col gap-8 max-w-2xl mx-auto">
+        <div className="flex items-center gap-4">
             <Avatar className="h-20 w-20">
                 <AvatarImage src={userProfile?.profilePic} alt={userProfile?.name} />
                 <AvatarFallback>{userProfile?.name?.charAt(0) || 'U'}</AvatarFallback>
             </Avatar>
             <div className='space-y-1'>
-                <p className="text-xl font-semibold">{userProfile?.name}</p>
+                <p className="text-2xl font-semibold">{userProfile?.name}</p>
                 <p className="text-muted-foreground">{userProfile?.email}</p>
-                <p className="text-sm capitalize text-primary font-medium">{userProfile?.role}</p>
             </div>
-          </div>
+        </div>
+      <Card className="shadow-md">
+        <CardHeader>
+            <div className="flex items-center gap-2">
+                <User className="w-5 h-5" />
+                <CardTitle>Personal Information</CardTitle>
+            </div>
+          <CardDescription>
+            Update your display name. Your email and role cannot be changed.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
@@ -113,6 +112,20 @@ export default function ProfileSettingsPage() {
                   </FormItem>
                 )}
               />
+              <div className="space-y-2">
+                <FormLabel>Email Address</FormLabel>
+                <Input value={userProfile?.email || ''} disabled />
+                <FormDescription>
+                    You cannot change your email address.
+                </FormDescription>
+              </div>
+               <div className="space-y-2">
+                <FormLabel>Role</FormLabel>
+                <Input value={userProfile?.role || ''} disabled className="capitalize" />
+                 <FormDescription>
+                    Your role cannot be changed.
+                </FormDescription>
+              </div>
               <div className="flex justify-end">
                 <Button type="submit" disabled={formLoading}>
                   {formLoading ? <Loader className="h-4 w-4" /> : 'Save Changes'}
