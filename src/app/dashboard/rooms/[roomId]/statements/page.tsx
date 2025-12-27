@@ -28,7 +28,7 @@ import {
 import React from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useRoom } from '@/hooks/use-room';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Loader } from '@/components/loader';
 import { useToast } from '@/hooks/use-toast';
 
@@ -175,13 +175,18 @@ function ChairpersonStatementsPage() {
 
 function StudentStatementsPage() {
     const { toast } = useToast();
+    const router = useRouter();
+    const params = useParams();
+    const roomId = params.roomId as string;
 
     const handleActionClick = (label: string) => {
+        if (label === 'View') {
+            router.push(`/dashboard/rooms/${roomId}/statements/personal`);
+            return;
+        }
+
         let description = '';
         switch(label) {
-            case 'View':
-                description = 'Your statement is being prepared and will be displayed shortly.';
-                break;
             case 'PDF':
                 description = 'Your PDF download will begin shortly.';
                 break;
@@ -198,9 +203,9 @@ function StudentStatementsPage() {
     };
 
     const studentActions = [
-        { label: 'View', icon: <Eye className="mr-2 h-4 w-4" /> },
-        { label: 'PDF', icon: <FileText className="mr-2 h-4 w-4" /> },
-        { label: 'Excel', icon: <FileSpreadsheet className="mr-2 h-4 w-4" /> },
+        { label: 'View', icon: <Eye className="mr-2 h-4 w-4" />, disabled: false },
+        { label: 'PDF', icon: <FileText className="mr-2 h-4 w-4" />, disabled: true },
+        { label: 'Excel', icon: <FileSpreadsheet className="mr-2 h-4 w-4" />, disabled: true },
       ];
 
     return (
@@ -228,7 +233,7 @@ function StudentStatementsPage() {
                 <CardContent>
                      <div className="flex items-center justify-end gap-2">
                         {studentActions.map((action, index) => (
-                        <Button key={index} variant="outline" onClick={() => handleActionClick(action.label)}>
+                        <Button key={index} variant="outline" onClick={() => handleActionClick(action.label)} disabled={action.disabled}>
                             {action.icon}
                             {action.label}
                         </Button>
@@ -240,7 +245,7 @@ function StudentStatementsPage() {
                 <CardHeader>
                     <CardTitle>Coming Soon!</CardTitle>
                     <CardDescription>
-                        Full statement generation and download functionality is currently under construction. This is a test.
+                        Full statement generation and download functionality for PDF and Excel is currently under construction.
                     </CardDescription>
                 </CardHeader>
             </Card>
