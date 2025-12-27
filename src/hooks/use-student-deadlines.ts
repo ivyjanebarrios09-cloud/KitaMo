@@ -17,49 +17,42 @@ export function useStudentDeadlines(roomId: string, studentId: string) {
     }
     setLoading(true);
 
-    const deadlinesRef = collection(db, 'rooms', roomId, 'transactions');
-    const deadlinesQuery = query(deadlinesRef, where('type', '==', 'deadline'), orderBy('dueDate', 'desc'));
+    // Fetch all transactions, then filter/process on client to avoid composite indexes
+    const transactionsRef = collection(db, 'rooms', roomId, 'transactions');
+    const transactionsQuery = query(transactionsRef, orderBy('createdAt', 'desc'));
 
-    const unsubscribeDeadlines = onSnapshot(deadlinesQuery, (deadlinesSnapshot) => {
-        const allDeadlines = deadlinesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const unsubscribe = onSnapshot(transactionsQuery, (snapshot) => {
+        const allTransactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        const paymentsRef = collection(db, 'rooms', roomId, 'transactions');
-        const paymentsQuery = query(paymentsRef, 
-            where('userId', '==', studentId), 
-            where('type', '==', 'credit')
-        );
+        const allDeadlines = allTransactions
+          .filter(t => t.type === 'deadline')
+          .sort((a,b) => b.dueDate.toDate() - a.dueDate.toDate());
+        
+        const studentPayments = allTransactions
+          .filter(t => t.type === 'credit' && t.userId === studentId);
 
-        const unsubscribePayments = onSnapshot(paymentsQuery, (paymentsSnapshot) => {
-            const studentPayments = paymentsSnapshot.docs.map(doc => doc.data());
-
-            const processedDeadlines = allDeadlines.map(deadline => {
-                const paymentsForDeadline = studentPayments.filter(p => p.deadlineId === deadline.id);
-                const amountPaid = paymentsForDeadline.reduce((sum, p) => sum + p.amount, 0);
-                
-                // Consider floating point inaccuracies
-                const isPaid = amountPaid >= deadline.amount - 0.001;
-                
-                return {
-                    ...deadline,
-                    amountPaid: amountPaid,
-                    status: isPaid ? 'Paid' : 'Unpaid'
-                };
-            });
-
-            setDeadlines(processedDeadlines);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching student payments: ", error);
-            setLoading(false);
+        const processedDeadlines = allDeadlines.map(deadline => {
+            const paymentsForDeadline = studentPayments.filter(p => p.deadlineId === deadline.id);
+            const amountPaid = paymentsForDeadline.reduce((sum, p) => sum + p.amount, 0);
+            
+            // Consider floating point inaccuracies
+            const isPaid = amountPaid >= deadline.amount - 0.001;
+            
+            return {
+                ...deadline,
+                amountPaid: amountPaid,
+                status: isPaid ? 'Paid' : 'Unpaid'
+            };
         });
 
-        return () => unsubscribePayments();
+        setDeadlines(processedDeadlines);
+        setLoading(false);
     }, (error) => {
-        console.error("Error fetching deadlines: ", error);
+        console.error("Error fetching transactions for student deadlines: ", error);
         setLoading(false);
     });
 
-    return () => unsubscribeDeadlines();
+    return () => unsubscribe();
 
   }, [roomId, studentId]);
 

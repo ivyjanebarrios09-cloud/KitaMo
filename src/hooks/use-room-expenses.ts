@@ -15,15 +15,19 @@ export function useRoomExpenses(roomId) {
       return;
     }
 
+    // Fetch all transactions and filter client-side to avoid composite index
     const transactionsRef = collection(db, 'rooms', roomId, 'transactions');
-    const q = query(transactionsRef, where('type', '==', 'debit'), orderBy('createdAt', 'desc'));
+    const q = query(transactionsRef, orderBy('createdAt', 'desc'));
 
     const unsubscribe = onSnapshot(
       q,
       (querySnapshot) => {
         const data: any[] = [];
         querySnapshot.forEach((doc) => {
-            data.push({ id: doc.id, ...doc.data() });
+          const transaction = { id: doc.id, ...doc.data() };
+          if (transaction.type === 'debit') {
+            data.push(transaction);
+          }
         });
         setExpenses(data);
         setLoading(false);

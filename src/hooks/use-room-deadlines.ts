@@ -15,16 +15,22 @@ export function useRoomDeadlines(roomId: string) {
       return;
     }
 
+    // Fetch all transactions and filter client-side to avoid composite index
     const transactionsRef = collection(db, 'rooms', roomId, 'transactions');
-    const q = query(transactionsRef, where('type', '==', 'deadline'), orderBy('dueDate', 'desc'));
+    const q = query(transactionsRef, orderBy('createdAt', 'desc'));
 
     const unsubscribe = onSnapshot(
       q,
       (querySnapshot) => {
         const data: any[] = [];
         querySnapshot.forEach((doc) => {
-            data.push({ id: doc.id, ...doc.data() });
+            const transaction = { id: doc.id, ...doc.data() };
+            if (transaction.type === 'deadline') {
+                data.push(transaction);
+            }
         });
+        // Sort by dueDate on the client
+        data.sort((a, b) => b.dueDate.toDate() - a.dueDate.toDate());
         setDeadlines(data);
         setLoading(false);
       },
