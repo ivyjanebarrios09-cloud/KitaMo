@@ -63,7 +63,7 @@ const joinRoomSchema = z.object({
 
 
 const RoomCard = ({ room, onEdit, onDelete, isChairperson }) => {
-    const memberCount = (room.members?.length || 1) - 1;
+    const memberCount = isChairperson ? (room.members?.length || 1) - 1 : room.members?.length || 0;
     return (
     <Card className="shadow-sm hover:shadow-lg transition-shadow flex flex-col">
       <CardHeader>
@@ -81,7 +81,7 @@ const RoomCard = ({ room, onEdit, onDelete, isChairperson }) => {
       <CardFooter className="flex justify-between items-center text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4" />
-          <span>{isChairperson ? memberCount : (room.members?.length || 0)} Members</span>
+          <span>{memberCount} Members</span>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" asChild>
