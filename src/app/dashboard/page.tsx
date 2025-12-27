@@ -58,7 +58,7 @@ function ChairpersonDashboard() {
         const expenses = room.totalExpenses || 0;
         acc.totalCollected += collected;
         acc.totalExpenses += expenses;
-        acc.totalMembers += room.members?.length || 0;
+        acc.totalMembers += room.members?.length > 1 ? room.members.length -1 : 0;
         return acc;
     }, {
         totalCollected: 0,
@@ -164,14 +164,14 @@ function ChairpersonDashboard() {
 
 function StudentDashboard() {
     const { user } = useAuth();
-    const { userProfile } = useUserProfile(user?.uid);
+    const { userProfile, loading: profileLoading } = useUserProfile(user?.uid);
     const { rooms, loading: roomsLoading } = useUserRooms(user?.uid, false);
-    const roomIds = userProfile?.rooms || [];
+    const roomIds = rooms.map(r => r.id);
     const { transactions, loading: transactionsLoading } = useUserTransactions(roomIds);
     
     const studentName = userProfile?.name || user?.email?.split('@')[0] || 'Student';
 
-    const loading = roomsLoading || transactionsLoading;
+    const loading = profileLoading || roomsLoading || transactionsLoading;
 
     const getRoomName = (roomId) => {
         const room = rooms.find(r => r.id === roomId);
