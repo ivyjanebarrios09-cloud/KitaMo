@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 
   useEffect(() => {
-    // This effect handles the result from a redirect sign-in flow.
+    // This handles the result from a redirect sign-in flow (primarily for mobile)
     getRedirectResult(auth)
     .then(async (result: UserCredential | null) => {
       if (result) {
@@ -46,15 +46,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         });
 
         if (!userDoc.exists()) {
-          // If it's a new user, they need to select a role.
+          // New user: Redirect to select a role.
           router.push('/select-role');
         } else {
-          // Existing user goes to the dashboard.
+          // Existing user: Go to the dashboard.
           router.push('/dashboard');
         }
       }
-      // If result is null, it means this is not a redirect sign-in,
-      // so we let onAuthStateChanged handle the session.
+      // If result is null, it means this isn't a return from a redirect,
+      // so we let onAuthStateChanged handle the session state below.
     }).catch((error) => {
         console.error("Error during redirect sign in:", error);
         toast({
@@ -63,7 +63,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             description: error.message || 'An unexpected error occurred during sign-in.',
         });
     }).finally(() => {
-        // This is now the single source of truth for user state.
+        // This is the primary listener for auth state. It will also catch the user
+        // from the redirect result after the promise above resolves.
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setUser(user);
             setLoading(false);
