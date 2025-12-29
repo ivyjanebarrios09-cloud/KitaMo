@@ -62,9 +62,6 @@ function NavContent({ isMobile = false, userProfile }) {
     const isChairperson = userProfile?.role === 'chairperson';
     
     let sidebarNavItems = baseSidebarNavItems;
-    if (!isChairperson) {
-        sidebarNavItems = [...baseSidebarNavItems, personalStatementsNavItem];
-    }
 
 
     const renderLink = (item: any, isSubItem = false) => {
@@ -211,9 +208,6 @@ export function BottomNavBar({userProfile}) {
   const isChairperson = userProfile?.role === 'chairperson';
   
   let sidebarNavItems = baseSidebarNavItems;
-  if (!isChairperson) {
-      sidebarNavItems = [...baseSidebarNavItems, personalStatementsNavItem];
-  }
 
 
   const isRoomRoute = pathname.startsWith('/dashboard/rooms/');
