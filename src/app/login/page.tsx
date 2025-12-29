@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -41,21 +42,10 @@ const formSchema = z.object({
 });
 
 const Logo = () => (
-    <svg
-      width="28"
-      height="28"
-      viewBox="0 0 28 28"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="hsl(var(--primary))" />
-          <stop offset="100%" stopColor="hsl(var(--accent))" />
-        </linearGradient>
-      </defs>
-      <circle cx="14" cy="14" r="12" fill="url(#logo-gradient)" />
-    </svg>
+    <div className="flex items-center gap-2">
+        <img src="/image/logoooo.png" alt="KitaMo! Logo" className="h-7 w-7" />
+        <span className="font-bold text-xl text-primary">KitaMo!</span>
+    </div>
   );
 
 export default function LoginPage() {

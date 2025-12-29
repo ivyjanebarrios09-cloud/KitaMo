@@ -43,7 +43,6 @@ const baseSidebarNavItems = [
   ];
 
 const personalStatementsNavItem = { href: '/dashboard/personal-statements', icon: ClipboardList, label: 'Statements' };
-const settingsNavItem = { href: '/dashboard/settings', icon: Settings, label: 'Settings' };
 
 const roomSubNavItems = [
     { href: '', label: 'Room Dashboard', icon: Home, chairpersonOnly: false },
@@ -56,21 +55,9 @@ const roomSubNavItems = [
 ];
 
 const Logo = () => (
-    <svg
-      width="28"
-      height="28"
-      viewBox="0 0 28 28"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="hsl(var(--primary))" />
-          <stop offset="100%" stopColor="hsl(var(--accent))" />
-        </linearGradient>
-      </defs>
-      <circle cx="14" cy="14" r="12" fill="url(#logo-gradient)" />
-    </svg>
+    <div className="flex items-center gap-2">
+        <img src="/image/logoooo.png" alt="KitaMo! Logo" className="h-7 w-7" />
+    </div>
   );
 
 function NavContent({ isMobile = false, userProfile }) {
@@ -80,9 +67,10 @@ function NavContent({ isMobile = false, userProfile }) {
 
     const isChairperson = userProfile?.role === 'chairperson';
     
-    const sidebarNavItems = isChairperson
-      ? baseSidebarNavItems
-      : [...baseSidebarNavItems, personalStatementsNavItem];
+    let sidebarNavItems = baseSidebarNavItems;
+    if (!isChairperson) {
+        sidebarNavItems = [...baseSidebarNavItems, personalStatementsNavItem];
+    }
 
 
     const renderLink = (item: any, isSubItem = false) => {
@@ -257,9 +245,11 @@ export function BottomNavBar({userProfile}) {
   const pathname = usePathname();
   const isChairperson = userProfile?.role === 'chairperson';
   
-  const sidebarNavItems = isChairperson
-    ? baseSidebarNavItems
-    : [...baseSidebarNavItems, personalStatementsNavItem];
+  let sidebarNavItems = baseSidebarNavItems;
+  if (!isChairperson) {
+      sidebarNavItems = [...baseSidebarNavItems, personalStatementsNavItem];
+  }
+
 
   const isRoomRoute = pathname.startsWith('/dashboard/rooms/');
   const roomId = isRoomRoute ? pathname.split('/')[3] : null;
