@@ -16,7 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ArrowRight, Archive, MoreHorizontal, Users, Unarchive } from 'lucide-react';
+import { ArrowRight, Archive, MoreHorizontal, Users, ArchiveRestore } from 'lucide-react';
 import Link from 'next/link';
 import { useUserRooms } from '@/hooks/use-user-rooms';
 import { useAuth } from '@/context/auth-context';
@@ -55,7 +55,7 @@ const ArchivedRoomCard = ({ room, onUnarchive }) => {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => onUnarchive(room)}>
-            <Unarchive className="mr-2 h-4 w-4" />
+            <ArchiveRestore className="mr-2 h-4 w-4" />
             Unarchive
           </Button>
         </div>
