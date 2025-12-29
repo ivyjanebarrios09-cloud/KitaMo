@@ -1,10 +1,11 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/context/auth-context';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'KitaClone',
+  title: 'KitaMo!',
   description: 'A clone of kita-mo.vercel.app',
 };
 
