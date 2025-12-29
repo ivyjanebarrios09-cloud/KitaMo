@@ -115,20 +115,14 @@ export default function RegisterPage() {
                 const userDoc = await getDoc(userDocRef);
 
                 if (!userDoc.exists()) {
-                    await setDoc(userDocRef, {
-                        name: user.displayName,
-                        email: user.email,
-                        role: 'student',
-                        createdAt: serverTimestamp(),
-                        rooms: [],
-                        profilePic: user.photoURL || `https://avatar.vercel.sh/${user.email}.png`
+                    router.push('/select-role');
+                } else {
+                    toast({
+                        title: 'Welcome!',
+                        description: 'You have successfully signed in with Google.',
                     });
+                    router.push('/dashboard');
                 }
-                toast({
-                    title: 'Welcome!',
-                    description: 'You have successfully signed in with Google.',
-                });
-                router.push('/dashboard');
             }
         } catch (error: any) {
             toast({
@@ -193,34 +187,29 @@ export default function RegisterPage() {
       const userDoc = await getDoc(userDocRef);
 
       if (!userDoc.exists()) {
-        await setDoc(userDocRef, {
-          name: user.displayName,
-          email: user.email,
-          role: 'student', // Default role for new Google sign-ups
-          createdAt: serverTimestamp(),
-          rooms: [],
-          profilePic: user.photoURL || `https://avatar.vercel.sh/${user.email}.png`
+        router.push('/select-role');
+      } else {
+        toast({
+          title: 'Welcome!',
+          description: 'You have successfully signed in with Google.',
         });
+        router.push('/dashboard');
       }
-      
-      toast({
-        title: 'Welcome!',
-        description: 'You have successfully signed in with Google.',
-      });
-      router.push('/dashboard');
 
     } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Google Sign-In Failed',
-        description: error.message || 'An unexpected error occurred. Please try again.',
-      });
+       if (error.code !== 'auth/popup-closed-by-user') {
+            toast({
+                variant: 'destructive',
+                title: 'Google Sign-In Failed',
+                description: error.message || 'An unexpected error occurred. Please try again.',
+            });
+        }
     } finally {
         setGoogleLoading(false);
     }
   };
 
-  if (authLoading || user || googleLoading) {
+  if (authLoading || user) {
     return <div className="h-screen w-full flex items-center justify-center bg-background"><Loader /></div>;
   }
 
@@ -325,7 +314,7 @@ export default function RegisterPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={formLoading}>
+              <Button type="submit" className="w-full" disabled={formLoading || googleLoading}>
                 {formLoading ? <Loader className="h-4 w-4" /> : 'Create Account'}
               </Button>
             </form>
@@ -340,7 +329,7 @@ export default function RegisterPage() {
                 </span>
             </div>
           </div>
-          <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={googleLoading}>
+          <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={googleLoading || formLoading}>
             {googleLoading ? <Loader className="h-4 w-4"/> : <><GoogleIcon className="mr-2 h-5 w-5"/> Sign up with Google</>}
           </Button>
         </CardContent>

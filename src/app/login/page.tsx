@@ -88,12 +88,6 @@ export default function LoginPage() {
   });
 
   useEffect(() => {
-    if (!authLoading && user) {
-      router.push('/dashboard');
-    }
-  }, [user, authLoading, router]);
-
-  useEffect(() => {
     const handleRedirectResult = async () => {
         setGoogleLoading(true);
         try {
@@ -104,20 +98,14 @@ export default function LoginPage() {
                 const userDoc = await getDoc(userDocRef);
 
                 if (!userDoc.exists()) {
-                    await setDoc(userDocRef, {
-                        name: user.displayName,
-                        email: user.email,
-                        role: 'student',
-                        createdAt: serverTimestamp(),
-                        rooms: [],
-                        profilePic: user.photoURL || `https://avatar.vercel.sh/${user.email}.png`
+                    router.push('/select-role');
+                } else {
+                    toast({
+                        title: 'Welcome!',
+                        description: 'You have successfully signed in with Google.',
                     });
+                    router.push('/dashboard');
                 }
-                toast({
-                    title: 'Welcome!',
-                    description: 'You have successfully signed in with Google.',
-                });
-                router.push('/dashboard');
             }
         } catch (error: any) {
             toast({
@@ -131,6 +119,7 @@ export default function LoginPage() {
     };
     handleRedirectResult();
   }, [router, toast]);
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setFormLoading(true);
@@ -169,28 +158,23 @@ export default function LoginPage() {
       const userDoc = await getDoc(userDocRef);
 
       if (!userDoc.exists()) {
-        await setDoc(userDocRef, {
-          name: user.displayName,
-          email: user.email,
-          role: 'student',
-          createdAt: serverTimestamp(),
-          rooms: [],
-          profilePic: user.photoURL || `https://avatar.vercel.sh/${user.email}.png`
+        router.push('/select-role');
+      } else {
+        toast({
+            title: 'Welcome!',
+            description: 'You have successfully signed in with Google.',
         });
+        router.push('/dashboard');
       }
-      
-      toast({
-        title: 'Welcome!',
-        description: 'You have successfully signed in with Google.',
-      });
-      router.push('/dashboard');
 
     } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Google Sign-In Failed',
-        description: error.message || 'An unexpected error occurred. Please try again.',
-      });
+      if (error.code !== 'auth/popup-closed-by-user') {
+        toast({
+            variant: 'destructive',
+            title: 'Google Sign-In Failed',
+            description: error.message || 'An unexpected error occurred. Please try again.',
+        });
+      }
     } finally {
         setGoogleLoading(false);
     }
@@ -222,7 +206,7 @@ export default function LoginPage() {
   };
 
 
-  if (authLoading || user || googleLoading) {
+  if (authLoading || user) {
      return <div className="h-screen w-full flex items-center justify-center bg-background"><Loader /></div>;
   }
 
