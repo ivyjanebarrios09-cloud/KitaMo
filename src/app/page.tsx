@@ -1,13 +1,10 @@
+
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Header } from '@/components/header';
-import Image from 'next/image';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Footer } from '@/components/footer';
 
 export default function Home() {
-  const heroImage = PlaceHolderImages.find(p => p.id === 'hero-image');
-
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Header />
@@ -40,16 +37,6 @@ export default function Home() {
                   </Button>
                 </div>
               </div>
-              {heroImage && (
-                <Image
-                  src={heroImage.imageUrl}
-                  alt={heroImage.description}
-                  data-ai-hint={heroImage.imageHint}
-                  width={600}
-                  height={400}
-                  className="mx-auto aspect-video overflow-hidden rounded-xl object-cover shadow-lg sm:w-full"
-                />
-              )}
             </div>
           </div>
         </section>
