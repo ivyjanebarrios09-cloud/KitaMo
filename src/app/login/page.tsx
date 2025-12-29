@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { signInWithEmailAndPassword, signInWithRedirect, getRedirectResult, sendPasswordResetEmail, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, getRedirectResult, sendPasswordResetEmail, GoogleAuthProvider } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 
@@ -158,7 +158,42 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     const googleProvider = new GoogleAuthProvider();
-    await signInWithRedirect(auth, googleProvider);
+    googleProvider.setCustomParameters({
+        prompt: 'select_account'
+    });
+    try {
+      const userCredential = await signInWithPopup(auth, googleProvider);
+      const user = userCredential.user;
+
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (!userDoc.exists()) {
+        await setDoc(userDocRef, {
+          name: user.displayName,
+          email: user.email,
+          role: 'student',
+          createdAt: serverTimestamp(),
+          rooms: [],
+          profilePic: user.photoURL || `https://avatar.vercel.sh/${user.email}.png`
+        });
+      }
+      
+      toast({
+        title: 'Welcome!',
+        description: 'You have successfully signed in with Google.',
+      });
+      router.push('/dashboard');
+
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Google Sign-In Failed',
+        description: error.message || 'An unexpected error occurred. Please try again.',
+      });
+    } finally {
+        setGoogleLoading(false);
+    }
   };
 
   const handleForgotPassword = async () => {
