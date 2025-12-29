@@ -283,3 +283,5 @@ export function BottomNavBar({userProfile}) {
     </div>
   );
 }
+
+    
