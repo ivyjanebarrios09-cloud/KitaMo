@@ -31,30 +31,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-
-    // Handle redirect result
+    // This effect handles the result from a redirect sign-in flow.
     getRedirectResult(auth)
     .then(async (result: UserCredential | null) => {
       if (result) {
-        // This is the successfully signed in user.
+        // User has successfully signed in via redirect.
         const user = result.user;
         const userDocRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userDocRef);
 
+        toast({
+          title: 'Welcome!',
+          description: 'You have successfully signed in.',
+        });
+
         if (!userDoc.exists()) {
-            router.push('/select-role');
+          // If it's a new user, they need to select a role.
+          router.push('/select-role');
         } else {
-            toast({
-                title: 'Welcome!',
-                description: 'You have successfully signed in.',
-            });
-            router.push('/dashboard');
+          // Existing user goes to the dashboard.
+          router.push('/dashboard');
         }
       }
+      // If result is null, it means this is not a redirect sign-in,
+      // so we let onAuthStateChanged handle the session.
     }).catch((error) => {
         console.error("Error during redirect sign in:", error);
         toast({
@@ -62,11 +62,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             title: 'Sign-In Failed',
             description: error.message || 'An unexpected error occurred during sign-in.',
         });
+    }).finally(() => {
+        // This is now the single source of truth for user state.
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            setUser(user);
+            setLoading(false);
+        });
+        return () => unsubscribe();
     });
-
-
-    return () => unsubscribe();
-  }, [router, toast]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   const logout = () => {
     signOut(auth);
