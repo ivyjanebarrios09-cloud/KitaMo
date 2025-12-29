@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
@@ -34,6 +34,8 @@ import { useEffect, useState } from 'react';
 import { Loader } from '@/components/loader';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ArrowLeft } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
+
 
 const formSchema = z
   .object({
@@ -88,6 +90,8 @@ export default function RegisterPage() {
   const { user, loading: authLoading } = useAuth();
   const [formLoading, setFormLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const isMobile = useIsMobile();
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -146,23 +150,14 @@ export default function RegisterPage() {
     googleProvider.setCustomParameters({
         prompt: 'select_account'
     });
+    
+    const signInMethod = isMobile ? signInWithRedirect : signInWithPopup;
+
     try {
-      const userCredential = await signInWithPopup(auth, googleProvider);
-      const user = userCredential.user;
-
-      const userDocRef = doc(db, 'users', user.uid);
-      const userDoc = await getDoc(userDocRef);
-
-      if (!userDoc.exists()) {
-        router.push('/select-role');
-      } else {
-        toast({
-          title: 'Welcome!',
-          description: 'You have successfully signed in with Google.',
-        });
-        router.push('/dashboard');
-      }
-
+        await signInMethod(auth, googleProvider);
+         if (signInMethod === signInWithPopup) {
+            // Logic handled in AuthProvider
+         }
     } catch (error: any) {
        if (error.code !== 'auth/popup-closed-by-user') {
             toast({

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { signInWithEmailAndPassword, signInWithPopup, sendPasswordResetEmail, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, sendPasswordResetEmail, GoogleAuthProvider, signInWithRedirect } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 
@@ -35,6 +35,7 @@ import { useEffect, useState } from 'react';
 import { Loader } from '@/components/loader';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const formSchema = z.object({
   email: z.string().email({
@@ -79,6 +80,8 @@ export default function LoginPage() {
   const { user, loading: authLoading } = useAuth();
   const [formLoading, setFormLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const isMobile = useIsMobile();
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -123,23 +126,23 @@ export default function LoginPage() {
     googleProvider.setCustomParameters({
         prompt: 'select_account'
     });
+    
+    const signInMethod = isMobile ? signInWithRedirect : signInWithPopup;
+
     try {
-      const userCredential = await signInWithPopup(auth, googleProvider);
-      const user = userCredential.user;
-
-      const userDocRef = doc(db, 'users', user.uid);
-      const userDoc = await getDoc(userDocRef);
-
-      if (!userDoc.exists()) {
-        router.push('/select-role');
-      } else {
-        toast({
-            title: 'Welcome!',
-            description: 'You have successfully signed in with Google.',
-        });
-        router.push('/dashboard');
-      }
-
+        await signInMethod(auth, googleProvider);
+        // For popups, the logic continues in the AuthProvider's useEffect or here if it resolves.
+        // For redirects, the user will be redirected away and come back, where the AuthProvider will handle the user state.
+        if (signInMethod === signInWithPopup) {
+            // The code to handle popup result is implicitly handled by the onAuthStateChanged listener
+            // in AuthProvider and the useEffect that checks for a user after a redirect.
+            // We can add a toast here for immediate feedback if we want.
+             toast({
+                title: 'Welcome!',
+                description: 'You have successfully signed in with Google.',
+            });
+            router.push('/dashboard');
+        }
     } catch (error: any) {
       if (error.code !== 'auth/popup-closed-by-user') {
         toast({

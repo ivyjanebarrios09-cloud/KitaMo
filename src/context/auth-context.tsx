@@ -1,10 +1,15 @@
+
 'use client';
 
 import type { User } from 'firebase/auth';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { onAuthStateChanged, signOut, getRedirectResult, UserCredential } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
+import { useRouter } from 'next/navigation';
+import { doc, getDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+
 
 interface AuthContextType {
   user: User | null;
@@ -21,6 +26,9 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const { toast } = useToast();
+
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -28,8 +36,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     });
 
+    // Handle redirect result
+    getRedirectResult(auth)
+    .then(async (result: UserCredential | null) => {
+      if (result) {
+        // This is the successfully signed in user.
+        const user = result.user;
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (!userDoc.exists()) {
+            router.push('/select-role');
+        } else {
+            toast({
+                title: 'Welcome!',
+                description: 'You have successfully signed in.',
+            });
+            router.push('/dashboard');
+        }
+      }
+    }).catch((error) => {
+        console.error("Error during redirect sign in:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Sign-In Failed',
+            description: error.message || 'An unexpected error occurred during sign-in.',
+        });
+    });
+
+
     return () => unsubscribe();
-  }, []);
+  }, [router, toast]);
   
   const logout = () => {
     signOut(auth);
