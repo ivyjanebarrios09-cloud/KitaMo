@@ -2,10 +2,11 @@
 'use client';
 
 import AuthGuard from '@/components/auth-guard';
-import { Sidebar, Header, BottomNavBar } from '@/components/sidebar';
-import { useAuth } from '@/context/auth-context';
+import { Header, Sidebar } from '@/components/sidebar';
 import { Loader } from '@/components/loader';
+import { useAuth } from '@/context/auth-context';
 import { useUserProfile } from '@/hooks/use-user-profile';
+import { BottomNavBar } from '@/components/sidebar';
 
 export default function DashboardLayout({
   children,
@@ -29,10 +30,12 @@ export default function DashboardLayout({
         <Sidebar userProfile={userProfile} />
         <div className="flex-1 flex flex-col relative">
           <Header />
-          <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 pb-20 lg:pb-8">
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 pb-20">
             {children}
           </main>
-          <BottomNavBar userProfile={userProfile} />
+          <div className="lg:hidden">
+            <BottomNavBar userProfile={userProfile} />
+          </div>
         </div>
       </div>
     </AuthGuard>
