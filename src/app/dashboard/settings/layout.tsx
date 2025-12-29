@@ -1,13 +1,14 @@
 
 'use client';
 
-import { User, Lock, Settings } from 'lucide-react';
+import { User, Lock, Settings, SunMoon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 const settingsNavItems = [
   { href: '/dashboard/settings', label: 'Personal Information', icon: User },
+  { href: '/dashboard/settings/appearance', label: 'Appearance', icon: SunMoon },
   { href: '/dashboard/settings/security', label: 'Account Security', icon: Lock },
 ];
 
