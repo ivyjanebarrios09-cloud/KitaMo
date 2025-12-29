@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -23,7 +24,6 @@ import { format } from 'date-fns';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { useUserRooms } from '@/hooks/use-user-rooms';
 import { useUserTransactions } from '@/hooks/use-user-transactions';
-import { Calculator } from '@/components/calculator';
 
 const StatCard = ({ title, value, icon: Icon, currency = '₱', loading = false }) => (
   <Card className="shadow-sm hover:shadow-md transition-shadow">
@@ -41,6 +41,68 @@ const StatCard = ({ title, value, icon: Icon, currency = '₱', loading = false 
     </CardContent>
   </Card>
 );
+
+const TransactionRow = ({ transaction, roomName }) => (
+    <div className="flex justify-between items-center py-4 border-b last:border-b-0">
+        <div className="flex items-center gap-3">
+            <div className="flex-shrink-0">
+                 <Badge
+                    variant={
+                    transaction.type === 'debit'
+                        ? 'destructive'
+                        : 'secondary'
+                    }
+                    className="capitalize w-16 justify-center"
+                >
+                    {transaction.type}
+                </Badge>
+            </div>
+            <div>
+                <p className="font-semibold truncate max-w-[150px] sm:max-w-none">{transaction.description}</p>
+                <p className="text-sm text-muted-foreground">
+                    <Link href={`/dashboard/rooms/${transaction.roomId}`} className="hover:underline">
+                        {roomName}
+                    </Link>
+                    {' · '}
+                    {transaction.createdAt ? format(transaction.createdAt.toDate(), 'PP') : 'N/A'}
+                </p>
+            </div>
+        </div>
+        <div className="font-medium text-right whitespace-nowrap">
+            ₱{transaction.amount.toFixed(2)}
+        </div>
+    </div>
+)
+
+const StudentTransactionRow = ({ transaction, roomName }) => (
+    <div className="flex justify-between items-center py-4 border-b last:border-b-0">
+        <div className="flex items-center gap-3">
+             <div className="flex-shrink-0">
+                <Badge
+                    variant={
+                    transaction.type === 'debit'
+                        ? 'destructive'
+                        : transaction.type === 'deadline' ? 'outline' : 'secondary'
+                    }
+                    className="capitalize w-20 justify-center"
+                >
+                    {transaction.type}
+                </Badge>
+            </div>
+            <div>
+                <p className="font-semibold truncate max-w-[150px] sm:max-w-none">{transaction.description}</p>
+                <p className="text-sm text-muted-foreground">
+                    {roomName}
+                    {' · '}
+                    {transaction.createdAt ? format(transaction.createdAt.toDate(), 'PP') : 'N/A'}
+                </p>
+            </div>
+        </div>
+         <div className="font-medium text-right whitespace-nowrap">
+            ₱{transaction.amount.toFixed(2)}
+        </div>
+    </div>
+)
 
 
 function ChairpersonDashboard() {
@@ -83,87 +145,42 @@ function ChairpersonDashboard() {
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <StatCard title="Total Collected" value={stats.totalCollected.toFixed(2)} icon={PiggyBank} loading={loading}/>
-                    <StatCard title="Total Expenses" value={stats.totalExpenses.toFixed(2)} icon={Receipt} loading={loading} />
-                    <StatCard title="Net Balance" value={stats.netBalance.toFixed(2)} icon={Scale} loading={loading} />
-                    <StatCard
-                    title="Total Members"
-                    value={stats.totalMembers}
-                    icon={Users}
-                    currency=""
-                    loading={loading}
-                    />
-                </div>
-                <div className="lg:col-span-1">
-                    <Calculator />
-                </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard title="Total Collected" value={stats.totalCollected.toFixed(2)} icon={PiggyBank} loading={loading}/>
+                <StatCard title="Total Expenses" value={stats.totalExpenses.toFixed(2)} icon={Receipt} loading={loading} />
+                <StatCard title="Net Balance" value={stats.netBalance.toFixed(2)} icon={Scale} loading={loading} />
+                <StatCard
+                title="Total Members"
+                value={stats.totalMembers}
+                icon={Users}
+                currency=""
+                loading={loading}
+                />
             </div>
 
             <Card className="shadow-lg">
                 <CardHeader>
                 <CardTitle>Recent History</CardTitle>
-                <p className="text-sm text-muted-foreground">
+                <CardDescription>
                     The last 10 transactions across all of your rooms.
-                </p>
+                </CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <div className="overflow-x-auto">
-                        <Table>
-                            <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[100px]">Type</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Room</TableHead>
-                                <TableHead>Description</TableHead>
-                                <TableHead className="text-right">Amount</TableHead>
-                            </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                            {loading ? (
-                                <TableRow>
-                                    <TableCell colSpan={5} className="text-center">
-                                        <div className="flex justify-center p-8"><Loader/></div>
-                                    </TableCell>
-                                </TableRow>
-                            ) : transactions.length > 0 ? (
-                                transactions.map((transaction) => (
-                                <TableRow key={transaction.id}>
-                                    <TableCell>
-                                    <Badge
-                                        variant={
-                                        transaction.type === 'debit'
-                                            ? 'destructive'
-                                            : 'secondary'
-                                        }
-                                        className="capitalize"
-                                    >
-                                        {transaction.type}
-                                    </Badge>
-                                    </TableCell>
-                                    <TableCell className="whitespace-nowrap">{transaction.createdAt ? format(transaction.createdAt.toDate(), 'PP') : 'N/A'}</TableCell>
-                                    <TableCell>
-                                    <Link href={`/dashboard/rooms/${transaction.roomId}`} className="text-primary hover:underline whitespace-nowrap">
-                                        {getRoomName(transaction.roomId)}
-                                    </Link>
-                                    </TableCell>
-                                    <TableCell className="min-w-[150px]">{transaction.description}</TableCell>
-                                    <TableCell className="text-right font-medium whitespace-nowrap">
-                                    ₱{transaction.amount.toFixed(2)}
-                                    </TableCell>
-                                </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                <TableCell colSpan={5} className="text-center h-24">
-                                    No recent transactions found.
-                                </TableCell>
-                                </TableRow>
-                            )}
-                            </TableBody>
-                        </Table>
-                    </div>
+                <CardContent className="p-0 sm:p-6 sm:pt-0">
+                    {loading ? (
+                         <div className="flex justify-center p-8"><Loader/></div>
+                    ) : transactions.length > 0 ? (
+                        <div className="flow-root">
+                            <div className="-my-4 divide-y divide-border">
+                                {transactions.map((transaction) => (
+                                    <TransactionRow key={transaction.id} transaction={transaction} roomName={getRoomName(transaction.roomId)}/>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-center h-24 flex items-center justify-center text-muted-foreground">
+                            No recent transactions found.
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </div>
@@ -197,64 +214,26 @@ function StudentDashboard() {
              <Card className="shadow-lg">
                 <CardHeader>
                 <CardTitle>Recent History</CardTitle>
-                <p className="text-sm text-muted-foreground">
+                <CardDescription>
                     The latest deadlines and expenses across all of your joined rooms.
-                </p>
+                </CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <div className="overflow-x-auto">
-                        <Table>
-                            <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[100px]">Type</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Room</TableHead>
-                                <TableHead>Description</TableHead>
-                                <TableHead className="text-right">Amount</TableHead>
-                            </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                            {loading ? (
-                                <TableRow>
-                                    <TableCell colSpan={5} className="text-center">
-                                        <div className="flex justify-center p-8"><Loader/></div>
-                                    </TableCell>
-                                </TableRow>
-                            ) : transactions.length > 0 ? (
-                                transactions.map((transaction) => (
-                                <TableRow key={transaction.id}>
-                                    <TableCell>
-                                    <Badge
-                                        variant={
-                                        transaction.type === 'debit'
-                                            ? 'destructive'
-                                            : transaction.type === 'deadline' ? 'outline' : 'secondary'
-                                        }
-                                        className="capitalize"
-                                    >
-                                        {transaction.type}
-                                    </Badge>
-                                    </TableCell>
-                                    <TableCell className="whitespace-nowrap">{transaction.createdAt ? format(transaction.createdAt.toDate(), 'PP') : 'N/A'}</TableCell>
-                                    <TableCell className="whitespace-nowrap">
-                                        {getRoomName(transaction.roomId)}
-                                    </TableCell>
-                                    <TableCell className="min-w-[150px]">{transaction.description}</TableCell>
-                                    <TableCell className="text-right font-medium whitespace-nowrap">
-                                    ₱{transaction.amount.toFixed(2)}
-                                    </TableCell>
-                                </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                <TableCell colSpan={5} className="text-center h-24">
-                                    No recent transactions found.
-                                </TableCell>
-                                </TableRow>
-                            )}
-                            </TableBody>
-                        </Table>
-                    </div>
+                <CardContent className="p-0 sm:p-6 sm:pt-0">
+                     {loading ? (
+                        <div className="flex justify-center p-8"><Loader/></div>
+                    ) : transactions.length > 0 ? (
+                        <div className="flow-root">
+                            <div className="-my-4 divide-y divide-border">
+                                {transactions.map((transaction) => (
+                                    <StudentTransactionRow key={transaction.id} transaction={transaction} roomName={getRoomName(transaction.roomId)}/>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-center h-24 flex items-center justify-center text-muted-foreground">
+                            No recent transactions found.
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </div>

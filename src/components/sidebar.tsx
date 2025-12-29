@@ -16,6 +16,7 @@ import {
   Settings,
   Megaphone,
   ArchiveRestore,
+  Calculator
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import {
@@ -40,6 +41,7 @@ const baseSidebarNavItems = [
 
 const chairpersonExtraNav = [
     { href: '/dashboard/archived-rooms', icon: ArchiveRestore, label: 'Archived Rooms' },
+    { href: '/dashboard/calculator', icon: Calculator, label: 'Calculator' },
 ];
 
 const roomSubNavItems = [
