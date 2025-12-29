@@ -7,6 +7,7 @@ import { Loader } from '@/components/loader';
 import { useAuth } from '@/context/auth-context';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { BottomNavBar } from '@/components/sidebar';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function DashboardLayout({
   children,
@@ -15,6 +16,7 @@ export default function DashboardLayout({
 }) {
   const { user } = useAuth();
   const { userProfile, loading } = useUserProfile(user?.uid);
+  const isMobile = useIsMobile();
 
   if (loading) {
     return (
@@ -33,9 +35,7 @@ export default function DashboardLayout({
           <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 pb-20">
             {children}
           </main>
-          <div className="lg:hidden">
-            <BottomNavBar userProfile={userProfile} />
-          </div>
+          {isMobile && <BottomNavBar userProfile={userProfile} />}
         </div>
       </div>
     </AuthGuard>
