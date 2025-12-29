@@ -165,24 +165,6 @@ export function Sidebar({isMobileSheet = false, userProfile}: {isMobileSheet?: b
   );
 }
 
-export function MobileSidebar({isSidebarOpen, setSidebarOpen, userProfile}: {isSidebarOpen: boolean, setSidebarOpen: (open: boolean) => void, userProfile: any}) {
-    return (
-        <div className="lg:hidden">
-             <Sheet open={isSidebarOpen} onOpenChange={setSidebarOpen}>
-                <SheetContent side="left" className="flex flex-col p-0 w-72">
-                    <SheetHeader className="p-4 border-b">
-                        <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-lg">
-                           <Logo />
-                           <SheetTitle>KitaMo!</SheetTitle>
-                        </Link>
-                    </SheetHeader>
-                    <Sidebar isMobileSheet={true} userProfile={userProfile}/>
-                </SheetContent>
-            </Sheet>
-        </div>
-    )
-}
-
 export function Header({onMenuClick}: {onMenuClick?: () => void}) {
     const { user, logout } = useAuth();
     const { userProfile } = useUserProfile(user?.uid);
