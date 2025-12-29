@@ -15,13 +15,13 @@ export default function Home() {
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-4">
                   <div className="inline-block rounded-lg bg-secondary px-3 py-1 text-sm text-secondary-foreground">
-                    Your Personal Task Manager
+                    Your Financial Class Manager
                   </div>
                   <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline text-primary">
-                    Organize Your Life with KitaMo!
+                    Organize Your Class Funds with KitaMo!
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl mx-auto">
-                    A simple, modern, and fast way to manage your tasks. Stay organized, focused, and achieve more every day.
+                    A simple, modern, and transparent way to manage your class or organization's finances. Stay organized, track payments, and generate reports with ease.
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row justify-center">
@@ -46,24 +46,24 @@ export default function Home() {
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <div className="inline-block rounded-lg bg-secondary px-3 py-1 text-sm">Features</div>
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Everything You Need to Be Productive</h2>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Everything You Need for Financial Tracking</h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  KitaMo! provides a comprehensive set of tools to help you manage your tasks efficiently and effectively.
+                  KitaMo! provides a comprehensive set of tools to help student organizations manage their finances efficiently and transparently.
                 </p>
               </div>
             </div>
-            <div className="mx-auto grid max-w-5xl items-start gap-8 sm:grid-cols-2 md:gap-12 lg:grid-cols-3 mt-12">
+            <div className="mx-auto flex max-w-3xl flex-col items-stretch gap-8 mt-12">
               <div className="grid gap-1 text-center p-6 rounded-lg hover:bg-card transition-all">
-                <h3 className="text-lg font-bold">Easy Task Management</h3>
-                <p className="text-sm text-muted-foreground">Quickly add, edit, and delete tasks. Mark them as complete to track your progress.</p>
+                <h3 className="text-lg font-bold">Financial Rooms</h3>
+                <p className="text-sm text-muted-foreground">Create dedicated rooms for your organization or class to track collections and expenses in one place.</p>
               </div>
               <div className="grid gap-1 text-center p-6 rounded-lg hover:bg-card transition-all">
-                <h3 className="text-lg font-bold">Secure Authentication</h3>
-                <p className="text-sm text-muted-foreground">Your data is safe with our secure email and password authentication powered by Firebase.</p>
+                <h3 className="text-lg font-bold">Real-Time Tracking</h3>
+                <p className="text-sm text-muted-foreground">Monitor payments and expenses as they happen with a live activity feed for all members.</p>
               </div>
               <div className="grid gap-1 text-center p-6 rounded-lg hover:bg-card transition-all">
-                <h3 className="text-lg font-bold">Cross-Device Sync</h3>
-                <p className="text-sm text-muted-foreground">Your tasks are synced in real-time across all your devices, thanks to Firestore.</p>
+                <h3 className="text-lg font-bold">Statement Generation</h3>
+                <p className="text-sm text-muted-foreground">Easily generate and download financial statements for reporting and transparency.</p>
               </div>
             </div>
           </div>
