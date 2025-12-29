@@ -11,9 +11,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/context/auth-context';
-import { Lock, Settings, LogOut } from 'lucide-react';
+import { Lock, LogOut } from 'lucide-react';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -59,7 +58,7 @@ export default function AccountSecurityPage() {
             <CardHeader>
                 <CardTitle>Account Security</CardTitle>
                 <CardDescription>
-                    Manage your password, privacy, and log out from your account.
+                    Manage your password and log out from your account.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-8">
@@ -74,21 +73,6 @@ export default function AccountSecurityPage() {
                     <p className="text-sm text-muted-foreground">
                         Click "Change Password" to receive a password reset link via email.
                     </p>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Privacy Settings</h3>
-                    <Card className='bg-muted/30'>
-                        <CardContent className='p-4 flex items-center justify-between'>
-                            <div>
-                                <h4 className='font-medium'>Public Profile</h4>
-                                <p className='text-sm text-muted-foreground'>Allow others to see your profile information.</p>
-                            </div>
-                            <Switch disabled/>
-                        </CardContent>
-                    </Card>
                 </div>
 
                 <Separator />
