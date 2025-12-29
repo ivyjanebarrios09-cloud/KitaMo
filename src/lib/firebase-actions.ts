@@ -1,5 +1,6 @@
 
-import { addDoc, collection, serverTimestamp, writeBatch, doc, getDocs, query, where, updateDoc, deleteDoc, runTransaction, increment, arrayUnion, getDoc, collectionGroup } from "firebase/firestore";
+
+import { addDoc, collection, serverTimestamp, writeBatch, doc, getDocs, query, where, updateDoc, deleteDoc, runTransaction, increment, arrayUnion, getDoc, collectionGroup, arrayRemove } from "firebase/firestore";
 import { db } from "./firebase";
 import { customAlphabet } from 'nanoid';
 
@@ -67,7 +68,7 @@ export const deleteRoom = async (roomId: string) => {
         for (const memberId of members) {
             const userRef = doc(db, 'users', memberId);
             batch.update(userRef, {
-                rooms: arrayUnion(roomId) // Note: This should be arrayRemove, but it requires reading first. A cloud function is better for this. For now, this will leave stale room IDs.
+                rooms: arrayRemove(roomId)
             });
         }
 
@@ -219,6 +220,47 @@ export const joinRoom = async (roomCode: string, userId: string, userName: strin
         });
     });
 };
+
+export const leaveRoom = async (roomId: string, userId: string) => {
+    const roomRef = doc(db, 'rooms', roomId);
+    const userRef = doc(db, 'users', userId);
+    const studentRef = doc(db, 'rooms', roomId, 'students', userId);
+    const studentTransactionsRef = collection(db, 'rooms', roomId, 'transactions');
+
+    await runTransaction(db, async (transaction) => {
+        const roomDoc = await transaction.get(roomRef);
+        if (!roomDoc.exists()) {
+            throw new Error("Room not found.");
+        }
+        const roomData = roomDoc.data();
+        const studentDoc = await transaction.get(studentRef);
+
+        // Prevent leaving if there's an outstanding balance
+        if (studentDoc.exists() && studentDoc.data().totalOwed > 0) {
+            throw new Error("You cannot leave the room with an outstanding balance.");
+        }
+
+        // 1. Remove user from room's members list
+        transaction.update(roomRef, {
+            members: arrayRemove(userId)
+        });
+
+        // 2. Remove room from user's rooms list
+        transaction.update(userRef, {
+            rooms: arrayRemove(roomId)
+        });
+
+        // 3. Delete the student-specific details doc
+        if (studentDoc.exists()) {
+            transaction.delete(studentRef);
+        }
+        
+        // 4. (Optional but good practice) Delete student's payment transactions to clean up.
+        // This is more complex and might be better handled via a Cloud Function for atomicity.
+        // For now, we will leave them for historical record, but they won't be easily accessible.
+    });
+};
+
 
 export const addPayment = async (roomId: string, studentId: string, chairpersonName: string, deadlineId: string, amount: number, deadlineDescription: string) => {
     const roomRef = doc(db, 'rooms', roomId);
