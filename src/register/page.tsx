@@ -6,9 +6,8 @@ import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { signInWithEmailAndPassword, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-
+import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -33,16 +32,26 @@ import { auth, db, googleProvider } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-context';
 import { useEffect, useState } from 'react';
 import { Loader } from '@/components/loader';
-import { Separator } from '@/components/ui/separator';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
-const formSchema = z.object({
-  email: z.string().email({
-    message: 'Please enter a valid email address.',
-  }),
-  password: z.string().min(1, {
-    message: 'Password is required.',
-  }),
-});
+const formSchema = z
+  .object({
+    name: z.string().min(1, { message: 'Name is required' }),
+    email: z.string().email({
+      message: 'Please enter a valid email address.',
+    }),
+    password: z.string().min(6, {
+      message: 'Password must be at least 6 characters.',
+    }),
+    confirmPassword: z.string(),
+    role: z.enum(['student', 'chairperson'], {
+        required_error: "You need to select a role."
+    }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match.",
+    path: ['confirmPassword'],
+  });
 
 const Logo = () => (
     <div className="flex items-center gap-2">
@@ -72,7 +81,7 @@ const Logo = () => (
     </svg>
   );
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
@@ -82,11 +91,13 @@ export default function LoginPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: '',
       email: '',
       password: '',
+      confirmPassword: '',
     },
   });
-
+  
   useEffect(() => {
     if (!authLoading && user) {
       router.push('/dashboard');
@@ -96,20 +107,32 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setFormLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        values.email,
+        values.password
+      );
+      
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
+        name: values.name,
+        email: values.email,
+        role: values.role,
+        createdAt: serverTimestamp(),
+        rooms: [],
+        profilePic: `https://avatar.vercel.sh/${values.email}.png`
+      });
+
       toast({
-        title: 'Welcome back!',
-        description: 'You have successfully logged in.',
+        title: 'Account created!',
+        description: "Welcome! You have been successfully registered.",
       });
       router.push('/dashboard');
+
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Login Failed',
-        description:
-          error.code === 'auth/invalid-credential'
-            ? 'Invalid email or password.'
-            : 'An unexpected error occurred. Please try again.',
+        title: 'Registration Failed',
+        description: error.code === 'auth/email-already-in-use' ? 'This email is already taken.' : 'An unexpected error occurred. Please try again.',
       });
     } finally {
       setFormLoading(false);
@@ -153,51 +176,38 @@ export default function LoginPage() {
     }
   };
 
-  const handleForgotPassword = async () => {
-    const email = form.getValues('email');
-    if (!email) {
-      toast({
-        variant: 'destructive',
-        title: 'Email Required',
-        description: 'Please enter your email address to reset your password.',
-      });
-      return;
-    }
-    try {
-      await sendPasswordResetEmail(auth, email);
-      toast({
-        title: 'Password Reset Email Sent',
-        description: `An email has been sent to ${email} with instructions to reset your password.`,
-      });
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to send password reset email.',
-      });
-    }
-  };
-
-
   if (authLoading || user) {
-     return <div className="h-screen w-full flex items-center justify-center bg-background"><Loader /></div>;
+    return <div className="h-screen w-full flex items-center justify-center bg-background"><Loader /></div>;
   }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-secondary/20">
-      <div className="absolute top-6 left-6">
+       <div className="absolute top-6 left-6">
         <Link href="/" className="flex items-center gap-2 font-semibold text-lg text-primary hover:text-primary/80 transition-colors">
           <Logo />
         </Link>
       </div>
       <Card className="w-full max-w-sm shadow-xl">
         <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-3xl">Welcome Back</CardTitle>
-          <CardDescription>Enter your credentials to access your dashboard.</CardDescription>
+          <CardTitle className="text-3xl">Create an Account</CardTitle>
+          <CardDescription>Enter your details to get started.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Juan Dela Cruz" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="email"
@@ -216,12 +226,7 @@ export default function LoginPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="flex justify-between items-center">
-                        <FormLabel>Password</FormLabel>
-                        <Button variant="link" type="button" onClick={handleForgotPassword} className="p-0 h-auto text-xs">
-                            Forgot password?
-                        </Button>
-                    </div>
+                    <FormLabel>Password</FormLabel>
                     <FormControl>
                       <Input type="password" placeholder="••••••••" {...field} />
                     </FormControl>
@@ -229,8 +234,55 @@ export default function LoginPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={formLoading}>
-                {formLoading ? <Loader className="h-4 w-4" /> : 'Login'}
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="••••••••" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Select your role</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex space-x-4"
+                      >
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="student" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Student
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="chairperson" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Financial Chairperson
+                          </FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full" disabled={formLoading || googleLoading}>
+                {formLoading ? <Loader className="h-4 w-4" /> : 'Create Account'}
               </Button>
             </form>
           </Form>
@@ -244,15 +296,15 @@ export default function LoginPage() {
                 </span>
             </div>
           </div>
-          <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={googleLoading}>
-            {googleLoading ? <Loader className="h-4 w-4"/> : <><GoogleIcon className="mr-2 h-5 w-5"/> Sign in with Google</>}
+          <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={googleLoading || formLoading}>
+            {googleLoading ? <Loader className="h-4 w-4"/> : <><GoogleIcon className="mr-2 h-5 w-5"/> Sign up with Google</>}
           </Button>
         </CardContent>
         <CardFooter className="flex justify-center">
           <p className="text-sm text-muted-foreground">
-            Don't have an account?{' '}
-            <Link href="/register" className="text-primary hover:underline font-medium">
-              Register
+            Already have an account?{' '}
+            <Link href="/login" className="text-primary hover:underline font-medium">
+              Login
             </Link>
           </p>
         </CardFooter>
