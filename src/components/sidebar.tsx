@@ -165,24 +165,13 @@ export function Sidebar({isMobileSheet = false, userProfile}: {isMobileSheet?: b
   );
 }
 
-export function Header({onMenuClick}: {onMenuClick?: () => void}) {
+export function Header() {
     const { user, logout } = useAuth();
     const { userProfile } = useUserProfile(user?.uid);
-    const pathname = usePathname();
-    const isRoomRoute = pathname.startsWith('/dashboard/rooms/');
 
 
     return (
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-16 lg:px-6 sticky top-0 z-30">
-            {onMenuClick && <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden"
-              onClick={onMenuClick}
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path></svg>
-              <span className="sr-only">Toggle Menu</span>
-            </Button>}
             <div className="w-full flex-1">
                 {/* Optional: Add search or other header elements here */}
             </div>
@@ -251,10 +240,10 @@ export function BottomNavBar({userProfile}) {
 
 
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-card border-t z-40">
+    <div className="fixed bottom-0 left-0 right-0 bg-card border-t z-40">
       <div className="flex justify-around items-center h-16">
         {navItemsToShow.map((item) => {
-            const href = (isRoomRoute && roomId && item.href !== '/dashboard/rooms' && item.href !== '/dashboard') ? `/dashboard/rooms/${roomId}${item.href}` : item.href;
+            const href = item.href;
             
             const isActive = (pathname === href) || (href !== '/dashboard' && pathname.startsWith(href) && href.length > 10);
             
