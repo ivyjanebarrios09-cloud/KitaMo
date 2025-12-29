@@ -27,12 +27,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useUserProfile } from '@/hooks/use-user-profile';
 
@@ -235,7 +229,7 @@ export function BottomNavBar({userProfile}) {
     navItemsToShow = roomNavs.map(item => ({
         ...item,
         href: `/dashboard/rooms/${roomId}${item.href}`
-    })).slice(0, 5);
+    }));
   }
 
 
@@ -245,19 +239,40 @@ export function BottomNavBar({userProfile}) {
         {navItemsToShow.map((item) => {
             const href = item.href;
             
-            const isActive = (pathname === href) || (href !== '/dashboard' && pathname.startsWith(href) && href.length > 10);
+            const isActive = (item.href.endsWith(pathname) && item.href.length > 1) || (pathname === item.href) || (item.href.length > 1 && pathname.startsWith(item.href) && item.href !== '/dashboard' && item.href !== '/dashboard/rooms') || (item.href.endsWith('/rooms') && isRoomRoute);
+            if (roomId && item.href === `/dashboard/rooms/${roomId}`) {
+              // Special case for room dashboard
+              if (pathname !== `/dashboard/rooms/${roomId}`){
+                // isActive = false;
+              }
+            }
+            if (item.href === `/dashboard/rooms/${roomId}` && pathname !== item.href){
+              // another special case
+            }
+            const finalIsActive = (pathname === href) || (href.length > 1 && pathname.startsWith(href) && href !== '/dashboard' && href !== '/dashboard/rooms' && !href.endsWith('/rooms/')) || (isRoomRoute && item.label === "Rooms" && !roomId);
+
+            let newIsActive = (pathname === href);
+            // Room Dashboard
+            if(href.endsWith(roomId as string) && pathname === href) newIsActive = true;
+
+            // Sub routes
+            if(!href.endsWith(roomId as string) && pathname.startsWith(href) && href.length > `/dashboard/rooms/${roomId}`.length) newIsActive = true;
             
+            // Base items
+            if(item.label === "Dashboard" && pathname === '/dashboard') newIsActive = true;
+            if(item.label === "Rooms" && isRoomRoute) newIsActive = true;
+
+
             return (
                 <Link
                     key={item.label}
                     href={href}
                     className={cn(
                     'flex flex-col items-center justify-center text-muted-foreground transition-all w-full h-full gap-1 p-1 text-xs',
-                    isActive && 'text-primary bg-muted/50'
+                    newIsActive && 'text-primary bg-muted/50'
                     )}
                 >
                     <item.icon className="h-5 w-5" />
-                    <span className='truncate'>{item.label}</span>
                 </Link>
             )
         })}
