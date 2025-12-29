@@ -14,10 +14,45 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/context/auth-context';
 import { Lock, Settings, LogOut } from 'lucide-react';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
+import { Loader } from '@/components/loader';
   
 
 export default function AccountSecurityPage() {
-    const { logout } = useAuth();
+    const { user, logout } = useAuth();
+    const { toast } = useToast();
+    const [loading, setLoading] = useState(false);
+
+    const handleChangePassword = async () => {
+        if (!user?.email) {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'No email address found for your account.',
+            });
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await sendPasswordResetEmail(auth, user.email);
+            toast({
+                title: 'Password Reset Email Sent',
+                description: `An email has been sent to ${user.email} with instructions to reset your password.`,
+            });
+        } catch (error: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: error.message || 'Failed to send password reset email.',
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
   
     return (
         <Card>
@@ -31,11 +66,13 @@ export default function AccountSecurityPage() {
                 <div className="space-y-2">
                     <label className="text-sm font-medium">Password</label>
                     <div className="flex items-center gap-4">
-                    <Input type="password" value="••••••••••" readOnly disabled />
-                    <Button variant="outline" disabled>Change Password</Button>
+                        <Input type="password" value="••••••••••" readOnly disabled />
+                        <Button variant="outline" onClick={handleChangePassword} disabled={loading}>
+                            {loading ? <Loader className='h-4 w-4' /> : 'Change Password'}
+                        </Button>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                    Password change functionality is not yet available.
+                        Click "Change Password" to receive a password reset link via email.
                     </p>
                 </div>
 
