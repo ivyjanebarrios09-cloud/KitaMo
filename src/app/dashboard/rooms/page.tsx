@@ -44,7 +44,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import React from 'react';
-import { createRoom, deleteRoom, updateRoom, joinRoom } from '@/lib/firebase-actions';
+import { createRoom, deleteRoom, updateRoom, joinRoom, archiveRoom } from '@/lib/firebase-actions';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -62,7 +62,7 @@ const joinRoomSchema = z.object({
 });
 
 
-const RoomCard = ({ room, onEdit, onDelete, isChairperson }) => {
+const RoomCard = ({ room, onEdit, onDelete, onArchive, isChairperson }) => {
     const memberCount = isChairperson ? (room.members?.length || 1) - 1 : room.members?.length || 0;
     return (
     <Card className="shadow-sm hover:shadow-lg transition-shadow flex flex-col">
@@ -98,6 +98,7 @@ const RoomCard = ({ room, onEdit, onDelete, isChairperson }) => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => onEdit(room)}>Edit</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onArchive(room)}>Archive</DropdownMenuItem>
                 <DropdownMenuItem className="text-destructive" onClick={() => onDelete(room)}>
                     Delete
                 </DropdownMenuItem>
@@ -248,11 +249,12 @@ const JoinRoomModal = ({ open, onOpenChange, onSubmit, formLoading }) => {
 function ChairpersonRoomsPage() {
     const { user } = useAuth();
     const { userProfile } = useUserProfile(user?.uid);
-    const { rooms, loading } = useUserRooms(user?.uid, true); // isChairperson = true
+    const { rooms, loading } = useUserRooms(user?.uid, true, false); // isChairperson = true, archived = false
     const [modalOpen, setModalOpen] = React.useState(false);
     const [formLoading, setFormLoading] = React.useState(false);
     const [selectedRoom, setSelectedRoom] = React.useState(null);
     const [deleteAlertOpen, setDeleteAlertOpen] = React.useState(false);
+    const [archiveAlertOpen, setArchiveAlertOpen] = React.useState(false);
     const { toast } = useToast();
   
     const handleCreate = () => {
@@ -268,6 +270,11 @@ function ChairpersonRoomsPage() {
     const handleDelete = (room) => {
       setSelectedRoom(room);
       setDeleteAlertOpen(true);
+    }
+
+    const handleArchive = (room) => {
+        setSelectedRoom(room);
+        setArchiveAlertOpen(true);
     }
   
     const confirmDelete = async () => {
@@ -290,6 +297,25 @@ function ChairpersonRoomsPage() {
       }
     }
   
+    const confirmArchive = async () => {
+        if (!selectedRoom) return;
+        try {
+          await archiveRoom(selectedRoom.id, true);
+          toast({
+            title: 'Room Archived',
+            description: `${selectedRoom.name} has been moved to the archive.`,
+          });
+        } catch (error) {
+            toast({
+                variant: 'destructive',
+                title: 'Error archiving room',
+                description: 'An unexpected error occurred. Please try again.',
+            });
+        } finally {
+            setArchiveAlertOpen(false);
+            setSelectedRoom(null);
+        }
+      }
   
     const onSubmit = async (values: z.infer<typeof roomSchema>) => {
       if (!user || !userProfile) return;
@@ -330,7 +356,7 @@ function ChairpersonRoomsPage() {
                 <div>
                 <h1 className="text-3xl font-bold">Manage Rooms</h1>
                 <p className="text-muted-foreground">
-                    Your financial rooms are listed below.
+                    Your active financial rooms are listed below.
                 </p>
                 </div>
                 <Button onClick={handleCreate}>
@@ -361,6 +387,20 @@ function ChairpersonRoomsPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            <AlertDialog open={archiveAlertOpen} onOpenChange={setArchiveAlertOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Archive Room?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to archive "{selectedRoom?.name}"? Archived rooms can be viewed and restored later.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmArchive}>Archive</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {loading ? (
@@ -371,11 +411,11 @@ function ChairpersonRoomsPage() {
                 </>
                 ) : rooms.length > 0 ? (
                 rooms.map((room) => (
-                    <RoomCard key={room.id} room={room} onEdit={handleEdit} onDelete={handleDelete} isChairperson={true}/>
+                    <RoomCard key={room.id} room={room} onEdit={handleEdit} onDelete={handleDelete} onArchive={handleArchive} isChairperson={true}/>
                 ))
                 ) : (
                     <div className="md:col-span-2 lg:col-span-3 text-center text-muted-foreground py-16">
-                        <p>No rooms found.</p>
+                        <p>No active rooms found.</p>
                         <p className="text-sm">Click "Create Room" to get started.</p>
                     </div>
                 )}
@@ -444,7 +484,7 @@ function StudentRoomsPage() {
                 </>
                 ) : rooms.length > 0 ? (
                 rooms.map((room) => (
-                    <RoomCard key={room.id} room={room} onEdit={() => {}} onDelete={() => {}} isChairperson={false} />
+                    <RoomCard key={room.id} room={room} onEdit={() => {}} onDelete={() => {}} onArchive={()=>{}} isChairperson={false} />
                 ))
                 ) : (
                     <div className="md:col-span-2 lg:col-span-3 text-center text-muted-foreground py-16">

@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, getDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-export function useUserRooms(userId: string, isChairperson: boolean) {
+export function useUserRooms(userId: string, isChairperson: boolean, archived: boolean | null = false) {
   const [rooms, setRooms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,11 +18,20 @@ export function useUserRooms(userId: string, isChairperson: boolean) {
     const fetchRooms = async () => {
         setLoading(true);
         try {
-            const q = isChairperson
-              ? query(collection(db, 'rooms'), where('createdBy', '==', userId))
-              : query(collection(db, 'rooms'), where('members', 'array-contains', userId));
+            let roomQuery;
+            if (isChairperson) {
+                const queries = [where('createdBy', '==', userId)];
+                // If archived is not null, add a filter for it.
+                if (archived !== null) {
+                    queries.push(where('archived', '==', archived));
+                }
+                roomQuery = query(collection(db, 'rooms'), ...queries);
+            } else {
+                // Students should not see archived rooms they are a member of
+                roomQuery = query(collection(db, 'rooms'), where('members', 'array-contains', userId), where('archived', '==', false));
+            }
             
-            const querySnapshot = await getDocs(q);
+            const querySnapshot = await getDocs(roomQuery);
 
             const roomsDataPromises = querySnapshot.docs.map(async (roomDoc) => {
                 const roomData = { id: roomDoc.id, ...roomDoc.data() };
@@ -54,7 +63,7 @@ export function useUserRooms(userId: string, isChairperson: boolean) {
     
     fetchRooms();
 
-  }, [userId, isChairperson]);
+  }, [userId, isChairperson, archived]);
 
   return { rooms, loading };
 }

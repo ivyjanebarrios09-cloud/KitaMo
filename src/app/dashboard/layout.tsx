@@ -35,7 +35,7 @@ export default function DashboardLayout({
           <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 pb-20">
             {children}
           </main>
-          {isMobile && <BottomNavBar userProfile={userProfile} />}
+          <BottomNavBar userProfile={userProfile} />
         </div>
       </div>
     </AuthGuard>

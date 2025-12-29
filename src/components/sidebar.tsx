@@ -15,6 +15,7 @@ import {
   BarChart3,
   Settings,
   Megaphone,
+  ArchiveRestore,
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import {
@@ -29,6 +30,7 @@ import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useUserProfile } from '@/hooks/use-user-profile';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 
 const baseSidebarNavItems = [
@@ -36,7 +38,9 @@ const baseSidebarNavItems = [
     { href: '/dashboard/rooms', icon: Archive, label: 'Rooms' },
   ];
 
-const personalStatementsNavItem = { href: '/dashboard/personal-statements', icon: ClipboardList, label: 'Statements' };
+const chairpersonExtraNav = [
+    { href: '/dashboard/archived-rooms', icon: ArchiveRestore, label: 'Archived Rooms' },
+];
 
 const roomSubNavItems = [
     { href: '', label: 'Room Dashboard', icon: Home, chairpersonOnly: false },
@@ -61,7 +65,9 @@ function NavContent({ isMobile = false, userProfile }) {
 
     const isChairperson = userProfile?.role === 'chairperson';
     
-    let sidebarNavItems = baseSidebarNavItems;
+    let sidebarNavItems = isChairperson
+        ? [...baseSidebarNavItems, ...chairpersonExtraNav]
+        : baseSidebarNavItems;
 
 
     const renderLink = (item: any, isSubItem = false) => {
@@ -205,15 +211,18 @@ export function Header() {
 
 export function BottomNavBar({userProfile}) {
   const pathname = usePathname();
+  const isMobile = useIsMobile();
   const isChairperson = userProfile?.role === 'chairperson';
   
-  let sidebarNavItems = baseSidebarNavItems;
+  let mainNavItems = isChairperson
+  ? [...baseSidebarNavItems, ...chairpersonExtraNav]
+  : baseSidebarNavItems;
 
 
   const isRoomRoute = pathname.startsWith('/dashboard/rooms/');
   const roomId = isRoomRoute ? pathname.split('/')[3] : null;
 
-  let navItemsToShow = sidebarNavItems;
+  let navItemsToShow = mainNavItems;
 
   if (isRoomRoute && roomId) {
     const roomNavs = isChairperson 
@@ -226,35 +235,25 @@ export function BottomNavBar({userProfile}) {
     }));
   }
 
+  if (!isMobile) return null;
+
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-card border-t z-40">
       <div className="flex justify-around items-center h-16">
         {navItemsToShow.map((item) => {
             const href = item.href;
-            
-            const isActive = (item.href.endsWith(pathname) && item.href.length > 1) || (pathname === item.href) || (item.href.length > 1 && pathname.startsWith(item.href) && item.href !== '/dashboard' && item.href !== '/dashboard/rooms') || (item.href.endsWith('/rooms') && isRoomRoute);
-            if (roomId && item.href === `/dashboard/rooms/${roomId}`) {
-              // Special case for room dashboard
-              if (pathname !== `/dashboard/rooms/${roomId}`){
-                // isActive = false;
-              }
-            }
-            if (item.href === `/dashboard/rooms/${roomId}` && pathname !== item.href){
-              // another special case
-            }
-            const finalIsActive = (pathname === href) || (href.length > 1 && pathname.startsWith(href) && href !== '/dashboard' && href !== '/dashboard/rooms' && !href.endsWith('/rooms/')) || (isRoomRoute && item.label === "Rooms" && !roomId);
 
             let newIsActive = (pathname === href);
-            // Room Dashboard
-            if(href.endsWith(roomId as string) && pathname === href) newIsActive = true;
-
-            // Sub routes
-            if(!href.endsWith(roomId as string) && pathname.startsWith(href) && href.length > `/dashboard/rooms/${roomId}`.length) newIsActive = true;
+            if(isRoomRoute && item.label === "Rooms") newIsActive = true;
             
-            // Base items
-            if(item.label === "Dashboard" && pathname === '/dashboard') newIsActive = true;
-            if(item.label === "Rooms" && isRoomRoute) newIsActive = true;
+            if (roomId) {
+                 if (href.endsWith(roomId) && pathname === href) newIsActive = true; // Room dashboard
+                 if (!href.endsWith(roomId) && pathname.startsWith(href) && href.length > `/dashboard/rooms/${roomId}`.length) newIsActive = true;
+            } else {
+                 if (item.href !== '/dashboard' && pathname.startsWith(item.href)) newIsActive = true;
+                 if (item.href === '/dashboard' && pathname === '/dashboard') newIsActive = true;
+            }
 
 
             return (

@@ -19,6 +19,7 @@ export const createRoom = async (createdBy: string, createdByName: string, data:
             members: [createdBy], // Creator is the first member
             totalCollected: 0,
             totalExpenses: 0,
+            archived: false, // Add archived field
         });
 
         // Also add room to the creator's user document
@@ -185,6 +186,10 @@ export const joinRoom = async (roomCode: string, userId: string, userName: strin
         throw new Error("You are the creator of this room and cannot join as a student.");
     }
 
+    if (roomData.archived) {
+        throw new Error("This room is archived and cannot be joined.");
+    }
+
     await runTransaction(db, async (transaction) => {
         const roomTransactionDoc = await transaction.get(roomRef);
         const members = roomTransactionDoc.data()?.members || [];
@@ -312,5 +317,17 @@ export const addPayment = async (roomId: string, studentId: string, chairpersonN
     } catch (error) {
         console.error("Error adding payment: ", error);
         throw new Error("Could not process payment.");
+    }
+}
+
+export const archiveRoom = async (roomId: string, archived: boolean) => {
+    try {
+        const roomRef = doc(db, 'rooms', roomId);
+        await updateDoc(roomRef, {
+            archived: archived,
+        });
+    } catch (error) {
+        console.error("Error updating room archive status: ", error);
+        throw new Error("Could not update room status.");
     }
 }
