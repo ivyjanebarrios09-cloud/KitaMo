@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { auth, db, googleProvider } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-context';
 import { useEffect, useState } from 'react';
 import { Loader } from '@/components/loader';
@@ -141,6 +141,10 @@ export default function RegisterPage() {
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
+    const googleProvider = new GoogleAuthProvider();
+    googleProvider.setCustomParameters({
+        prompt: 'select_account'
+    });
     try {
       const userCredential = await signInWithPopup(auth, googleProvider);
       const user = userCredential.user;
@@ -312,3 +316,5 @@ export default function RegisterPage() {
     </div>
   );
 }
+
+    
