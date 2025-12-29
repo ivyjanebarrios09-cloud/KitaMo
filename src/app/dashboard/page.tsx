@@ -113,7 +113,7 @@ function ChairpersonDashboard() {
                         <Table>
                             <TableHeader>
                             <TableRow>
-                                <TableHead>Type</TableHead>
+                                <TableHead className="w-[100px]">Type</TableHead>
                                 <TableHead>Date</TableHead>
                                 <TableHead>Room</TableHead>
                                 <TableHead>Description</TableHead>
@@ -142,14 +142,14 @@ function ChairpersonDashboard() {
                                         {transaction.type}
                                     </Badge>
                                     </TableCell>
-                                    <TableCell>{transaction.createdAt ? format(transaction.createdAt.toDate(), 'PP') : 'N/A'}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{transaction.createdAt ? format(transaction.createdAt.toDate(), 'PP') : 'N/A'}</TableCell>
                                     <TableCell>
-                                    <Link href={`/dashboard/rooms/${transaction.roomId}`} className="text-primary hover:underline">
+                                    <Link href={`/dashboard/rooms/${transaction.roomId}`} className="text-primary hover:underline whitespace-nowrap">
                                         {getRoomName(transaction.roomId)}
                                     </Link>
                                     </TableCell>
-                                    <TableCell>{transaction.description}</TableCell>
-                                    <TableCell className="text-right font-medium">
+                                    <TableCell className="min-w-[150px]">{transaction.description}</TableCell>
+                                    <TableCell className="text-right font-medium whitespace-nowrap">
                                     ₱{transaction.amount.toFixed(2)}
                                     </TableCell>
                                 </TableRow>
@@ -206,7 +206,7 @@ function StudentDashboard() {
                         <Table>
                             <TableHeader>
                             <TableRow>
-                                <TableHead>Type</TableHead>
+                                <TableHead className="w-[100px]">Type</TableHead>
                                 <TableHead>Date</TableHead>
                                 <TableHead>Room</TableHead>
                                 <TableHead>Description</TableHead>
@@ -235,12 +235,12 @@ function StudentDashboard() {
                                         {transaction.type}
                                     </Badge>
                                     </TableCell>
-                                    <TableCell>{transaction.createdAt ? format(transaction.createdAt.toDate(), 'PP') : 'N/A'}</TableCell>
-                                    <TableCell>
+                                    <TableCell className="whitespace-nowrap">{transaction.createdAt ? format(transaction.createdAt.toDate(), 'PP') : 'N/A'}</TableCell>
+                                    <TableCell className="whitespace-nowrap">
                                         {getRoomName(transaction.roomId)}
                                     </TableCell>
-                                    <TableCell>{transaction.description}</TableCell>
-                                    <TableCell className="text-right font-medium">
+                                    <TableCell className="min-w-[150px]">{transaction.description}</TableCell>
+                                    <TableCell className="text-right font-medium whitespace-nowrap">
                                     ₱{transaction.amount.toFixed(2)}
                                     </TableCell>
                                 </TableRow>
@@ -275,3 +275,5 @@ export default function DashboardPage() {
     
     return <ChairpersonDashboard />;
 }
+
+    
