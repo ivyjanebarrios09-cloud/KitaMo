@@ -66,33 +66,33 @@ function ChairpersonStudentsPage() {
                 <Accordion type="single" collapsible className="w-full">
                     {students.map((student) => (
                         <AccordionItem value={student.id} key={student.id}>
-                            <AccordionTrigger className="w-full hover:bg-muted/50 px-4 rounded-lg">
-                                 <div className="flex items-center justify-between w-full">
+                            <AccordionTrigger className="w-full hover:bg-muted/50 px-4 py-3 rounded-lg">
+                                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-4">
                                     <div className="flex items-center gap-4">
                                         <Avatar>
                                             <AvatarImage src={student.profilePic || `https://avatar.vercel.sh/${student.email}.png`} alt={student.name} />
                                             <AvatarFallback>{student.name?.charAt(0) || 'S'}</AvatarFallback>
                                         </Avatar>
-                                        <div>
+                                        <div className="text-left">
                                             <p className="font-semibold">{student.name}</p>
                                             <p className="text-sm text-muted-foreground">
                                             {student.email}
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-8 text-sm pr-4">
-                                        <div>
-                                            <p className="text-muted-foreground">Status</p>
+                                    <div className="flex items-center gap-4 sm:gap-8 text-sm w-full sm:w-auto justify-between sm:justify-end pl-14 sm:pl-0 sm:pr-4">
+                                        <div className="text-left sm:text-left">
+                                            <p className="text-muted-foreground text-xs">Status</p>
                                             <Badge variant={student.totalOwed <= 0 ? 'default' : 'destructive'} className={student.totalOwed <= 0 ? 'bg-green-500/20 text-green-700 border-green-500/30 hover:bg-green-500/30' : ''}>
                                                 {student.totalOwed <= 0 ? 'Fully Paid' : 'Has Dues'}
                                             </Badge>
                                         </div>
-                                        <div>
-                                                <p className="text-muted-foreground">Paid</p>
+                                        <div className="text-left sm:text-left">
+                                                <p className="text-muted-foreground text-xs">Paid</p>
                                                 <p className="font-medium">₱{student.totalPaid.toFixed(2)}</p>
                                         </div>
-                                        <div>
-                                                <p className="text-muted-foreground">Owed</p>
+                                        <div className="text-left sm:text-left">
+                                                <p className="text-muted-foreground text-xs">Owed</p>
                                                 <p className="font-medium">₱{student.totalOwed.toFixed(2)}</p>
                                         </div>
                                     </div>
@@ -121,14 +121,14 @@ function StudentMembersPage() {
     const { students, chairperson, loading } = useRoomStudents(roomId);
 
     const MemberRow = ({ user, isChairperson = false }) => (
-        <div className="flex items-center gap-4 py-4 px-6 border-b">
+        <div className="flex items-center gap-4 py-4 px-4 sm:px-6 border-b">
              <Avatar className='h-12 w-12'>
                 <AvatarImage src={user.profilePic || `https://avatar.vercel.sh/${user.email}.png`} alt={user.name} />
                 <AvatarFallback>{user.name?.charAt(0) || 'U'}</AvatarFallback>
             </Avatar>
             <div className='flex-1'>
-                <p className="font-semibold">{user.name}</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="font-semibold truncate">{user.name}</p>
+                <p className="text-sm text-muted-foreground truncate">
                     {user.email}
                 </p>
             </div>
