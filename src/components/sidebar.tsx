@@ -58,6 +58,13 @@ const Logo = () => (
     </div>
   );
 
+  const LogoWithTitle = () => (
+    <div className="flex items-center gap-2">
+        <img src="/image/logoooo.png" alt="KitaMo! Logo" className="h-7 w-7" />
+        <span className="font-bold text-xl text-primary">KitaMo!</span>
+    </div>
+  );
+
 function NavContent({ isMobile = false, userProfile }) {
     const pathname = usePathname();
     const isRoomRoute = pathname.startsWith('/dashboard/rooms/');
@@ -169,6 +176,9 @@ export function Header() {
 
     return (
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-16 lg:px-6 sticky top-0 z-30">
+            <Link href="/dashboard" className="lg:hidden">
+              <LogoWithTitle />
+            </Link>
             <div className="w-full flex-1">
                 {/* Optional: Add search or other header elements here */}
             </div>
