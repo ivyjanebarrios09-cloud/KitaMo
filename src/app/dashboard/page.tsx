@@ -23,6 +23,7 @@ import { format } from 'date-fns';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { useUserRooms } from '@/hooks/use-user-rooms';
 import { useUserTransactions } from '@/hooks/use-user-transactions';
+import { Calculator } from '@/components/calculator';
 
 const StatCard = ({ title, value, icon: Icon, currency = '₱', loading = false }) => (
   <Card className="shadow-sm hover:shadow-md transition-shadow">
@@ -82,17 +83,22 @@ function ChairpersonDashboard() {
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard title="Total Collected" value={stats.totalCollected.toFixed(2)} icon={PiggyBank} loading={loading}/>
-                <StatCard title="Total Expenses" value={stats.totalExpenses.toFixed(2)} icon={Receipt} loading={loading} />
-                <StatCard title="Net Balance" value={stats.netBalance.toFixed(2)} icon={Scale} loading={loading} />
-                <StatCard
-                title="Total Members"
-                value={stats.totalMembers}
-                icon={Users}
-                currency=""
-                loading={loading}
-                />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <StatCard title="Total Collected" value={stats.totalCollected.toFixed(2)} icon={PiggyBank} loading={loading}/>
+                    <StatCard title="Total Expenses" value={stats.totalExpenses.toFixed(2)} icon={Receipt} loading={loading} />
+                    <StatCard title="Net Balance" value={stats.netBalance.toFixed(2)} icon={Scale} loading={loading} />
+                    <StatCard
+                    title="Total Members"
+                    value={stats.totalMembers}
+                    icon={Users}
+                    currency=""
+                    loading={loading}
+                    />
+                </div>
+                <div className="lg:col-span-1">
+                    <Calculator />
+                </div>
             </div>
 
             <Card className="shadow-lg">
