@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { signInWithEmailAndPassword, signInWithPopup, getRedirectResult, sendPasswordResetEmail, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, sendPasswordResetEmail, GoogleAuthProvider } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 
@@ -89,38 +89,10 @@ export default function LoginPage() {
   });
 
   useEffect(() => {
-    const handleRedirectResult = async () => {
-        setGoogleLoading(true);
-        try {
-            const result = await getRedirectResult(auth);
-            if (result) {
-                const user = result.user;
-                const userDocRef = doc(db, 'users', user.uid);
-                const userDoc = await getDoc(userDocRef);
-
-                if (!userDoc.exists()) {
-                    router.push('/select-role');
-                } else {
-                    toast({
-                        title: 'Welcome!',
-                        description: 'You have successfully signed in with Google.',
-                    });
-                    router.push('/dashboard');
-                }
-            }
-        } catch (error: any) {
-            toast({
-                variant: 'destructive',
-                title: 'Google Sign-In Failed',
-                description: error.message || 'An unexpected error occurred. Please try again.',
-            });
-        } finally {
-            setGoogleLoading(false);
-        }
-    };
-    handleRedirectResult();
-  }, [router, toast]);
-
+    if (!authLoading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, authLoading, router]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setFormLoading(true);
