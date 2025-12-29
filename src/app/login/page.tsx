@@ -34,6 +34,7 @@ import { useAuth } from '@/context/auth-context';
 import { useEffect, useState } from 'react';
 import { Loader } from '@/components/loader';
 import { Separator } from '@/components/ui/separator';
+import { ArrowLeft } from 'lucide-react';
 
 const formSchema = z.object({
   email: z.string().email({
@@ -214,11 +215,15 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-secondary/20">
       <div className="absolute top-6 left-6">
         <Link href="/" className="flex items-center gap-2 font-semibold text-lg text-primary hover:text-primary/80 transition-colors">
-          <Logo />
+          <ArrowLeft className="h-5 w-5" />
+          <span>Back to Home</span>
         </Link>
       </div>
       <Card className="w-full max-w-sm shadow-xl">
         <CardHeader className="text-center space-y-2">
+          <div className="flex justify-center mb-4">
+            <Logo />
+          </div>
           <CardTitle className="text-3xl">Welcome Back</CardTitle>
           <CardDescription>Enter your credentials to access your dashboard.</CardDescription>
         </CardHeader>
