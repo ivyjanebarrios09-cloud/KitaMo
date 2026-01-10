@@ -32,7 +32,7 @@ export default function CollectionSummaryPage() {
   const loading = roomLoading || deadlinesLoading || paymentsLoading;
 
   const collectionData = useMemo(() => {
-    if (loading) return [];
+    if (loading || !deadlines || !payments) return [];
     
     return deadlines.map(deadline => {
         const paymentsForDeadline = payments.filter(p => p.deadlineId === deadline.id);
