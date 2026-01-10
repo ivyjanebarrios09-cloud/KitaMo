@@ -174,6 +174,7 @@ export function Sidebar({isMobileSheet = false, userProfile}: {isMobileSheet?: b
 export function Header() {
     const { user, logout } = useAuth();
     const { userProfile } = useUserProfile(user?.uid);
+    const isMobile = useIsMobile();
 
 
     return (
@@ -188,7 +189,7 @@ export function Header() {
               {user && userProfile && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full">
+                    <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full transition-transform duration-200 ease-in-out hover:scale-110 active:scale-105">
                       <UserIcon className="h-5 w-5" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -205,7 +206,7 @@ export function Header() {
                     <DropdownMenuItem asChild>
                         <Link href="/dashboard/settings">
                             <Settings className="mr-2 h-4 w-4" />
-                            <span>Profile Settings</span>
+                            {isMobile ? <span>Settings</span> : <span>Profile Settings</span>}
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
