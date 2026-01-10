@@ -271,7 +271,7 @@ export default function ClassFinancialReportPage() {
                                     <tr key={item.id}>
                                         <td className="border border-black p-1">{format(item.createdAt.toDate(), 'MMM d, yyyy')}</td>
                                         <td className="border border-black p-1">{item.description}</td>
-                                        <td className="border border-black p-1">{item.userName}</td>
+                                        <td className="border border-black p-1">{item.recipient}</td>
                                         <td className="border border-black p-1 text-right">{item.amount.toFixed(2)}</td>
                                         <td className="border border-black p-1 h-8"></td>
                                     </tr>
