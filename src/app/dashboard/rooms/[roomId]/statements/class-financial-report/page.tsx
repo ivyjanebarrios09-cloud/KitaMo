@@ -117,25 +117,27 @@ export default function ClassFinancialReportPage() {
         
         const margin = 10;
         const contentWidth = pdfWidth - (margin * 2);
-        const contentHeight = pdfHeight - (margin * 2);
         
         const imgProps = pdf.getImageProperties(imgData);
         const imgHeight = (imgProps.height * contentWidth) / imgProps.width;
+        const contentHeight = imgHeight; // Use the scaled image height as the full content height
+
+        const pageHeight = pdfHeight - (margin * 2); // The printable area height on one page
         
-        let heightLeft = imgHeight;
+        let heightLeft = contentHeight;
         let position = 0;
         
         // Add first page
-        pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, imgHeight);
-        heightLeft -= contentHeight;
+        pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, contentHeight);
+        heightLeft -= pageHeight;
 
         // Add subsequent pages if content overflows
         while (heightLeft > 0) {
-            position = position - contentHeight; // Correctly calculate the negative offset for the next slice
+            position = position - pageHeight; 
             pdf.addPage();
             // The image is added again, but the negative 'position' crops it to show the next part
-            pdf.addImage(imgData, 'PNG', margin, position + margin, contentWidth, imgHeight);
-            heightLeft -= contentHeight;
+            pdf.addImage(imgData, 'PNG', margin, position + margin, contentWidth, contentHeight);
+            heightLeft -= pageHeight;
         }
 
         pdf.save(`class-financial-report-${roomId}-${year}-${monthName}.pdf`);
@@ -183,7 +185,7 @@ export default function ClassFinancialReportPage() {
         <div ref={statementRef} className="bg-white p-4">
             <div className="max-w-4xl mx-auto bg-white p-8 report-content text-black">
                 {/* Header */}
-                <div className="text-center mb-8">
+                <div className="text-center mb-8 report-section">
                     <img src="/image/logoooo.png" alt="Logo" className="w-16 h-16 mx-auto mb-2"/>
                     <h2 className="text-xl font-bold">Saint Louis College</h2>
                     <p className="text-sm">of San Fernando, La Union</p>
@@ -199,9 +201,9 @@ export default function ClassFinancialReportPage() {
                 <hr className="my-4 border-black"/>
 
                 {/* Report Title */}
-                <h1 className="text-xl font-bold text-center mb-4">Class Financial Report</h1>
+                <h1 className="text-xl font-bold text-center mb-4 report-section">Class Financial Report</h1>
                 
-                <div className="mb-6 text-sm">
+                <div className="mb-6 text-sm report-section">
                     <p><span className="font-semibold">Month:</span> <span className='capitalize'>{monthName} {year}</span></p>
                     <p><span className="font-semibold">Prepared by:</span> {userProfile?.name}</p>
                     <p><span className="font-semibold">Position:</span> Class Finance Officer</p>
@@ -209,7 +211,7 @@ export default function ClassFinancialReportPage() {
                 </div>
 
                 {/* Collections */}
-                <div className="mb-8" style={{ pageBreakInside: 'avoid' }}>
+                <div className="mb-8 report-section">
                     <h3 className="font-bold text-lg mb-2">I. SUMMARY OF COLLECTIONS</h3>
                     <p className="text-sm mb-2">
                         The total amount collected from all students of {room?.name} for the month of <span className='capitalize'>{monthName} {year}</span> is:
@@ -253,7 +255,7 @@ export default function ClassFinancialReportPage() {
                 </div>
 
                 {/* Expenses */}
-                <div className="mb-8" style={{ pageBreakInside: 'avoid' }}>
+                <div className="mb-8 report-section">
                     <h3 className="font-bold text-lg mb-2">II. SUMMARY OF EXPENSES</h3>
                     <p className="text-sm mb-2">
                         Major disbursements were made this month for class activities:
@@ -294,7 +296,7 @@ export default function ClassFinancialReportPage() {
                 </div>
 
                 {/* Financial Position */}
-                <div className="mb-12" style={{ pageBreakInside: 'avoid' }}>
+                <div className="mb-12 report-section">
                      <h3 className="font-bold text-lg mb-2">III. FINANCIAL POSITION</h3>
                       <table className="w-1/2 text-sm border-collapse border border-black">
                         <thead>
@@ -322,14 +324,14 @@ export default function ClassFinancialReportPage() {
 
                 {/* Remarks */}
                 {remarks && (
-                    <div className="mb-12 text-sm" style={{ pageBreakInside: 'avoid' }}>
+                    <div className="mb-12 text-sm report-section">
                         <h3 className="font-bold text-lg mb-2">IV. REMARKS</h3>
                         <p className='whitespace-pre-wrap'>{remarks}</p>
                     </div>
                 )}
                 
                 {/* Signatories */}
-                <div className="mb-8 text-sm" style={{ pageBreakInside: 'avoid', paddingTop: '50px' }}>
+                <div className="mb-8 text-sm report-section" style={{paddingTop: '50px' }}>
                     <h3 className="font-bold text-lg mb-4">V. SIGNATORIES</h3>
                     <div className="flex justify-around items-start">
                         <div className="text-center w-1/2">
@@ -357,6 +359,7 @@ export default function ClassFinancialReportPage() {
         @media print {
           body { background-color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           .print\:hidden { display: none; }
+          .report-section { page-break-inside: avoid; }
         }
         .report-content table, .report-content th, .report-content td {
             border: 1px solid black !important;
