@@ -90,7 +90,8 @@ export default function ClassFinancialReportPage() {
   const totalCollections = collections.reduce((sum, t) => sum + t.amount, 0);
   const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
   
-  const uniqueStudentsPaid = collections.reduce((acc, curr) => acc + curr.paidCount, 0);
+  const uniqueStudentsPaid = new Set(collections.flatMap(c => Array.from(c.paidCount))).size;
+
 
   const financialPosition = (room?.totalCollected || 0) - (room?.totalExpenses || 0);
 
@@ -218,6 +219,7 @@ export default function ClassFinancialReportPage() {
                                 <th className="border border-black p-1 text-left">Date</th>
                                 <th className="border border-black p-1 text-left">Description</th>
                                 <th className="border border-black p-1 text-right">Amount Per Student (PHP)</th>
+                                <th className="border border-black p-1 text-right">No. of Students Paid</th>
                                 <th className="border border-black p-1 text-right">Amount Collected (PHP)</th>
                             </tr>
                         </thead>
@@ -228,12 +230,13 @@ export default function ClassFinancialReportPage() {
                                         <td className="border border-black p-1">{format(item.date.toDate(), 'MMM d, yyyy')}</td>
                                         <td className="border border-black p-1">{item.description}</td>
                                         <td className="border border-black p-1 text-right">{item.amountPerStudent.toFixed(2)}</td>
+                                        <td className="border border-black p-1 text-right">{item.paidCount}</td>
                                         <td className="border border-black p-1 text-right">{item.amount.toFixed(2)}</td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={4} className="border border-black p-1 text-center">No collections this month.</td>
+                                    <td colSpan={5} className="border border-black p-1 text-center">No collections this month.</td>
                                 </tr>
                             )}
                         </tbody>
@@ -243,10 +246,6 @@ export default function ClassFinancialReportPage() {
                             <tr className="font-bold">
                                 <td className="text-left p-1">Total Amount Collected:</td>
                                 <td className="text-right p-1">P {totalCollections.toFixed(2)}</td>
-                            </tr>
-                            <tr className="font-bold">
-                                <td className="text-left p-1">Number of Students Paid:</td>
-                                <td className="text-right p-1">{uniqueStudentsPaid}</td>
                             </tr>
                         </tbody>
                     </table>
