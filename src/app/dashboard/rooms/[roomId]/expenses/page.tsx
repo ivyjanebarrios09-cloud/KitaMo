@@ -50,6 +50,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/auth-context';
 import { useRoom } from '@/hooks/use-room';
 import { useUserProfile } from '@/hooks/use-user-profile';
+import { Separator } from '@/components/ui/separator';
 
 const expenseSchema = z.object({
   description: z.string().min(1, 'Description is required'),
@@ -170,6 +171,31 @@ function NewExpenseModal({ roomId }: { roomId: string }) {
   );
 }
 
+const ExpenseCard = ({ expense }) => (
+    <Card className="mb-4">
+        <CardContent className="p-4 space-y-3">
+            <div className="flex justify-between items-start">
+                <p className="font-semibold pr-4">{expense.description}</p>
+                <p className="font-bold text-lg whitespace-nowrap">₱{expense.amount.toFixed(2)}</p>
+            </div>
+            <Separator />
+            <div className="text-muted-foreground text-sm space-y-2">
+                <div className="flex justify-between">
+                    <span>Recipient:</span>
+                    <span>{expense.recipient}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span>Date:</span>
+                    <span>{expense.createdAt ? format(expense.createdAt.toDate(), 'PP') : 'N/A'}</span>
+                </div>
+                 <div className="flex justify-between">
+                    <span>Posted By:</span>
+                    <span>{expense.userName}</span>
+                </div>
+            </div>
+        </CardContent>
+    </Card>
+);
 
 export default function ExpensesPage() {
   const params = useParams();
@@ -197,48 +223,49 @@ export default function ExpensesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Recipient</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center">
-                    <div className="flex justify-center p-8">
-                      <Loader />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : expenses.length > 0 ? (
-                expenses.map((expense) => (
-                  <TableRow key={expense.id}>
-                    <TableCell>
-                      {expense.createdAt
-                        ? format(expense.createdAt.toDate(), 'PP')
-                        : 'N/A'}
-                    </TableCell>
-                    <TableCell className="font-medium">{expense.description}</TableCell>
-                    <TableCell>{expense.recipient}</TableCell>
-                    <TableCell className="text-right font-medium">
-                      ₱{expense.amount.toFixed(2)}
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
+            {loading ? (
+                <div className="flex justify-center p-8"><Loader /></div>
+            ) : expenses.length > 0 ? (
+                <>
+                {/* Mobile View */}
+                <div className="md:hidden space-y-4">
+                    {expenses.map(expense => <ExpenseCard key={expense.id} expense={expense} />)}
+                </div>
+                {/* Desktop View */}
+                <div className="hidden md:block">
+                    <Table>
+                        <TableHeader>
+                        <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Description</TableHead>
+                            <TableHead>Recipient</TableHead>
+                            <TableHead className="text-right">Amount</TableHead>
+                        </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                        {expenses.map((expense) => (
+                            <TableRow key={expense.id}>
+                                <TableCell>
+                                {expense.createdAt
+                                    ? format(expense.createdAt.toDate(), 'PP')
+                                    : 'N/A'}
+                                </TableCell>
+                                <TableCell className="font-medium">{expense.description}</TableCell>
+                                <TableCell>{expense.recipient}</TableCell>
+                                <TableCell className="text-right font-medium">
+                                ₱{expense.amount.toFixed(2)}
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                        </TableBody>
+                    </Table>
+                </div>
+                </>
+            ) : (
+                <div className="text-center h-24 flex items-center justify-center text-muted-foreground">
                     No expenses posted yet.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                </div>
+            )}
         </CardContent>
       </Card>
     </div>
