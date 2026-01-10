@@ -9,7 +9,7 @@ import { useRoomTransactions } from '@/hooks/use-room-transactions';
 import { Loader } from '@/components/loader';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useToast } from '@/hooks/use-toast';
@@ -43,25 +43,26 @@ export default function ClassFinancialReportPage() {
   const monthNumber = monthName ? monthMap[monthName.toLowerCase()] : -1;
   const yearNumber = year ? parseInt(year) : new Date().getFullYear();
 
-  const { collections, expenses, roomBalance } = transactions.reduce((acc, t) => {
-      if (t.createdAt) {
-          const txDate = t.createdAt.toDate();
-          const isInMonth = txDate.getFullYear() === yearNumber && (monthNumber === -1 || txDate.getMonth() === monthNumber);
-          
-          if (isInMonth) {
-              if (t.type === 'credit') acc.collections.push(t);
-              if (t.type === 'debit') acc.expenses.push(t);
-          }
-      }
-      return acc;
-  }, { collections: [] as any[], expenses: [] as any[], roomBalance: room?.totalCollected - room?.totalExpenses || 0 });
+  const { collections, expenses, roomBalance } = useMemo(() => {
+    return transactions.reduce((acc, t) => {
+        if (t.createdAt) {
+            const txDate = t.createdAt.toDate();
+            const isInMonth = txDate.getFullYear() === yearNumber && (monthNumber === -1 || txDate.getMonth() === monthNumber);
+            
+            if (isInMonth) {
+                if (t.type === 'credit') acc.collections.push(t);
+                if (t.type === 'debit') acc.expenses.push(t);
+            }
+        }
+        return acc;
+    }, { collections: [] as any[], expenses: [] as any[], roomBalance: room?.totalCollected - room?.totalExpenses || 0 });
+  }, [transactions, yearNumber, monthNumber, room]);
 
   const totalCollections = collections.reduce((sum, t) => sum + t.amount, 0);
   const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
   
-  // This should represent the balance at the end of the selected month.
-  // A more accurate calculation would need starting balance, which we don't have.
-  // We will use the current room balance as a proxy.
+  const uniqueStudentsPaid = new Set(collections.map(c => c.userId)).size;
+
   const financialPosition = roomBalance;
 
 
@@ -196,7 +197,7 @@ export default function ClassFinancialReportPage() {
                                 collections.map(item => (
                                     <tr key={item.id}>
                                         <td className="border border-black p-1">{format(item.createdAt.toDate(), 'MMM d, yyyy')}</td>
-                                        <td className="border border-black p-1">{item.description} from {item.userName}</td>
+                                        <td className="border border-black p-1">{item.description}</td>
                                         <td className="border border-black p-1 text-right">{item.amount.toFixed(2)}</td>
                                     </tr>
                                 ))
@@ -205,9 +206,17 @@ export default function ClassFinancialReportPage() {
                                     <td colSpan={3} className="border border-black p-1 text-center">No collections this month.</td>
                                 </tr>
                             )}
-                            <tr className="font-bold bg-gray-100">
-                                <td colSpan={2} className="border border-black p-1 text-left">Total</td>
-                                <td className="border border-black p-1 text-right">P {totalCollections.toFixed(2)}</td>
+                        </tbody>
+                    </table>
+                    <table className="w-full text-sm mt-2">
+                         <tbody>
+                            <tr className="font-bold">
+                                <td className="text-left p-1">Total Amount Collected:</td>
+                                <td className="text-right p-1">P {totalCollections.toFixed(2)}</td>
+                            </tr>
+                            <tr className="font-bold">
+                                <td className="text-left p-1">Number of Students Paid:</td>
+                                <td className="text-right p-1">{uniqueStudentsPaid}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -301,5 +310,3 @@ export default function ClassFinancialReportPage() {
     </div>
   );
 }
-
-    
