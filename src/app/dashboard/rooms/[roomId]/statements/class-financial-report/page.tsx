@@ -107,7 +107,9 @@ export default function ClassFinancialReportPage() {
         const canvas = await html2canvas(element, {
             scale: 2,
             useCORS: true,
-            backgroundColor: '#ffffff'
+            backgroundColor: '#ffffff',
+            windowWidth: element.scrollWidth,
+            windowHeight: element.scrollHeight
         });
 
         const imgData = canvas.toDataURL('image/png');
@@ -117,10 +119,9 @@ export default function ClassFinancialReportPage() {
         
         const margin = 10;
         const contentWidth = pdfWidth - (margin * 2);
-        const contentHeight = pdfHeight - (margin * 2);
-        
         const imgProps = pdf.getImageProperties(imgData);
         const imgHeight = (imgProps.height * contentWidth) / imgProps.width;
+        const contentHeight = imgHeight > pdfHeight - (margin * 2) ? pdfHeight - (margin * 2) : imgHeight;
         
         let heightLeft = imgHeight;
         let position = 0;
@@ -131,11 +132,13 @@ export default function ClassFinancialReportPage() {
 
         // Add subsequent pages if content overflows
         while (heightLeft > 0) {
-            position = position - contentHeight;
+            position = position - pdfHeight; // Move to the next page's Y position
             pdf.addPage();
-            pdf.addImage(imgData, 'PNG', margin, position, contentWidth, imgHeight);
+            // The image is added again, but the negative 'position' crops it to show the next part
+            pdf.addImage(imgData, 'PNG', margin, position + margin, contentWidth, imgHeight);
             heightLeft -= contentHeight;
         }
+
 
         pdf.save(`class-financial-report-${roomId}-${year}-${monthName}.pdf`);
     } catch(err) {
@@ -208,7 +211,7 @@ export default function ClassFinancialReportPage() {
                 </div>
 
                 {/* Collections */}
-                <div className="mb-8">
+                <div className="mb-8" style={{ pageBreakInside: 'avoid' }}>
                     <h3 className="font-bold text-lg mb-2">I. SUMMARY OF COLLECTIONS</h3>
                     <p className="text-sm mb-2">
                         The total amount collected from all students of {room?.name} for the month of <span className='capitalize'>{monthName} {year}</span> is:
@@ -252,7 +255,7 @@ export default function ClassFinancialReportPage() {
                 </div>
 
                 {/* Expenses */}
-                <div className="mb-8">
+                <div className="mb-8" style={{ pageBreakInside: 'avoid' }}>
                     <h3 className="font-bold text-lg mb-2">II. SUMMARY OF EXPENSES</h3>
                     <p className="text-sm mb-2">
                         Major disbursements were made this month for class activities:
@@ -293,7 +296,7 @@ export default function ClassFinancialReportPage() {
                 </div>
 
                 {/* Financial Position */}
-                <div className="mb-12">
+                <div className="mb-12" style={{ pageBreakInside: 'avoid' }}>
                      <h3 className="font-bold text-lg mb-2">III. FINANCIAL POSITION</h3>
                       <table className="w-1/2 text-sm border-collapse border border-black">
                         <thead>
@@ -321,14 +324,14 @@ export default function ClassFinancialReportPage() {
 
                 {/* Remarks */}
                 {remarks && (
-                    <div className="mb-12 text-sm">
+                    <div className="mb-12 text-sm" style={{ pageBreakInside: 'avoid' }}>
                         <h3 className="font-bold text-lg mb-2">IV. REMARKS</h3>
                         <p className='whitespace-pre-wrap'>{remarks}</p>
                     </div>
                 )}
                 
                 {/* Signatories */}
-                <div className="mb-8 text-sm">
+                <div className="mb-8 text-sm" style={{ pageBreakInside: 'avoid' }}>
                     <h3 className="font-bold text-lg mb-4">V. SIGNATORIES</h3>
                     <div className="flex justify-around items-start">
                         <div className="text-center w-1/2">
