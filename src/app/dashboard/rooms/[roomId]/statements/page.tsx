@@ -74,11 +74,23 @@ const baseActions = [
     { label: 'Excel', icon: <FileSpreadsheet className="mr-2 h-4 w-4" />, disabled: false },
   ];
 
+const generateYearOptions = () => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let i = currentYear + 2; i >= currentYear - 5; i--) {
+        years.push(i.toString());
+    }
+    return years;
+}
+
+
 function ChairpersonStatementsPage() {
     const router = useRouter();
     const params = useParams();
     const roomId = params.roomId as string;
-    const [year, setYear] = useState('2025');
+    
+    const yearOptions = generateYearOptions();
+    const [year, setYear] = useState(new Date().getFullYear().toString());
     const [month, setMonth] = useState('december');
 
     const handleAction = (reportType: string, action: string) => {
@@ -159,9 +171,9 @@ function ChairpersonStatementsPage() {
                             <SelectValue placeholder="Select a year" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="2025">2025</SelectItem>
-                            <SelectItem value="2024">2024</SelectItem>
-                            <SelectItem value="2023">2023</SelectItem>
+                            {yearOptions.map(year => (
+                                <SelectItem key={year} value={year}>{year}</SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                     </div>
@@ -182,9 +194,9 @@ function ChairpersonStatementsPage() {
                             <SelectValue placeholder="Select a year" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="2025">2025</SelectItem>
-                            <SelectItem value="2024">2024</SelectItem>
-                            <SelectItem value="2023">2023</SelectItem>
+                            {yearOptions.map(year => (
+                                <SelectItem key={year} value={year}>{year}</SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                 </div>
@@ -227,9 +239,9 @@ function ChairpersonStatementsPage() {
                             <SelectValue placeholder="Select a year" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="2025">2025</SelectItem>
-                            <SelectItem value="2024">2024</SelectItem>
-                            <SelectItem value="2023">2023</SelectItem>
+                            {yearOptions.map(year => (
+                                <SelectItem key={year} value={year}>{year}</SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                     </div>

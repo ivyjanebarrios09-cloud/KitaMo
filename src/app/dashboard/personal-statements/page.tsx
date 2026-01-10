@@ -63,7 +63,19 @@ const actions = [
   { label: 'Excel', icon: <FileSpreadsheet className="mr-2 h-4 w-4" /> },
 ];
 
+const generateYearOptions = () => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let i = currentYear + 2; i >= currentYear - 5; i--) {
+        years.push(i.toString());
+    }
+    return years;
+}
+
 export default function PersonalStatementsPage() {
+  const yearOptions = generateYearOptions();
+  const defaultYear = new Date().getFullYear().toString();
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center gap-2">
@@ -85,14 +97,14 @@ export default function PersonalStatementsPage() {
         >
           <div className="space-y-2">
             <label className="text-sm font-medium">Select Year</label>
-            <Select defaultValue="2025">
+            <Select defaultValue={defaultYear}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a year" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="2025">2025</SelectItem>
-                <SelectItem value="2024">2024</SelectItem>
-                <SelectItem value="2023">2023</SelectItem>
+                {yearOptions.map(year => (
+                    <SelectItem key={year} value={year}>{year}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -129,14 +141,14 @@ export default function PersonalStatementsPage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Select Year</label>
-              <Select defaultValue="2025">
+              <Select defaultValue={defaultYear}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a year" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="2025">2025</SelectItem>
-                  <SelectItem value="2024">2024</SelectItem>
-                  <SelectItem value="2023">2023</SelectItem>
+                    {yearOptions.map(year => (
+                        <SelectItem key={year} value={year}>{year}</SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
