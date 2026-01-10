@@ -11,6 +11,40 @@ import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useUserProfile } from '@/hooks/use-user-profile';
+import { Card, CardContent } from './ui/card';
+
+const DeadlineCard = ({ deadline, onMarkAsPaid, payingDeadlineId }) => (
+    <Card className="mb-4">
+        <CardContent className="p-4">
+            <div className="flex justify-between items-start">
+                <p className="font-semibold pr-4">{deadline.description}</p>
+                <Badge variant={deadline.status === 'Paid' ? 'secondary' : 'destructive'} className={`${deadline.status === 'Paid' ? 'bg-green-100 text-green-800' : ''} whitespace-nowrap`}>
+                    {deadline.status}
+                </Badge>
+            </div>
+            <div className="text-muted-foreground text-sm space-y-2 mt-2">
+                <div className="flex justify-between">
+                    <span>Due Date:</span>
+                    <span>{deadline.dueDate ? format(deadline.dueDate.toDate(), 'PP') : 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span>Amount:</span>
+                    <span className="font-medium">₱{deadline.amount.toFixed(2)}</span>
+                </div>
+            </div>
+            <div className="mt-4 flex justify-end">
+                <Button
+                    size="sm"
+                    variant={deadline.status === 'Paid' ? 'ghost' : 'outline'}
+                    onClick={() => onMarkAsPaid(deadline)}
+                    disabled={deadline.status === 'Paid' || payingDeadlineId === deadline.id}
+                >
+                    {payingDeadlineId === deadline.id ? <Loader className="h-4 w-4"/> : (deadline.status === 'Paid' ? 'Paid' : 'Mark as Paid')}
+                </Button>
+            </div>
+        </CardContent>
+    </Card>
+);
 
 export function StudentDeadlines({ roomId, student }) {
   const { deadlines, loading } = useStudentDeadlines(roomId, student.id);
@@ -47,49 +81,71 @@ export function StudentDeadlines({ roomId, student }) {
   return (
     <div className="px-4 py-2 bg-muted/50 rounded-b-lg">
       <h4 className="font-semibold mb-2 text-sm text-muted-foreground px-4 pt-2">Deadline Status for {student.name}</h4>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Deadline</TableHead>
-            <TableHead>Due Date</TableHead>
-            <TableHead>Amount</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Action</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {deadlines.length > 0 ? (
-            deadlines.map((d) => (
-              <TableRow key={d.id}>
-                <TableCell>{d.description}</TableCell>
-                <TableCell>{d.dueDate ? format(d.dueDate.toDate(), 'PP') : 'N/A'}</TableCell>
-                <TableCell>₱{d.amount.toFixed(2)}</TableCell>
-                <TableCell>
-                  <Badge variant={d.status === 'Paid' ? 'secondary' : 'destructive'} className={d.status === 'Paid' ? 'bg-green-100 text-green-800' : ''}>
-                    {d.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    size="sm"
-                    variant={d.status === 'Paid' ? 'ghost' : 'outline'}
-                    onClick={() => handleMarkAsPaid(d)}
-                    disabled={d.status === 'Paid' || payingDeadline === d.id}
-                  >
-                    {payingDeadline === d.id ? <Loader className="h-4 w-4"/> : (d.status === 'Paid' ? 'Paid' : 'Mark as Paid')}
-                  </Button>
-                </TableCell>
-              </TableRow>
+      
+      {/* Mobile View */}
+      <div className="md:hidden">
+        {deadlines.length > 0 ? (
+            deadlines.map(d => (
+                <DeadlineCard 
+                    key={d.id} 
+                    deadline={d} 
+                    onMarkAsPaid={handleMarkAsPaid}
+                    payingDeadlineId={payingDeadline}
+                />
             ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={5} className="text-center h-24">
+        ) : (
+             <div className="text-center text-muted-foreground py-10">
                 No deadlines have been posted for this room yet.
-              </TableCell>
+            </div>
+        )}
+      </div>
+
+      {/* Desktop View */}
+      <div className="hidden md:block">
+        <Table>
+            <TableHeader>
+            <TableRow>
+                <TableHead>Deadline</TableHead>
+                <TableHead>Due Date</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Action</TableHead>
             </TableRow>
-          )}
-        </TableBody>
-      </Table>
+            </TableHeader>
+            <TableBody>
+            {deadlines.length > 0 ? (
+                deadlines.map((d) => (
+                <TableRow key={d.id}>
+                    <TableCell>{d.description}</TableCell>
+                    <TableCell>{d.dueDate ? format(d.dueDate.toDate(), 'PP') : 'N/A'}</TableCell>
+                    <TableCell>₱{d.amount.toFixed(2)}</TableCell>
+                    <TableCell>
+                    <Badge variant={d.status === 'Paid' ? 'secondary' : 'destructive'} className={d.status === 'Paid' ? 'bg-green-100 text-green-800' : ''}>
+                        {d.status}
+                    </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                    <Button
+                        size="sm"
+                        variant={d.status === 'Paid' ? 'ghost' : 'outline'}
+                        onClick={() => handleMarkAsPaid(d)}
+                        disabled={d.status === 'Paid' || payingDeadline === d.id}
+                    >
+                        {payingDeadline === d.id ? <Loader className="h-4 w-4"/> : (d.status === 'Paid' ? 'Paid' : 'Mark as Paid')}
+                    </Button>
+                    </TableCell>
+                </TableRow>
+                ))
+            ) : (
+                <TableRow>
+                <TableCell colSpan={5} className="text-center h-24">
+                    No deadlines have been posted for this room yet.
+                </TableCell>
+                </TableRow>
+            )}
+            </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }
