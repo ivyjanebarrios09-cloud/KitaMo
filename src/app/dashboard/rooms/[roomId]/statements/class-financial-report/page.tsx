@@ -176,8 +176,8 @@ export default function ClassFinancialReportPage() {
       {loading ? (
         <div className="flex justify-center p-8"><Loader/></div>
       ) : (
-        <div className="sm:p-4 overflow-x-auto">
-          <div ref={statementRef} className="bg-white text-black p-8 mx-auto origin-top-left sm:origin-top-center w-[800px] scale-[0.45] xs:scale-50 sm:scale-100">
+        <div className="bg-background sm:p-4 overflow-x-auto">
+          <div ref={statementRef} className="bg-white text-black p-4 sm:p-8 mx-auto origin-top-left w-full sm:w-[800px] scale-[0.8] xs:scale-100 sm:scale-100">
               <div className="max-w-4xl mx-auto report-content">
                   {/* Header */}
                   <div className="text-center mb-8 report-section">
@@ -206,39 +206,41 @@ export default function ClassFinancialReportPage() {
                   </div>
 
                   {/* Collections */}
-                  <div className="mb-8 report-section overflow-x-auto">
+                  <div className="mb-8 report-section">
                       <h3 className="font-bold text-lg mb-2">I. SUMMARY OF COLLECTIONS</h3>
                       <p className="text-sm mb-2">
                           The total amount collected from all students of {room?.name} for the month of <span className='capitalize'>{monthName} {year}</span> is:
                       </p>
-                      <table className="w-full text-sm border-collapse border border-black min-w-[600px]">
-                          <thead>
-                              <tr>
-                                  <th className="border border-black p-1 text-left">Date</th>
-                                  <th className="border border-black p-1 text-left">Description</th>
-                                  <th className="border border-black p-1 text-right">Amount Per Student (PHP)</th>
-                                  <th className="border border-black p-1 text-right">No. of Students Paid</th>
-                                  <th className="border border-black p-1 text-right">Amount Collected (PHP)</th>
-                              </tr>
-                          </thead>
-                          <tbody>
-                              {collections.length > 0 ? (
-                                  collections.map(item => (
-                                      <tr key={item.id}>
-                                          <td className="border border-black p-1">{format(item.date.toDate(), 'MMM d, yyyy')}</td>
-                                          <td className="border border-black p-1">{item.description}</td>
-                                          <td className="border border-black p-1 text-right">{item.amountPerStudent.toFixed(2)}</td>
-                                          <td className="border border-black p-1 text-right">{item.paidCount}</td>
-                                          <td className="border border-black p-1 text-right">{item.amount.toFixed(2)}</td>
-                                      </tr>
-                                  ))
-                              ) : (
-                                  <tr>
-                                      <td colSpan={5} className="border border-black p-1 text-center">No collections this month.</td>
-                                  </tr>
-                              )}
-                          </tbody>
-                      </table>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm border-collapse border border-black min-w-[600px]">
+                            <thead>
+                                <tr>
+                                    <th className="border border-black p-1 text-left">Date</th>
+                                    <th className="border border-black p-1 text-left">Description</th>
+                                    <th className="border border-black p-1 text-right">Amount Per Student (PHP)</th>
+                                    <th className="border border-black p-1 text-right">No. of Students Paid</th>
+                                    <th className="border border-black p-1 text-right">Amount Collected (PHP)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {collections.length > 0 ? (
+                                    collections.map(item => (
+                                        <tr key={item.id}>
+                                            <td className="border border-black p-1">{format(item.date.toDate(), 'MMM d, yyyy')}</td>
+                                            <td className="border border-black p-1">{item.description}</td>
+                                            <td className="border border-black p-1 text-right">{item.amountPerStudent.toFixed(2)}</td>
+                                            <td className="border border-black p-1 text-right">{item.paidCount}</td>
+                                            <td className="border border-black p-1 text-right">{item.amount.toFixed(2)}</td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={5} className="border border-black p-1 text-center">No collections this month.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                      </div>
                       <table className="w-full text-sm mt-2">
                            <tbody>
                               <tr className="font-bold">
@@ -250,44 +252,46 @@ export default function ClassFinancialReportPage() {
                   </div>
 
                   {/* Expenses */}
-                  <div className="mb-8 report-section overflow-x-auto">
+                  <div className="mb-8 report-section">
                       <h3 className="font-bold text-lg mb-2">II. SUMMARY OF EXPENSES</h3>
                       <p className="text-sm mb-2">
                           Major disbursements were made this month for class activities:
                       </p>
-                       <table className="w-full text-sm border-collapse border border-black min-w-[600px]">
-                          <thead>
-                              <tr>
-                                  <th className="border border-black p-1 text-left">Date</th>
-                                  <th className="border border-black p-1 text-left">Description</th>
-                                  <th className="border border-black p-1 text-left">Recipient</th>
-                                  <th className="border border-black p-1 text-right">Amount (PHP)</th>
-                                  <th className="border border-black p-1 text-left">Signature</th>
-                              </tr>
-                          </thead>
-                          <tbody>
-                              {expenses.length > 0 ? (
-                                  expenses.map(item => (
-                                      <tr key={item.id}>
-                                          <td className="border border-black p-1">{format(item.createdAt.toDate(), 'MMM d, yyyy')}</td>
-                                          <td className="border border-black p-1">{item.description}</td>
-                                          <td className="border border-black p-1">{item.recipient}</td>
-                                          <td className="border border-black p-1 text-right">{item.amount.toFixed(2)}</td>
-                                          <td className="border border-black p-1 h-8"></td>
-                                      </tr>
-                                  ))
-                               ) : (
-                                  <tr>
-                                      <td colSpan={5} className="border border-black p-1 text-center">No expenses this month.</td>
-                                  </tr>
-                               )}
-                              <tr className="font-bold bg-gray-100">
-                                  <td colSpan={3} className="border border-black p-1 text-left">Total Expenses</td>
-                                  <td className="border border-black p-1 text-right">P {totalExpenses.toFixed(2)}</td>
-                                  <td className="border border-black p-1"></td>
-                              </tr>
-                          </tbody>
-                      </table>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm border-collapse border border-black min-w-[600px]">
+                            <thead>
+                                <tr>
+                                    <th className="border border-black p-1 text-left">Date</th>
+                                    <th className="border border-black p-1 text-left">Description</th>
+                                    <th className="border border-black p-1 text-left">Recipient</th>
+                                    <th className="border border-black p-1 text-right">Amount (PHP)</th>
+                                    <th className="border border-black p-1 text-left">Signature</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {expenses.length > 0 ? (
+                                    expenses.map(item => (
+                                        <tr key={item.id}>
+                                            <td className="border border-black p-1">{format(item.createdAt.toDate(), 'MMM d, yyyy')}</td>
+                                            <td className="border border-black p-1">{item.description}</td>
+                                            <td className="border border-black p-1">{item.recipient}</td>
+                                            <td className="border border-black p-1 text-right">{item.amount.toFixed(2)}</td>
+                                            <td className="border border-black p-1 h-8"></td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={5} className="border border-black p-1 text-center">No expenses this month.</td>
+                                    </tr>
+                                )}
+                                <tr className="font-bold bg-gray-100">
+                                    <td colSpan={3} className="border border-black p-1 text-left">Total Expenses</td>
+                                    <td className="border border-black p-1 text-right">P {totalExpenses.toFixed(2)}</td>
+                                    <td className="border border-black p-1"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                      </div>
                   </div>
 
                   {/* Financial Position */}
@@ -367,11 +371,6 @@ export default function ClassFinancialReportPage() {
         }
         @page {
             margin: 10mm;
-        }
-        @media (max-width: 640px) {
-          .xs\\:scale-50 {
-            transform: scale(0.5);
-          }
         }
       `}</style>
     </div>
