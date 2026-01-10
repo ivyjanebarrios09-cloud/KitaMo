@@ -296,7 +296,7 @@ export const addPayment = async (roomId: string, studentId: string, chairpersonN
                 userName: studentName,
                 amount: amount,
                 type: 'credit',
-                description: `Payment for ${deadlineDescription}`,
+                description: deadlineDescription,
                 deadlineId: deadlineId,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
