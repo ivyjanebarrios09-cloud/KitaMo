@@ -156,22 +156,27 @@ export default function ClassFinancialReportPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 print:hidden">
-        <div className="flex items-center gap-4">
-          <Link href={`/dashboard/rooms/${roomId}/statements`} className="p-2 rounded-md hover:bg-muted">
-            <ArrowLeft className="h-6 w-6" />
-          </Link>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">Class Financial Report</h1>
-            <p className="text-muted-foreground text-sm sm:text-base capitalize">{monthName} {year} for {room?.name || '...'}</p>
-          </div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 print:hidden">
+            <div className="flex items-center gap-4">
+                <Link href={`/dashboard/rooms/${roomId}/statements`} className="p-2 rounded-md hover:bg-muted">
+                    <ArrowLeft className="h-6 w-6" />
+                </Link>
+                <div>
+                    <h1 className="text-2xl sm:text-3xl font-bold">Class Financial Report</h1>
+                    <p className="text-muted-foreground text-sm sm:text-base capitalize">{monthName} {year} for {room?.name || '...'}</p>
+                </div>
+            </div>
+            <div className="sm:hidden w-full">
+                <Button onClick={handleDownloadPdf} variant="outline" disabled={isDownloading} className="w-auto">
+                    {isDownloading ? <Loader className="mr-2 h-4 w-4"/> : <Download className="mr-2 h-4 w-4"/>} PDF
+                </Button>
+            </div>
+            <div className="hidden sm:flex w-full sm:w-auto gap-2 justify-end">
+                <Button onClick={handleDownloadPdf} variant="outline" disabled={isDownloading} className="flex-1 sm:flex-initial">
+                    {isDownloading ? <Loader className="mr-2 h-4 w-4"/> : <Download className="mr-2 h-4 w-4"/>} PDF
+                </Button>
+            </div>
         </div>
-        <div className="flex w-full sm:w-auto gap-2">
-          <Button onClick={handleDownloadPdf} variant="outline" disabled={isDownloading} className="flex-1">
-            {isDownloading ? <Loader className="mr-2 h-4 w-4"/> : <Download className="mr-2 h-4 w-4"/>} PDF
-          </Button>
-        </div>
-      </div>
       
       {loading ? (
         <div className="flex justify-center p-8"><Loader/></div>
