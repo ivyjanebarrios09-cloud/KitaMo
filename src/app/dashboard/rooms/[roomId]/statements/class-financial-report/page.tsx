@@ -43,21 +43,27 @@ export default function ClassFinancialReportPage() {
   const monthNumber = monthName ? monthMap[monthName.toLowerCase()] : -1;
   const yearNumber = year ? parseInt(year) : new Date().getFullYear();
 
-  const { collections, expenses } = transactions.reduce((acc, t) => {
-      if (!t.createdAt) return acc;
-      const txDate = t.createdAt.toDate();
-      const isInMonth = txDate.getFullYear() === yearNumber && txDate.getMonth() === monthNumber;
-      
-      if (isInMonth) {
-          if (t.type === 'credit') acc.collections.push(t);
-          if (t.type === 'debit') acc.expenses.push(t);
+  const { collections, expenses, roomBalance } = transactions.reduce((acc, t) => {
+      if (t.createdAt) {
+          const txDate = t.createdAt.toDate();
+          const isInMonth = txDate.getFullYear() === yearNumber && (monthNumber === -1 || txDate.getMonth() === monthNumber);
+          
+          if (isInMonth) {
+              if (t.type === 'credit') acc.collections.push(t);
+              if (t.type === 'debit') acc.expenses.push(t);
+          }
       }
       return acc;
-  }, { collections: [], expenses: [] });
+  }, { collections: [] as any[], expenses: [] as any[], roomBalance: room?.totalCollected - room?.totalExpenses || 0 });
 
   const totalCollections = collections.reduce((sum, t) => sum + t.amount, 0);
   const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
-  const financialPosition = totalCollections - totalExpenses; // Simplified for now
+  
+  // This should represent the balance at the end of the selected month.
+  // A more accurate calculation would need starting balance, which we don't have.
+  // We will use the current room balance as a proxy.
+  const financialPosition = roomBalance;
+
 
   const handleDownloadPdf = async () => {
     if (!statementRef.current || isDownloading) return;
@@ -72,7 +78,6 @@ export default function ClassFinancialReportPage() {
           useCORS: true,
           logging: true,
           onclone: (document) => {
-              // On the cloned document, we can add styles that will only affect the canvas capture
               const reportContent = document.querySelector('.report-content');
               if (reportContent) {
                   (reportContent as HTMLElement).style.boxShadow = 'none';
@@ -87,7 +92,21 @@ export default function ClassFinancialReportPage() {
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight * (canvas.height > 1122 ? 1.4 : 1)); // Extend height if content is long
+      const contentHeight = (canvas.height * pdfWidth) / canvas.width;
+      let pageHeight = pdf.internal.pageSize.height;
+      let heightLeft = contentHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, contentHeight);
+      heightLeft -= pageHeight;
+      
+      while (heightLeft > 0) {
+        position = heightLeft - contentHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, contentHeight);
+        heightLeft -= pageHeight;
+      }
+
       pdf.save(`class-financial-report-${roomId}-${year}-${monthName}.pdf`);
     } catch(err) {
         console.error("Error generating PDF", err);
@@ -131,7 +150,7 @@ export default function ClassFinancialReportPage() {
         <div className="flex justify-center p-8"><Loader/></div>
       ) : (
         <div ref={statementRef} className="bg-gray-100 p-4">
-            <div className="max-w-4xl mx-auto bg-white p-8 report-content">
+            <div className="max-w-4xl mx-auto bg-white p-8 report-content text-black">
                 {/* Header */}
                 <div className="text-center mb-8">
                     <img src="/image/logoooo.png" alt="Logo" className="w-16 h-16 mx-auto mb-2"/>
@@ -173,14 +192,20 @@ export default function ClassFinancialReportPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {collections.map(item => (
-                                <tr key={item.id}>
-                                    <td className="border border-black p-1">{format(item.createdAt.toDate(), 'MMM d')}</td>
-                                    <td className="border border-black p-1">{item.description}</td>
-                                    <td className="border border-black p-1 text-right">{item.amount.toFixed(2)}</td>
+                            {collections.length > 0 ? (
+                                collections.map(item => (
+                                    <tr key={item.id}>
+                                        <td className="border border-black p-1">{format(item.createdAt.toDate(), 'MMM d, yyyy')}</td>
+                                        <td className="border border-black p-1">{item.description} from {item.userName}</td>
+                                        <td className="border border-black p-1 text-right">{item.amount.toFixed(2)}</td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={3} className="border border-black p-1 text-center">No collections this month.</td>
                                 </tr>
-                            ))}
-                            <tr className="font-bold">
+                            )}
+                            <tr className="font-bold bg-gray-100">
                                 <td colSpan={2} className="border border-black p-1 text-left">Total</td>
                                 <td className="border border-black p-1 text-right">P {totalCollections.toFixed(2)}</td>
                             </tr>
@@ -205,16 +230,22 @@ export default function ClassFinancialReportPage() {
                             </tr>
                         </thead>
                         <tbody>
-                             {expenses.map(item => (
-                                <tr key={item.id}>
-                                    <td className="border border-black p-1">{format(item.createdAt.toDate(), 'MMM d')}</td>
-                                    <td className="border border-black p-1">{item.description}</td>
-                                    <td className="border border-black p-1">{item.userName}</td>
-                                    <td className="border border-black p-1 text-right">{item.amount.toFixed(2)}</td>
-                                    <td className="border border-black p-1"></td>
+                            {expenses.length > 0 ? (
+                                expenses.map(item => (
+                                    <tr key={item.id}>
+                                        <td className="border border-black p-1">{format(item.createdAt.toDate(), 'MMM d, yyyy')}</td>
+                                        <td className="border border-black p-1">{item.description}</td>
+                                        <td className="border border-black p-1">{item.userName}</td>
+                                        <td className="border border-black p-1 text-right">{item.amount.toFixed(2)}</td>
+                                        <td className="border border-black p-1 h-8"></td>
+                                    </tr>
+                                ))
+                             ) : (
+                                <tr>
+                                    <td colSpan={5} className="border border-black p-1 text-center">No expenses this month.</td>
                                 </tr>
-                            ))}
-                            <tr className="font-bold">
+                             )}
+                            <tr className="font-bold bg-gray-100">
                                 <td colSpan={3} className="border border-black p-1 text-left">Total Expenses</td>
                                 <td className="border border-black p-1 text-right">P {totalExpenses.toFixed(2)}</td>
                                 <td className="border border-black p-1"></td>
@@ -235,16 +266,16 @@ export default function ClassFinancialReportPage() {
                         </thead>
                         <tbody>
                             <tr>
-                                <td className="border border-black p-1">Total Collections</td>
+                                <td className="border border-black p-1">Total Collections this Month</td>
                                 <td className="border border-black p-1 text-right">{totalCollections.toFixed(2)}</td>
                             </tr>
                             <tr>
-                                <td className="border border-black p-1">Total Budget (Including the balances from the past months)</td>
-                                <td className="border border-black p-1 text-right">{financialPosition.toFixed(2)}</td>
+                                <td className="border border-black p-1">Total Expenses this Month</td>
+                                <td className="border border-black p-1 text-right">- {totalExpenses.toFixed(2)}</td>
                             </tr>
-                            <tr>
-                                <td className="border border-black p-1">Total Expenses</td>
-                                <td className="border border-black p-1 text-right">{totalExpenses.toFixed(2)}</td>
+                            <tr className='font-bold bg-gray-100'>
+                                <td className="border border-black p-1">Current Room Balance</td>
+                                <td className="border border-black p-1 text-right">{financialPosition.toFixed(2)}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -255,13 +286,20 @@ export default function ClassFinancialReportPage() {
 
       <style jsx global>{`
         @media print {
-          body { background-color: white; }
+          body { background-color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           .print\:hidden { display: none; }
         }
         .report-content table, .report-content th, .report-content td {
-            border: 1px solid black;
+            border: 1px solid black !important;
+        }
+        .bg-gray-100 {
+            background-color: #f3f4f6 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
       `}</style>
     </div>
   );
 }
+
+    
