@@ -38,7 +38,6 @@ export default function CollectionSummaryPage() {
 
     return deadlines.map(deadline => {
       const relevantPayments = payments.filter(p => p.deadlineId === deadline.id);
-      
       const totalAmountCollected = relevantPayments.reduce((sum, p) => sum + p.amount, 0);
 
       // Group payments by student to see who has paid in full for this deadline
@@ -50,7 +49,7 @@ export default function CollectionSummaryPage() {
         return acc;
       }, {} as Record<string, number>);
 
-      const studentsPaid = Object.values(paymentsByStudent).filter(
+      const studentsPaidCount = Object.values(paymentsByStudent).filter(
         amountPaid => amountPaid >= deadline.amount
       ).length;
 
@@ -60,7 +59,7 @@ export default function CollectionSummaryPage() {
         description: deadline.description,
         amountPerStudent: deadline.amount,
         totalAmountCollected: totalAmountCollected,
-        studentsPaid: studentsPaid,
+        studentsPaid: studentsPaidCount,
       };
     });
   }, [loading, deadlines, payments]);
@@ -78,7 +77,7 @@ export default function CollectionSummaryPage() {
       element.style.backgroundColor = originalBg;
 
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdf = new jsPDF('l', 'mm', 'a4'); // Use landscape
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const canvasAspectRatio = canvas.width / canvas.height;
@@ -129,7 +128,7 @@ export default function CollectionSummaryPage() {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [downloadAction, loading]);
+  }, [downloadAction, loading, collectionSummaryData]);
 
 
   return (
