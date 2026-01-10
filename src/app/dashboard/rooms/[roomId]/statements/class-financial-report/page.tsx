@@ -27,6 +27,9 @@ export default function ClassFinancialReportPage() {
   const downloadAction = searchParams.get('download');
   const year = searchParams.get('year');
   const monthName = searchParams.get('month');
+  const remarks = searchParams.get('remarks');
+  const adviserName = searchParams.get('adviserName');
+  const adviserPosition = searchParams.get('adviserPosition');
   const roomId = params.roomId as string;
   
   const { user } = useAuth();
@@ -113,27 +116,23 @@ export default function ClassFinancialReportPage() {
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
         const margin = 10; // 10mm margin on all sides
-        const contentWidth = pdfWidth - margin * 2;
-        const contentHeight = pdfHeight - margin * 2;
-
-        const canvasAspectRatio = canvas.width / canvas.height;
-        let imgWidth = contentWidth;
-        let imgHeight = imgWidth / canvasAspectRatio;
-
-        // If the content is too tall, fit it to the page height
-        if (imgHeight > contentHeight) {
-            imgHeight = contentHeight;
-            imgWidth = imgHeight * canvasAspectRatio;
-        }
-
-        // Center the content on the page
-        const x = (pdfWidth - imgWidth) / 2;
-        const y = (pdfHeight - imgHeight) / 2;
         
-        let position = y;
-        let heightLeft = canvas.height * (imgWidth / canvas.width); // Calculate total content height in PDF units
+        const imgProps = pdf.getImageProperties(imgData);
+        const imgWidth = pdfWidth - margin * 2;
+        const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+        
+        let heightLeft = imgHeight;
+        let position = margin;
+        
+        pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+        heightLeft -= (pdfHeight - margin * 2);
 
-        pdf.addImage(imgData, 'PNG', x, position, imgWidth, heightLeft);
+        while (heightLeft > 0) {
+            position = heightLeft - imgHeight + margin;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+            heightLeft -= (pdfHeight - margin * 2);
+        }
 
         pdf.save(`class-financial-report-${roomId}-${year}-${monthName}.pdf`);
     } catch(err) {
@@ -148,7 +147,7 @@ export default function ClassFinancialReportPage() {
   useEffect(() => {
     if (!loading && !isDownloading) {
       if (downloadAction === 'pdf') {
-        handleDownloadPdf();
+        setTimeout(handleDownloadPdf, 500); // Add a small delay for content to render
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -291,7 +290,7 @@ export default function ClassFinancialReportPage() {
                 </div>
 
                 {/* Financial Position */}
-                <div>
+                <div className="mb-12">
                      <h3 className="font-bold text-lg mb-2">III. FINANCIAL POSITION</h3>
                       <table className="w-1/2 text-sm border-collapse border border-black">
                         <thead>
@@ -316,6 +315,36 @@ export default function ClassFinancialReportPage() {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Remarks */}
+                {remarks && (
+                    <div className="mb-12 text-sm">
+                        <h3 className="font-bold text-lg mb-2">IV. REMARKS</h3>
+                        <p className='whitespace-pre-wrap'>{remarks}</p>
+                    </div>
+                )}
+                
+                {/* Signatories */}
+                <div className="mb-8 text-sm">
+                    <h3 className="font-bold text-lg mb-4">V. SIGNATORIES</h3>
+                    <div className="flex justify-around items-start">
+                        <div className="text-center w-1/2">
+                            <p className="font-semibold mb-1">Prepared by:</p>
+                            <div className='h-16'></div>
+                            <p className="font-bold underline">{userProfile?.name}</p>
+                            <p>Class Finance Officer</p>
+                        </div>
+                        {adviserName && (
+                            <div className="text-center w-1/2">
+                                <p className="font-semibold mb-1">Verified by:</p>
+                                <div className='h-16'></div>
+                                <p className="font-bold underline">{adviserName}</p>
+                                <p>{adviserPosition}</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
             </div>
         </div>
       )}
@@ -332,6 +361,9 @@ export default function ClassFinancialReportPage() {
             background-color: #f3f4f6 !important;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
+        }
+        @page {
+            margin: 10mm;
         }
       `}</style>
     </div>

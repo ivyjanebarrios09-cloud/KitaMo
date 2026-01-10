@@ -35,6 +35,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useStudentDeadlines } from '@/hooks/use-student-deadlines';
 import { format } from 'date-fns';
 import { downloadCSV } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 const StatementCard = ({
   icon: Icon,
@@ -92,22 +94,34 @@ function ChairpersonStatementsPage() {
     const yearOptions = generateYearOptions();
     const [year, setYear] = useState(new Date().getFullYear().toString());
     const [month, setMonth] = useState('december');
+    
+    // State for Class Financial Report inputs
+    const [remarks, setRemarks] = useState('A contribution was collected and managed by the class finance officer. This report aims to maintain transparency and accountability. Copies will be submitted to the adviser for record-keeping and will also be posted on the class bulletin board for public viewing.');
+    const [adviserName, setAdviserName] = useState('');
+    const [adviserPosition, setAdviserPosition] = useState('Class Adviser');
+
 
     const handleAction = (reportType: string, action: string) => {
         let path = `/dashboard/rooms/${roomId}/statements/${reportType}`;
         const queryParams = new URLSearchParams();
 
-        if (reportType === 'yearly' || reportType === 'class-financial-report') {
+        if (reportType === 'yearly') {
             queryParams.set('year', year);
         } 
-        if (reportType === 'monthly' || reportType === 'class-financial-report') {
+        if (reportType === 'monthly') {
             queryParams.set('month', month);
+        }
+        if (reportType === 'class-financial-report') {
+            queryParams.set('year', year);
+            queryParams.set('month', month);
+            queryParams.set('remarks', remarks);
+            queryParams.set('adviserName', adviserName);
+            queryParams.set('adviserPosition', adviserPosition);
         }
 
         if (action === 'PDF') {
             queryParams.set('download', 'pdf');
         } else if (action === 'Excel') {
-            // For the new report, we will only support PDF view/download for now
             if (reportType === 'class-financial-report') {
                 router.push(`${path}?${queryParams.toString()}`);
                 return;
@@ -141,41 +155,57 @@ function ChairpersonStatementsPage() {
                 actions={classReportActions}
                 onAction={(action) => handleAction('class-financial-report', action)}
             >
-                 <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                    <label className="text-sm font-medium">Select Month</label>
-                    <Select value={month} onValueChange={setMonth}>
-                        <SelectTrigger>
-                        <SelectValue placeholder="Select a month" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="january">January</SelectItem>
-                            <SelectItem value="february">February</SelectItem>
-                            <SelectItem value="march">March</SelectItem>
-                            <SelectItem value="april">April</SelectItem>
-                            <SelectItem value="may">May</SelectItem>
-                            <SelectItem value="june">June</SelectItem>
-                            <SelectItem value="july">July</SelectItem>
-                            <SelectItem value="august">August</SelectItem>
-                            <SelectItem value="september">September</SelectItem>
-                            <SelectItem value="october">October</SelectItem>
-                            <SelectItem value="november">November</SelectItem>
-                            <SelectItem value="december">December</SelectItem>
-                        </SelectContent>
-                    </Select>
+                 <div className="grid grid-cols-1 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                        <label className="text-sm font-medium">Select Month</label>
+                        <Select value={month} onValueChange={setMonth}>
+                            <SelectTrigger>
+                            <SelectValue placeholder="Select a month" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="january">January</SelectItem>
+                                <SelectItem value="february">February</SelectItem>
+                                <SelectItem value="march">March</SelectItem>
+                                <SelectItem value="april">April</SelectItem>
+                                <SelectItem value="may">May</SelectItem>
+                                <SelectItem value="june">June</SelectItem>
+                                <SelectItem value="july">July</SelectItem>
+                                <SelectItem value="august">August</SelectItem>
+                                <SelectItem value="september">September</SelectItem>
+                                <SelectItem value="october">October</SelectItem>
+                                <SelectItem value="november">November</SelectItem>
+                                <SelectItem value="december">December</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        </div>
+                        <div className="space-y-2">
+                        <label className="text-sm font-medium">Select Year</label>
+                        <Select value={year} onValueChange={setYear}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a year" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {yearOptions.map(year => (
+                                    <SelectItem key={year} value={year}>{year}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        </div>
                     </div>
                     <div className="space-y-2">
-                    <label className="text-sm font-medium">Select Year</label>
-                    <Select value={year} onValueChange={setYear}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a year" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {yearOptions.map(year => (
-                                <SelectItem key={year} value={year}>{year}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                        <label className="text-sm font-medium">Remarks</label>
+                        <Textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} placeholder="Enter remarks for the report..." rows={4}/>
+                    </div>
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Class Adviser Name</label>
+                            <Input value={adviserName} onChange={(e) => setAdviserName(e.target.value)} placeholder="e.g., Mrs. Florence S."/>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Adviser Position</label>
+                            <Input value={adviserPosition} onChange={(e) => setAdviserPosition(e.target.value)} placeholder="e.g., Class Adviser"/>
+                        </div>
                     </div>
                 </div>
             </StatementCard>
