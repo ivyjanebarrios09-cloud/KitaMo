@@ -52,6 +52,7 @@ import { Badge } from '@/components/ui/badge';
 import { useRoomDeadlines } from '@/hooks/use-room-deadlines';
 import { useStudentDeadlines } from '@/hooks/use-student-deadlines';
 import { useUserProfile } from '@/hooks/use-user-profile';
+import { Separator } from '@/components/ui/separator';
 
 
 const deadlineSchema = z.object({
@@ -173,6 +174,25 @@ function NewDeadlineModal({ roomId }: { roomId: string }) {
   );
 }
 
+const DeadlineCard = ({ deadline }) => (
+    <Card className="mb-4">
+        <CardContent className="p-4 space-y-3">
+             <p className="font-semibold pr-4">{deadline.description}</p>
+             <Separator/>
+            <div className="text-muted-foreground text-sm space-y-2">
+                <div className="flex justify-between">
+                    <span>Due Date:</span>
+                    <span>{deadline.dueDate ? format(deadline.dueDate.toDate(), 'PP') : 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span>Amount Required:</span>
+                    <span className="font-medium">₱{deadline.amount.toFixed(2)}</span>
+                </div>
+            </div>
+        </CardContent>
+    </Card>
+);
+
 function ChairpersonFundDeadlines({ roomId }: { roomId: string }) {
   const { deadlines, loading } = useRoomDeadlines(roomId);
 
@@ -194,46 +214,47 @@ function ChairpersonFundDeadlines({ roomId }: { roomId: string }) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Deadline</TableHead>
-                <TableHead>Due Date</TableHead>
-                <TableHead className="text-right">Amount Required</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center">
-                    <div className="flex justify-center p-8">
-                      <Loader />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : deadlines.length > 0 ? (
-                deadlines.map((deadline) => (
-                  <TableRow key={deadline.id}>
-                    <TableCell className="font-medium">{deadline.description}</TableCell>
-                    <TableCell>
-                      {deadline.dueDate
-                        ? format(deadline.dueDate.toDate(), 'PP')
-                        : 'N/A'}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      ₱{deadline.amount.toFixed(2)}
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={3} className="h-24 text-center">
+            {loading ? (
+                <div className="flex justify-center p-8"><Loader /></div>
+            ) : deadlines.length > 0 ? (
+                <>
+                 {/* Mobile View */}
+                <div className="md:hidden space-y-4">
+                    {deadlines.map(deadline => <DeadlineCard key={deadline.id} deadline={deadline} />)}
+                </div>
+                {/* Desktop View */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Deadline</TableHead>
+                        <TableHead>Due Date</TableHead>
+                        <TableHead className="text-right">Amount Required</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {deadlines.map((deadline) => (
+                          <TableRow key={deadline.id}>
+                            <TableCell className="font-medium">{deadline.description}</TableCell>
+                            <TableCell>
+                              {deadline.dueDate
+                                ? format(deadline.dueDate.toDate(), 'PP')
+                                : 'N/A'}
+                            </TableCell>
+                            <TableCell className="text-right font-medium">
+                              ₱{deadline.amount.toFixed(2)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                </>
+            ) : (
+                <div className="text-center h-24 flex items-center justify-center text-muted-foreground">
                     No deadlines posted yet.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                </div>
+            )}
         </CardContent>
       </Card>
     </div>
@@ -319,3 +340,5 @@ export default function FundDeadlinesPage() {
 
   return <StudentFundDeadlines roomId={roomId} studentId={user!.uid} />;
 }
+
+    
