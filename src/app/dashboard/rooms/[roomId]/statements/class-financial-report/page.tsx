@@ -76,15 +76,15 @@ export default function ClassFinancialReportPage() {
                 date: deadlineInfo?.createdAt || payment.createdAt,
                 amount: 0,
                 amountPerStudent: deadlineInfo?.amount || 0,
-                paidCount: new Set()
+                paidBy: new Set()
             };
         }
         acc[key].amount += payment.amount;
-        acc[key].paidCount.add(payment.userId);
+        acc[key].paidBy.add(payment.userId);
         return acc;
-    }, {} as Record<string, {id: string, description: string, date: any, amount: number, amountPerStudent: number, paidCount: Set<string>}>);
+    }, {} as Record<string, {id: string, description: string, date: any, amount: number, amountPerStudent: number, paidBy: Set<string>}>);
 
-    const collectionSummary = Object.values(collectionsByDeadline).map(c => ({...c, paidCount: c.paidCount.size}));
+    const collectionSummary = Object.values(collectionsByDeadline).map(c => ({...c, paidCount: c.paidBy.size}));
 
     return { collections: collectionSummary, expenses: expensesInMonth, deadlinesInMonth: deadlines };
 
@@ -93,8 +93,6 @@ export default function ClassFinancialReportPage() {
   const totalCollections = collections.reduce((sum, t) => sum + t.amount, 0);
   const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
   
-  const uniqueStudentsPaid = new Set(collections.flatMap(c => Array.from(c.paidCount))).size;
-
 
   const financialPosition = (room?.totalCollected || 0) - (room?.totalExpenses || 0);
 
@@ -117,11 +115,12 @@ export default function ClassFinancialReportPage() {
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
         
-        const margin = 10;
+        const margin = 10; // 10mm margin
         const contentWidth = pdfWidth - (margin * 2);
+        const contentHeight = pdfHeight - (margin * 2);
+        
         const imgProps = pdf.getImageProperties(imgData);
         const imgHeight = (imgProps.height * contentWidth) / imgProps.width;
-        const contentHeight = imgHeight > pdfHeight - (margin * 2) ? pdfHeight - (margin * 2) : imgHeight;
         
         let heightLeft = imgHeight;
         let position = 0;
@@ -132,13 +131,12 @@ export default function ClassFinancialReportPage() {
 
         // Add subsequent pages if content overflows
         while (heightLeft > 0) {
-            position = position - pdfHeight; // Move to the next page's Y position
+            position -= contentHeight; 
             pdf.addPage();
             // The image is added again, but the negative 'position' crops it to show the next part
             pdf.addImage(imgData, 'PNG', margin, position + margin, contentWidth, imgHeight);
             heightLeft -= contentHeight;
         }
-
 
         pdf.save(`class-financial-report-${roomId}-${year}-${monthName}.pdf`);
     } catch(err) {
@@ -331,7 +329,7 @@ export default function ClassFinancialReportPage() {
                 )}
                 
                 {/* Signatories */}
-                <div className="mb-8 text-sm" style={{ pageBreakInside: 'avoid' }}>
+                <div className="mb-8 text-sm" style={{ pageBreakInside: 'avoid', paddingTop: '50px' }}>
                     <h3 className="font-bold text-lg mb-4">V. SIGNATORIES</h3>
                     <div className="flex justify-around items-start">
                         <div className="text-center w-1/2">
