@@ -16,19 +16,30 @@ import {
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { Pie, PieChart, Cell, Legend } from 'recharts';
 import { useRoomTransactions } from '@/hooks/use-room-transactions';
 import { useRoom } from '@/hooks/use-room';
 import { Loader } from '@/components/loader';
 import { format } from 'date-fns';
 import React from 'react';
+import { cn } from '@/lib/utils';
+
 
 const chartConfig = {
-  expenses: {
-    label: 'Expenses',
-    color: 'hsl(var(--primary))',
-  },
-};
+    expenses: {
+      label: 'Expenses',
+      color: 'hsl(var(--primary))',
+    },
+  };
+  
+const COLORS = [
+    'hsl(var(--chart-1))',
+    'hsl(var(--chart-2))',
+    'hsl(var(--chart-3))',
+    'hsl(var(--chart-4))',
+    'hsl(var(--chart-5))',
+    'hsl(var(--primary))',
+];
 
 export default function ExpenseAnalyticsPage() {
   const params = useParams();
@@ -115,35 +126,52 @@ export default function ExpenseAnalyticsPage() {
                 <CardHeader>
                     <CardTitle>Monthly Expenses</CardTitle>
                     <CardDescription>
-                    Total expenses aggregated by month.
+                        Proportion of expenses by month.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
-                    <BarChart accessibilityLayer data={monthlyExpensesData} layout="vertical" margin={{ left: 10, right: 30 }}>
-                        <CartesianGrid horizontal={false} />
-                        <YAxis
-                            dataKey="month"
-                            type="category"
-                            tickLine={false}
-                            tickMargin={10}
-                            axisLine={false}
-                            tickFormatter={(value) => value}
-                            width={80}
-                        />
-                        <XAxis
-                            dataKey="expenses"
-                            type="number"
-                            tickFormatter={(value) => `₱${value}`}
-                            tickLine={false}
-                            axisLine={false}
-                        />
-                        <ChartTooltip
-                            content={<ChartTooltipContent />}
-                            cursor={false}
-                        />
-                        <Bar dataKey="expenses" fill="var(--color-expenses)" radius={4} layout="vertical" />
-                    </BarChart>
+                        <PieChart>
+                            <ChartTooltip content={<ChartTooltipContent nameKey="month" />} />
+                            <Pie
+                                data={monthlyExpensesData}
+                                dataKey="expenses"
+                                nameKey="month"
+                                cx="50%"
+                                cy="50%"
+                                outerRadius={80}
+                                labelLine={false}
+                                label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
+                                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                                    const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+                                    const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+                                    if (percent < 0.05) return null;
+                                    return (
+                                        <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central">
+                                        {`${(percent * 100).toFixed(0)}%`}
+                                        </text>
+                                    );
+                                }}
+                            >
+                                {monthlyExpensesData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                            </Pie>
+                             <Legend
+                                content={({ payload }) => {
+                                    return (
+                                    <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground justify-center">
+                                        {payload?.map((entry, index) => (
+                                        <li key={`item-${index}`} className="flex items-center gap-1.5">
+                                            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                                            <span>{entry.value}</span>
+                                        </li>
+                                        ))}
+                                    </ul>
+                                    )
+                                }}
+                                />
+                        </PieChart>
                     </ChartContainer>
                 </CardContent>
                 </Card>
@@ -152,34 +180,52 @@ export default function ExpenseAnalyticsPage() {
                 <CardHeader>
                     <CardTitle>Yearly Expenses</CardTitle>
                     <CardDescription>
-                    Total expenses aggregated by year.
+                        Proportion of expenses by year.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
-                    <BarChart accessibilityLayer data={yearlyExpensesData} layout="vertical" margin={{ left: 10, right: 30 }}>
-                        <CartesianGrid horizontal={false} />
-                         <YAxis
-                            dataKey="year"
-                            type="category"
-                            tickLine={false}
-                            tickMargin={10}
-                            axisLine={false}
-                            width={50}
-                        />
-                        <XAxis
-                            dataKey="expenses"
-                            type="number"
-                            tickFormatter={(value) => `₱${value}`}
-                            tickLine={false}
-                            axisLine={false}
-                        />
-                        <ChartTooltip
-                            content={<ChartTooltipContent />}
-                            cursor={false}
-                        />
-                        <Bar dataKey="expenses" fill="var(--color-expenses)" radius={4} layout="vertical" />
-                    </BarChart>
+                       <PieChart>
+                            <ChartTooltip content={<ChartTooltipContent nameKey="year" />} />
+                            <Pie
+                                data={yearlyExpensesData}
+                                dataKey="expenses"
+                                nameKey="year"
+                                cx="50%"
+                                cy="50%"
+                                outerRadius={80}
+                                labelLine={false}
+                                label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+                                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                                    const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+                                    const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+                                    if (percent < 0.05) return null;
+                                    return (
+                                        <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central">
+                                        {`${(percent * 100).toFixed(0)}%`}
+                                        </text>
+                                    );
+                                }}
+                            >
+                                {yearlyExpensesData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                            </Pie>
+                             <Legend
+                                content={({ payload }) => {
+                                    return (
+                                    <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground justify-center">
+                                        {payload?.map((entry, index) => (
+                                        <li key={`item-${index}`} className="flex items-center gap-1.5">
+                                            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                                            <span>{entry.value}</span>
+                                        </li>
+                                        ))}
+                                    </ul>
+                                    )
+                                }}
+                                />
+                        </PieChart>
                     </ChartContainer>
                 </CardContent>
                 </Card>
