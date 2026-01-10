@@ -12,17 +12,19 @@ import { useState } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { Card, CardContent } from './ui/card';
+import { Separator } from './ui/separator';
 
 const DeadlineCard = ({ deadline, onMarkAsPaid, payingDeadlineId }) => (
     <Card className="mb-4">
-        <CardContent className="p-4">
+        <CardContent className="p-4 space-y-3">
             <div className="flex justify-between items-start">
-                <p className="font-semibold pr-4">{deadline.description}</p>
-                <Badge variant={deadline.status === 'Paid' ? 'secondary' : 'destructive'} className={`${deadline.status === 'Paid' ? 'bg-green-100 text-green-800' : ''} whitespace-nowrap`}>
+                 <p className="font-semibold pr-4">{deadline.description}</p>
+                 <Badge variant={deadline.status === 'Paid' ? 'secondary' : 'destructive'} className={`${deadline.status === 'Paid' ? 'bg-green-100 text-green-800' : ''} whitespace-nowrap`}>
                     {deadline.status}
                 </Badge>
             </div>
-            <div className="text-muted-foreground text-sm space-y-2 mt-2">
+            <Separator/>
+            <div className="text-muted-foreground text-sm space-y-2">
                 <div className="flex justify-between">
                     <span>Due Date:</span>
                     <span>{deadline.dueDate ? format(deadline.dueDate.toDate(), 'PP') : 'N/A'}</span>
@@ -30,6 +32,10 @@ const DeadlineCard = ({ deadline, onMarkAsPaid, payingDeadlineId }) => (
                 <div className="flex justify-between">
                     <span>Amount:</span>
                     <span className="font-medium">₱{deadline.amount.toFixed(2)}</span>
+                </div>
+                 <div className="flex justify-between">
+                    <span>Paid:</span>
+                    <span className="font-medium">₱{deadline.amountPaid.toFixed(2)}</span>
                 </div>
             </div>
             <div className="mt-4 flex justify-end">
@@ -58,7 +64,14 @@ export function StudentDeadlines({ roomId, student }) {
     
     setPayingDeadline(deadline.id);
     try {
-      await addPayment(roomId, student.id, userProfile.name, deadline.id, deadline.amount, deadline.description);
+      // For chairpersons marking as paid, they should pay the full required amount for that deadline
+      const amountToPay = deadline.amount - deadline.amountPaid;
+      if (amountToPay <= 0) {
+        toast({ title: "Already Paid", description: "This deadline has already been fully paid."});
+        setPayingDeadline(null);
+        return;
+      }
+      await addPayment(roomId, student.id, userProfile.name, deadline.id, amountToPay, deadline.description);
       toast({
         title: 'Payment Recorded',
         description: `Marked '${deadline.description}' as paid for ${student.name}.`,
@@ -108,6 +121,7 @@ export function StudentDeadlines({ roomId, student }) {
                 <TableHead>Deadline</TableHead>
                 <TableHead>Due Date</TableHead>
                 <TableHead>Amount</TableHead>
+                <TableHead>Paid</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Action</TableHead>
             </TableRow>
@@ -119,6 +133,7 @@ export function StudentDeadlines({ roomId, student }) {
                     <TableCell>{d.description}</TableCell>
                     <TableCell>{d.dueDate ? format(d.dueDate.toDate(), 'PP') : 'N/A'}</TableCell>
                     <TableCell>₱{d.amount.toFixed(2)}</TableCell>
+                    <TableCell>₱{d.amountPaid.toFixed(2)}</TableCell>
                     <TableCell>
                     <Badge variant={d.status === 'Paid' ? 'secondary' : 'destructive'} className={d.status === 'Paid' ? 'bg-green-100 text-green-800' : ''}>
                         {d.status}
@@ -138,7 +153,7 @@ export function StudentDeadlines({ roomId, student }) {
                 ))
             ) : (
                 <TableRow>
-                <TableCell colSpan={5} className="text-center h-24">
+                <TableCell colSpan={6} className="text-center h-24">
                     No deadlines have been posted for this room yet.
                 </TableCell>
                 </TableRow>
