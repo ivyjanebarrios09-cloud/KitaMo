@@ -5,17 +5,16 @@ import { ArrowLeft, Download } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useRoom } from '@/hooks/use-room';
-import { useRoomStudents } from '@/hooks/use-room-students';
 import { Loader } from '@/components/loader';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useToast } from '@/hooks/use-toast';
 import { downloadCSV } from '@/lib/utils';
+import { useRoomTransactions } from '@/hooks/use-room-transactions';
 
 export default function CollectionSummaryPage() {
   const params = useParams();
@@ -23,12 +22,36 @@ export default function CollectionSummaryPage() {
   const downloadAction = searchParams.get('download');
   const roomId = params.roomId as string;
   const { room, loading: roomLoading } = useRoom(roomId);
-  const { students, loading: studentsLoading } = useRoomStudents(roomId);
+  const { transactions: deadlines, loading: deadlinesLoading } = useRoomTransactions(roomId, 'deadline');
+  const { transactions: payments, loading: paymentsLoading } = useRoomTransactions(roomId, 'credit');
+  
   const [isDownloading, setIsDownloading] = useState(false);
   const statementRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  const loading = roomLoading || studentsLoading;
+  const loading = roomLoading || deadlinesLoading || paymentsLoading;
+
+  const collectionData = useMemo(() => {
+    if (loading) return [];
+    
+    return deadlines.map(deadline => {
+        const paymentsForDeadline = payments.filter(p => p.deadlineId === deadline.id);
+        const uniqueStudentsPaid = new Set(paymentsForDeadline.map(p => p.userId));
+        const totalAmountCollected = paymentsForDeadline.reduce((sum, p) => sum + p.amount, 0);
+
+        return {
+            id: deadline.id,
+            date: deadline.createdAt.toDate(),
+            description: deadline.description,
+            amountPerStudent: deadline.amount,
+            totalAmount: totalAmountCollected,
+            studentCount: uniqueStudentsPaid.size
+        };
+    });
+  }, [deadlines, payments, loading]);
+
+  const totalCollected = collectionData.reduce((acc, item) => acc + item.totalAmount, 0);
+
 
   const handleDownloadPdf = async () => {
     if (!statementRef.current || isDownloading) return;
@@ -68,17 +91,17 @@ export default function CollectionSummaryPage() {
   };
 
   const handleDownloadCSV = () => {
-    if (loading || students.length === 0) {
+    if (loading || collectionData.length === 0) {
         toast({ variant: 'destructive', title: 'No Data Available', description: 'There is no data to download.' });
         return;
     }
-    const headers = ['Student Name', 'Email', 'Total Paid (PHP)', 'Total Owed (PHP)', 'Status'];
-    const data = students.map(s => ({
-        'Student Name': s.name,
-        'Email': s.email,
-        'Total Paid (PHP)': s.totalPaid.toFixed(2),
-        'Total Owed (PHP)': s.totalOwed.toFixed(2),
-        'Status': s.totalOwed <= 0 ? 'Fully Paid' : 'Has Dues',
+    const headers = ['Date', 'Description', 'Amount Per Student (PHP)', 'Amount (PHP)', 'No. of Students'];
+    const data = collectionData.map(item => ({
+        'Date': format(item.date, 'yyyy-MM-dd'),
+        'Description': item.description,
+        'Amount Per Student (PHP)': item.amountPerStudent.toFixed(2),
+        'Amount (PHP)': item.totalAmount.toFixed(2),
+        'No. of Students': item.studentCount,
     }));
     downloadCSV(data, headers, `collection-summary-${roomId}.csv`);
     toast({ title: 'Download Started', description: 'Your collection summary CSV has started downloading.' });
@@ -95,8 +118,6 @@ export default function CollectionSummaryPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [downloadAction, loading]);
 
-  const totalCollected = students.reduce((acc, s) => acc + s.totalPaid, 0);
-  const totalOwed = students.reduce((acc, s) => acc + s.totalOwed, 0);
 
   return (
     <div className="flex flex-col gap-6">
@@ -137,37 +158,36 @@ export default function CollectionSummaryPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-primary hover:bg-primary/90">
-                    <TableHead className="text-primary-foreground">Student Name</TableHead>
-                    <TableHead className="text-right text-primary-foreground">Total Paid</TableHead>
-                    <TableHead className="text-right text-primary-foreground">Total Owed</TableHead>
-                    <TableHead className="text-center text-primary-foreground">Status</TableHead>
+                    <TableHead className="text-primary-foreground">Date</TableHead>
+                    <TableHead className="text-primary-foreground">Description</TableHead>
+                    <TableHead className="text-right text-primary-foreground">Amount Per Student (PHP)</TableHead>
+                    <TableHead className="text-right text-primary-foreground">Amount (PHP)</TableHead>
+                    <TableHead className="text-center text-primary-foreground">No. of Students</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {students.length > 0 ? (
-                    students.map((student) => (
-                      <TableRow key={student.id}>
-                        <TableCell className="font-medium">{student.name}</TableCell>
-                        <TableCell className="text-right">₱{student.totalPaid.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">₱{student.totalOwed.toFixed(2)}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant={student.totalOwed <= 0 ? 'secondary' : 'outline'} className={student.totalOwed <= 0 ? 'bg-green-100 text-green-800' : 'border-destructive text-destructive'}>
-                            {student.totalOwed <= 0 ? 'Fully Paid' : 'Has Dues'}
-                          </Badge>
-                        </TableCell>
+                  {collectionData.length > 0 ? (
+                    collectionData.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>{format(item.date, 'MMM d')}</TableCell>
+                        <TableCell className="font-medium">{item.description}</TableCell>
+                        <TableCell className="text-right">₱{item.amountPerStudent.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">₱{item.totalAmount.toFixed(2)}</TableCell>
+                        <TableCell className="text-center">{item.studentCount}</TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center h-24">No students in this room.</TableCell>
+                      <TableCell colSpan={5} className="text-center h-24">No collection events found.</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
+                 <TableRow className="font-bold bg-muted/50">
+                    <TableCell colSpan={3} className="text-right">Total</TableCell>
+                    <TableCell className="text-right">P {totalCollected.toFixed(2)}</TableCell>
+                    <TableCell></TableCell>
+                 </TableRow>
               </Table>
-            </div>
-            <div className="mt-8 space-y-2 text-right text-sm">
-              <p><span className="text-muted-foreground">Total Collected from Students:</span> <span className='font-semibold'>PHP {totalCollected.toFixed(2)}</span></p>
-              <p><span className="text-muted-foreground">Total Outstanding Dues:</span> <span className='font-semibold'>PHP {totalOwed.toFixed(2)}</span></p>
             </div>
           </div>
         </div>
