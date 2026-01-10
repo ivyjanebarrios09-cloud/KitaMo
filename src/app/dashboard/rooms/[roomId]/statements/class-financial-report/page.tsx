@@ -115,7 +115,7 @@ export default function ClassFinancialReportPage() {
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
         
-        const margin = 10; // 10mm margin
+        const margin = 10;
         const contentWidth = pdfWidth - (margin * 2);
         const contentHeight = pdfHeight - (margin * 2);
         
@@ -131,7 +131,7 @@ export default function ClassFinancialReportPage() {
 
         // Add subsequent pages if content overflows
         while (heightLeft > 0) {
-            position -= contentHeight; 
+            position = position - contentHeight; // Correctly calculate the negative offset for the next slice
             pdf.addPage();
             // The image is added again, but the negative 'position' crops it to show the next part
             pdf.addImage(imgData, 'PNG', margin, position + margin, contentWidth, imgHeight);
