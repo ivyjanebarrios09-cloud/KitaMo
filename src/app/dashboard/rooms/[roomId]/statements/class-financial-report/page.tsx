@@ -100,44 +100,42 @@ export default function ClassFinancialReportPage() {
     if (!statementRef.current || isDownloading) return;
     setIsDownloading(true);
     try {
-      const element = statementRef.current;
-      const originalBg = element.style.backgroundColor;
-      element.style.backgroundColor = 'white';
-      
-      const canvas = await html2canvas(element, { 
-          scale: 2, 
-          useCORS: true,
-          logging: true,
-          onclone: (document) => {
-              const reportContent = document.querySelector('.report-content');
-              if (reportContent) {
-                  (reportContent as HTMLElement).style.boxShadow = 'none';
-                  (reportContent as HTMLElement).style.border = 'none';
-              }
-          }
-      });
-      element.style.backgroundColor = originalBg;
+        const element = statementRef.current;
+        const canvas = await html2canvas(element, {
+            scale: 2, // Higher scale for better quality
+            useCORS: true,
+            backgroundColor: '#ffffff' // Explicitly set a white background
+        });
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      
-      const contentHeight = (canvas.height * pdfWidth) / canvas.width;
-      let pageHeight = pdf.internal.pageSize.height;
-      let heightLeft = contentHeight;
-      let position = 0;
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4'); // Portrait, millimeters, A4 size
 
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, contentHeight);
-      heightLeft -= pageHeight;
-      
-      while (heightLeft > 0) {
-        position = heightLeft - contentHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, contentHeight);
-        heightLeft -= pageHeight;
-      }
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const margin = 10; // 10mm margin on all sides
+        const contentWidth = pdfWidth - margin * 2;
+        const contentHeight = pdfHeight - margin * 2;
 
-      pdf.save(`class-financial-report-${roomId}-${year}-${monthName}.pdf`);
+        const canvasAspectRatio = canvas.width / canvas.height;
+        let imgWidth = contentWidth;
+        let imgHeight = imgWidth / canvasAspectRatio;
+
+        // If the content is too tall, fit it to the page height
+        if (imgHeight > contentHeight) {
+            imgHeight = contentHeight;
+            imgWidth = imgHeight * canvasAspectRatio;
+        }
+
+        // Center the content on the page
+        const x = (pdfWidth - imgWidth) / 2;
+        const y = (pdfHeight - imgHeight) / 2;
+        
+        let position = y;
+        let heightLeft = canvas.height * (imgWidth / canvas.width); // Calculate total content height in PDF units
+
+        pdf.addImage(imgData, 'PNG', x, position, imgWidth, heightLeft);
+
+        pdf.save(`class-financial-report-${roomId}-${year}-${monthName}.pdf`);
     } catch(err) {
         console.error("Error generating PDF", err);
         toast({variant: "destructive", title: "Error generating PDF", description: "An error occurred while trying to create the PDF."})
@@ -179,7 +177,7 @@ export default function ClassFinancialReportPage() {
       {loading ? (
         <div className="flex justify-center p-8"><Loader/></div>
       ) : (
-        <div ref={statementRef} className="bg-gray-100 p-4">
+        <div ref={statementRef} className="bg-white p-4">
             <div className="max-w-4xl mx-auto bg-white p-8 report-content text-black">
                 {/* Header */}
                 <div className="text-center mb-8">
