@@ -124,15 +124,15 @@ export default function ClassFinancialReportPage() {
         const pageHeight = pdfHeight - margin * 2;
         
         let heightLeft = imgHeight;
-        let position = -margin; // Start position should be negative margin
+        let position = 0;
         
         pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, imgHeight);
         heightLeft -= pageHeight;
 
         while (heightLeft > 0) {
-            position -= pageHeight;
+            position -= pdfHeight;
             pdf.addPage();
-            pdf.addImage(imgData, 'PNG', margin, position + margin, contentWidth, imgHeight);
+            pdf.addImage(imgData, 'PNG', margin, margin + (position + margin), contentWidth, imgHeight);
             heightLeft -= pageHeight;
         }
 
@@ -178,8 +178,8 @@ export default function ClassFinancialReportPage() {
       {loading ? (
         <div className="flex justify-center p-8"><Loader/></div>
       ) : (
-        <div ref={statementRef} className="bg-white p-4">
-            <div className="max-w-4xl mx-auto bg-white p-8 report-content text-black">
+        <div ref={statementRef} className="bg-white p-0 sm:p-4">
+            <div className="max-w-4xl mx-auto bg-white p-4 sm:p-8 report-content text-black">
                 {/* Header */}
                 <div className="text-center mb-8 report-section">
                     <img src="/image/logoooo.png" alt="Logo" className="w-16 h-16 mx-auto mb-2"/>
@@ -187,7 +187,7 @@ export default function ClassFinancialReportPage() {
                     <p className="text-sm">of San Fernando, La Union</p>
                     <p className="text-xs">The Beacon of Wisdom in the North</p>
                     <h3 className="text-lg font-bold mt-2">SENIOR HIGH SCHOOL</h3>
-                    <div className="flex justify-around text-xs mt-2 text-gray-600">
+                    <div className="flex flex-col sm:flex-row justify-around text-xs mt-2 text-gray-600">
                         <span>● Center of Excellence in Teacher Education</span>
                         <span>● ISO 9001:2015 Quality Management System Certified</span>
                         <span>● CHED Autonomous Status</span>
@@ -207,12 +207,12 @@ export default function ClassFinancialReportPage() {
                 </div>
 
                 {/* Collections */}
-                <div className="mb-8 report-section">
+                <div className="mb-8 report-section overflow-x-auto">
                     <h3 className="font-bold text-lg mb-2">I. SUMMARY OF COLLECTIONS</h3>
                     <p className="text-sm mb-2">
                         The total amount collected from all students of {room?.name} for the month of <span className='capitalize'>{monthName} {year}</span> is:
                     </p>
-                    <table className="w-full text-sm border-collapse border border-black">
+                    <table className="w-full text-sm border-collapse border border-black min-w-[600px]">
                         <thead>
                             <tr>
                                 <th className="border border-black p-1 text-left">Date</th>
@@ -251,12 +251,12 @@ export default function ClassFinancialReportPage() {
                 </div>
 
                 {/* Expenses */}
-                <div className="mb-8 report-section">
+                <div className="mb-8 report-section overflow-x-auto">
                     <h3 className="font-bold text-lg mb-2">II. SUMMARY OF EXPENSES</h3>
                     <p className="text-sm mb-2">
                         Major disbursements were made this month for class activities:
                     </p>
-                     <table className="w-full text-sm border-collapse border border-black">
+                     <table className="w-full text-sm border-collapse border border-black min-w-[600px]">
                         <thead>
                             <tr>
                                 <th className="border border-black p-1 text-left">Date</th>
@@ -294,7 +294,7 @@ export default function ClassFinancialReportPage() {
                 {/* Financial Position */}
                 <div className="mb-12 report-section">
                      <h3 className="font-bold text-lg mb-2">III. FINANCIAL POSITION</h3>
-                      <table className="w-1/2 text-sm border-collapse border border-black">
+                      <table className="w-full sm:w-1/2 text-sm border-collapse border border-black">
                         <thead>
                             <tr>
                                 <th className="border border-black p-1 text-left">Particulars</th>
@@ -372,5 +372,3 @@ export default function ClassFinancialReportPage() {
     </div>
   );
 }
-
-    
