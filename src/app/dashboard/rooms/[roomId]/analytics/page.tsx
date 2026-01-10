@@ -86,17 +86,17 @@ export default function ExpenseAnalyticsPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
         <Link
           href={`/dashboard/rooms/${roomId}`}
-          className="p-2 rounded-md hover:bg-muted"
+          className="p-2 rounded-md hover:bg-muted -ml-2"
         >
           <ArrowLeft className="h-6 w-6" />
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">Expense Analytics</h1>
-          <p className="text-muted-foreground">
-            Visualizing financial data for: {room?.name || '...'}
+          <h1 className="text-2xl sm:text-3xl font-bold">Expense Analytics</h1>
+          <p className="text-muted-foreground text-sm sm:text-base max-w-[250px] sm:max-w-full truncate">
+            Visualizing data for: {room?.name || '...'}
           </p>
         </div>
       </div>
@@ -122,25 +122,29 @@ export default function ExpenseAnalyticsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-                    <BarChart accessibilityLayer data={monthlyExpensesData}>
+                    <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
+                    <BarChart accessibilityLayer data={monthlyExpensesData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
                         <CartesianGrid vertical={false} />
                         <XAxis
-                        dataKey="month"
-                        tickLine={false}
-                        tickMargin={10}
-                        axisLine={false}
-                        tickFormatter={(value) => value.split(' ')[0]} // Show only month abbreviation
+                            dataKey="month"
+                            tickLine={false}
+                            tickMargin={10}
+                            axisLine={false}
+                            tickFormatter={(value) => value.split(' ')[0]} // Show only month abbreviation
+                            interval={0}
+                            angle={-45}
+                            textAnchor="end"
+                            height={50}
                         />
                         <YAxis
-                        tickFormatter={(value) => `₱${value}`}
-                        tickLine={false}
-                        axisLine={false}
-                        width={50}
+                            tickFormatter={(value) => `₱${value}`}
+                            tickLine={false}
+                            axisLine={false}
+                            width={80}
                         />
                         <ChartTooltip
-                        content={<ChartTooltipContent />}
-                        cursor={false}
+                            content={<ChartTooltipContent />}
+                            cursor={false}
                         />
                         <Bar dataKey="expenses" fill="var(--color-expenses)" radius={4} />
                     </BarChart>
@@ -156,24 +160,24 @@ export default function ExpenseAnalyticsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-                    <BarChart accessibilityLayer data={yearlyExpensesData}>
+                    <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
+                    <BarChart accessibilityLayer data={yearlyExpensesData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
                         <CartesianGrid vertical={false} />
                         <XAxis
-                        dataKey="year"
-                        tickLine={false}
-                        tickMargin={10}
-                        axisLine={false}
+                            dataKey="year"
+                            tickLine={false}
+                            tickMargin={10}
+                            axisLine={false}
                         />
                         <YAxis
-                        tickFormatter={(value) => `₱${value}`}
-                        tickLine={false}
-                        axisLine={false}
-                        width={50}
+                            tickFormatter={(value) => `₱${value}`}
+                            tickLine={false}
+                            axisLine={false}
+                            width={80}
                         />
                         <ChartTooltip
-                        content={<ChartTooltipContent />}
-                        cursor={false}
+                            content={<ChartTooltipContent />}
+                            cursor={false}
                         />
                         <Bar dataKey="expenses" fill="var(--color-expenses)" radius={4} />
                     </BarChart>
