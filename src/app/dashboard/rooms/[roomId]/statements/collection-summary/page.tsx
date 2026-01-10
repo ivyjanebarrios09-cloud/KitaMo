@@ -9,7 +9,7 @@ import { Loader } from '@/components/loader';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useToast } from '@/hooks/use-toast';
@@ -22,35 +22,15 @@ export default function CollectionSummaryPage() {
   const downloadAction = searchParams.get('download');
   const roomId = params.roomId as string;
   const { room, loading: roomLoading } = useRoom(roomId);
-  const { transactions: deadlines, loading: deadlinesLoading } = useRoomTransactions(roomId, 'deadline');
   const { transactions: payments, loading: paymentsLoading } = useRoomTransactions(roomId, 'credit');
   
   const [isDownloading, setIsDownloading] = useState(false);
   const statementRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  const loading = roomLoading || deadlinesLoading || paymentsLoading;
+  const loading = roomLoading || paymentsLoading;
 
-  const collectionData = useMemo(() => {
-    if (loading || !deadlines || !payments) return [];
-    
-    return deadlines.map(deadline => {
-        const paymentsForDeadline = payments.filter(p => p.deadlineId === deadline.id);
-        const uniqueStudentsPaid = new Set(paymentsForDeadline.map(p => p.userId));
-        const totalAmountCollected = paymentsForDeadline.reduce((sum, p) => sum + p.amount, 0);
-
-        return {
-            id: deadline.id,
-            date: deadline.createdAt.toDate(),
-            description: deadline.description,
-            amountPerStudent: deadline.amount,
-            totalAmount: totalAmountCollected,
-            studentCount: uniqueStudentsPaid.size
-        };
-    });
-  }, [deadlines, payments, loading]);
-
-  const totalCollected = collectionData.reduce((acc, item) => acc + item.totalAmount, 0);
+  const totalCollected = payments.reduce((acc, item) => acc + item.amount, 0);
 
 
   const handleDownloadPdf = async () => {
@@ -91,17 +71,15 @@ export default function CollectionSummaryPage() {
   };
 
   const handleDownloadCSV = () => {
-    if (loading || collectionData.length === 0) {
+    if (loading || payments.length === 0) {
         toast({ variant: 'destructive', title: 'No Data Available', description: 'There is no data to download.' });
         return;
     }
-    const headers = ['Date', 'Description', 'Amount Per Student (PHP)', 'Amount (PHP)', 'No. of Students'];
-    const data = collectionData.map(item => ({
-        'Date': format(item.date, 'yyyy-MM-dd'),
+    const headers = ['Date', 'Description', 'Amount (PHP)'];
+    const data = payments.map(item => ({
+        'Date': format(item.createdAt.toDate(), 'yyyy-MM-dd'),
         'Description': item.description,
-        'Amount Per Student (PHP)': item.amountPerStudent.toFixed(2),
-        'Amount (PHP)': item.totalAmount.toFixed(2),
-        'No. of Students': item.studentCount,
+        'Amount (PHP)': item.amount.toFixed(2),
     }));
     downloadCSV(data, headers, `collection-summary-${roomId}.csv`);
     toast({ title: 'Download Started', description: 'Your collection summary CSV has started downloading.' });
@@ -147,11 +125,14 @@ export default function CollectionSummaryPage() {
         <div ref={statementRef} className="bg-white rounded-lg shadow-md p-6 sm:p-10 text-black">
           <div className="space-y-8 max-w-4xl mx-auto">
             <div>
-              <h1 className="text-2xl font-bold text-primary">Collection Summary Report</h1>
+              <h1 className="text-2xl font-bold text-primary">Summary of Collections</h1>
             </div>
             <div className="space-y-1 text-sm">
               <p><span className="font-semibold">Room:</span> {room?.name}</p>
               <p className="text-xs text-gray-500">Generated on: {format(new Date(), 'PP p')}</p>
+              <p className="text-sm mt-2">
+                The total amount collected from all students of {room?.name} is:
+              </p>
             </div>
 
             <div className="overflow-x-auto border rounded-lg">
@@ -160,32 +141,27 @@ export default function CollectionSummaryPage() {
                   <TableRow className="bg-primary hover:bg-primary/90">
                     <TableHead className="text-primary-foreground">Date</TableHead>
                     <TableHead className="text-primary-foreground">Description</TableHead>
-                    <TableHead className="text-right text-primary-foreground">Amount Per Student (PHP)</TableHead>
                     <TableHead className="text-right text-primary-foreground">Amount (PHP)</TableHead>
-                    <TableHead className="text-center text-primary-foreground">No. of Students</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {collectionData.length > 0 ? (
-                    collectionData.map((item) => (
+                  {payments.length > 0 ? (
+                    payments.map((item) => (
                       <TableRow key={item.id}>
-                        <TableCell>{format(item.date, 'MMM d')}</TableCell>
+                        <TableCell>{format(item.createdAt.toDate(), 'MMM d')}</TableCell>
                         <TableCell className="font-medium">{item.description}</TableCell>
-                        <TableCell className="text-right">₱{item.amountPerStudent.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">₱{item.totalAmount.toFixed(2)}</TableCell>
-                        <TableCell className="text-center">{item.studentCount}</TableCell>
+                        <TableCell className="text-right">₱{item.amount.toFixed(2)}</TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center h-24">No collection events found.</TableCell>
+                      <TableCell colSpan={3} className="text-center h-24">No payments have been recorded yet.</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
                  <TableRow className="font-bold bg-muted/50">
-                    <TableCell colSpan={3} className="text-right">Total</TableCell>
+                    <TableCell colSpan={2} className="text-right">Total</TableCell>
                     <TableCell className="text-right">P {totalCollected.toFixed(2)}</TableCell>
-                    <TableCell></TableCell>
                  </TableRow>
               </Table>
             </div>
