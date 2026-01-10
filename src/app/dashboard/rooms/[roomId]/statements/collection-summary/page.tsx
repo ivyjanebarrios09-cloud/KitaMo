@@ -9,28 +9,61 @@ import { Loader } from '@/components/loader';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useToast } from '@/hooks/use-toast';
 import { downloadCSV } from '@/lib/utils';
 import { useRoomTransactions } from '@/hooks/use-room-transactions';
+import { useRoomDeadlines } from '@/hooks/use-room-deadlines';
 
 export default function CollectionSummaryPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const downloadAction = searchParams.get('download');
   const roomId = params.roomId as string;
+
   const { room, loading: roomLoading } = useRoom(roomId);
+  const { deadlines, loading: deadlinesLoading } = useRoomDeadlines(roomId);
   const { transactions: payments, loading: paymentsLoading } = useRoomTransactions(roomId, 'credit');
   
   const [isDownloading, setIsDownloading] = useState(false);
   const statementRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  const loading = roomLoading || paymentsLoading;
+  const loading = roomLoading || deadlinesLoading || paymentsLoading;
 
-  const totalCollected = payments.reduce((acc, item) => acc + item.amount, 0);
+  const collectionSummaryData = useMemo(() => {
+    if (loading || deadlines.length === 0) return [];
+
+    return deadlines.map(deadline => {
+      const relevantPayments = payments.filter(p => p.deadlineId === deadline.id);
+      
+      const totalAmountCollected = relevantPayments.reduce((sum, p) => sum + p.amount, 0);
+
+      // Group payments by student to see who has paid in full for this deadline
+      const paymentsByStudent = relevantPayments.reduce((acc, p) => {
+        if (!acc[p.userId]) {
+          acc[p.userId] = 0;
+        }
+        acc[p.userId] += p.amount;
+        return acc;
+      }, {} as Record<string, number>);
+
+      const studentsPaid = Object.values(paymentsByStudent).filter(
+        amountPaid => amountPaid >= deadline.amount
+      ).length;
+
+      return {
+        id: deadline.id,
+        date: deadline.dueDate,
+        description: deadline.description,
+        amountPerStudent: deadline.amount,
+        totalAmountCollected: totalAmountCollected,
+        studentsPaid: studentsPaid,
+      };
+    });
+  }, [loading, deadlines, payments]);
 
 
   const handleDownloadPdf = async () => {
@@ -71,15 +104,17 @@ export default function CollectionSummaryPage() {
   };
 
   const handleDownloadCSV = () => {
-    if (loading || payments.length === 0) {
+    if (loading || collectionSummaryData.length === 0) {
         toast({ variant: 'destructive', title: 'No Data Available', description: 'There is no data to download.' });
         return;
     }
-    const headers = ['Date', 'Description', 'Amount (PHP)'];
-    const data = payments.map(item => ({
-        'Date': format(item.createdAt.toDate(), 'yyyy-MM-dd'),
+    const headers = ['Date', 'Description', 'Amount per Student', 'Total Amount Collected', 'Number of Students Paid'];
+    const data = collectionSummaryData.map(item => ({
+        'Date': item.date ? format(item.date.toDate(), 'yyyy-MM-dd') : 'N/A',
         'Description': item.description,
-        'Amount (PHP)': item.amount.toFixed(2),
+        'Amount per Student': item.amountPerStudent.toFixed(2),
+        'Total Amount Collected': item.totalAmountCollected.toFixed(2),
+        'Number of Students Paid': item.studentsPaid,
     }));
     downloadCSV(data, headers, `collection-summary-${roomId}.csv`);
     toast({ title: 'Download Started', description: 'Your collection summary CSV has started downloading.' });
@@ -130,9 +165,6 @@ export default function CollectionSummaryPage() {
             <div className="space-y-1 text-sm">
               <p><span className="font-semibold">Room:</span> {room?.name}</p>
               <p className="text-xs text-gray-500">Generated on: {format(new Date(), 'PP p')}</p>
-              <p className="text-sm mt-2">
-                The total amount collected from all students of {room?.name} is:
-              </p>
             </div>
 
             <div className="overflow-x-auto border rounded-lg">
@@ -141,28 +173,28 @@ export default function CollectionSummaryPage() {
                   <TableRow className="bg-primary hover:bg-primary/90">
                     <TableHead className="text-primary-foreground">Date</TableHead>
                     <TableHead className="text-primary-foreground">Description</TableHead>
-                    <TableHead className="text-right text-primary-foreground">Amount (PHP)</TableHead>
+                    <TableHead className="text-right text-primary-foreground">Amount per Student</TableHead>
+                    <TableHead className="text-right text-primary-foreground">Total Amount Collected</TableHead>
+                    <TableHead className="text-right text-primary-foreground">No. of Students Paid</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {payments.length > 0 ? (
-                    payments.map((item) => (
+                  {collectionSummaryData.length > 0 ? (
+                    collectionSummaryData.map((item) => (
                       <TableRow key={item.id}>
-                        <TableCell>{format(item.createdAt.toDate(), 'MMM d')}</TableCell>
+                        <TableCell>{item.date ? format(item.date.toDate(), 'PP') : 'N/A'}</TableCell>
                         <TableCell className="font-medium">{item.description}</TableCell>
-                        <TableCell className="text-right">₱{item.amount.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">₱{item.amountPerStudent.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">₱{item.totalAmountCollected.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">{item.studentsPaid}</TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center h-24">No payments have been recorded yet.</TableCell>
+                      <TableCell colSpan={5} className="text-center h-24">No collection deadlines have been created yet.</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
-                 <TableRow className="font-bold bg-muted/50">
-                    <TableCell colSpan={2} className="text-right">Total</TableCell>
-                    <TableCell className="text-right">P {totalCollected.toFixed(2)}</TableCell>
-                 </TableRow>
               </Table>
             </div>
           </div>
