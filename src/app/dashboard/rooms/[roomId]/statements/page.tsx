@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -33,6 +34,7 @@ import { Loader } from '@/components/loader';
 import { useToast } from '@/hooks/use-toast';
 import { useStudentDeadlines } from '@/hooks/use-student-deadlines';
 import { format } from 'date-fns';
+import { downloadCSV } from '@/lib/utils';
 
 const StatementCard = ({
   icon: Icon,
@@ -83,21 +85,31 @@ function ChairpersonStatementsPage() {
         let path = `/dashboard/rooms/${roomId}/statements/${reportType}`;
         const queryParams = new URLSearchParams();
 
-        if (reportType === 'yearly') {
+        if (reportType === 'yearly' || reportType === 'class-financial-report') {
             queryParams.set('year', year);
-        } else if (reportType === 'monthly') {
-            queryParams.set('year', year);
+        } 
+        if (reportType === 'monthly' || reportType === 'class-financial-report') {
             queryParams.set('month', month);
         }
 
         if (action === 'PDF') {
             queryParams.set('download', 'pdf');
         } else if (action === 'Excel') {
+            // For the new report, we will only support PDF view/download for now
+            if (reportType === 'class-financial-report') {
+                router.push(`${path}?${queryParams.toString()}`);
+                return;
+            }
             queryParams.set('download', 'csv');
         }
 
         router.push(`${path}?${queryParams.toString()}`);
     }
+
+    const classReportActions = [
+        { label: 'View', icon: <Eye className="mr-2 h-4 w-4" /> , disabled: false},
+        { label: 'PDF', icon: <FileText className="mr-2 h-4 w-4" /> , disabled: false},
+    ]
 
   return (
     <div className='flex flex-col gap-6'>
@@ -109,6 +121,53 @@ function ChairpersonStatementsPage() {
             </p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <StatementCard
+                icon={FileText}
+                title="Class Financial Report"
+                description="Generate an official monthly financial report with collections, expenses, and financial position."
+                actions={classReportActions}
+                onAction={(action) => handleAction('class-financial-report', action)}
+            >
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                    <label className="text-sm font-medium">Select Month</label>
+                    <Select value={month} onValueChange={setMonth}>
+                        <SelectTrigger>
+                        <SelectValue placeholder="Select a month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="january">January</SelectItem>
+                            <SelectItem value="february">February</SelectItem>
+                            <SelectItem value="march">March</SelectItem>
+                            <SelectItem value="april">April</SelectItem>
+                            <SelectItem value="may">May</SelectItem>
+                            <SelectItem value="june">June</SelectItem>
+                            <SelectItem value="july">July</SelectItem>
+                            <SelectItem value="august">August</SelectItem>
+                            <SelectItem value="september">September</SelectItem>
+                            <SelectItem value="october">October</SelectItem>
+                            <SelectItem value="november">November</SelectItem>
+                            <SelectItem value="december">December</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    </div>
+                    <div className="space-y-2">
+                    <label className="text-sm font-medium">Select Year</label>
+                    <Select value={year} onValueChange={setYear}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="2025">2025</SelectItem>
+                            <SelectItem value="2024">2024</SelectItem>
+                            <SelectItem value="2023">2023</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    </div>
+                </div>
+            </StatementCard>
+
             <StatementCard
                 icon={CalendarDays}
                 title="Financial Statement for the Whole Year"
@@ -205,29 +264,6 @@ function StudentStatementsPage() {
     const roomId = params.roomId as string;
     const { user } = useAuth();
     const { deadlines, loading: deadlinesLoading } = useStudentDeadlines(roomId, user?.uid || '');
-
-    const downloadCSV = (data: any[], headers: string[], filename: string) => {
-        const csvRows = [];
-        csvRows.push(headers.join(','));
-        for (const row of data) {
-            const values = headers.map(header => {
-                const escaped = ('' + row[header]).replace(/"/g, '\\"');
-                return `"${escaped}"`;
-            });
-            csvRows.push(values.join(','));
-        }
-
-        const csvString = csvRows.join('\n');
-        const blob = new Blob([csvString], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.setAttribute('hidden', '');
-        a.setAttribute('href', url);
-        a.setAttribute('download', filename);
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-    }
 
     const handleDownloadCSV = () => {
         if (deadlinesLoading || deadlines.length === 0) {
