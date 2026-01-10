@@ -16,7 +16,7 @@ import {
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Pie, PieChart, Cell, Legend } from 'recharts';
+import { Pie, PieChart, Cell, Legend, ResponsiveContainer } from 'recharts';
 import { useRoomTransactions } from '@/hooks/use-room-transactions';
 import { useRoom } from '@/hooks/use-room';
 import { Loader } from '@/components/loader';
@@ -130,48 +130,51 @@ export default function ExpenseAnalyticsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
-                        <PieChart>
-                            <ChartTooltip content={<ChartTooltipContent nameKey="month" />} />
-                            <Pie
-                                data={monthlyExpensesData}
-                                dataKey="expenses"
-                                nameKey="month"
-                                cx="50%"
-                                cy="50%"
-                                outerRadius={80}
-                                labelLine={false}
-                                label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
-                                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                                    const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
-                                    const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
-                                    if (percent < 0.05) return null;
-                                    return (
-                                        <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central">
-                                        {`${(percent * 100).toFixed(0)}%`}
-                                        </text>
-                                    );
-                                }}
-                            >
-                                {monthlyExpensesData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                            </Pie>
-                             <Legend
-                                content={({ payload }) => {
-                                    return (
-                                    <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground justify-center">
-                                        {payload?.map((entry, index) => (
-                                        <li key={`item-${index}`} className="flex items-center gap-1.5">
-                                            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
-                                            <span>{entry.value}</span>
-                                        </li>
-                                        ))}
-                                    </ul>
-                                    )
-                                }}
-                                />
-                        </PieChart>
+                    <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
+                        <ResponsiveContainer width="100%" height={250}>
+                            <PieChart>
+                                <ChartTooltip content={<ChartTooltipContent nameKey="month" />} />
+                                <Pie
+                                    data={monthlyExpensesData}
+                                    dataKey="expenses"
+                                    nameKey="month"
+                                    cx="50%"
+                                    cy="50%"
+                                    outerRadius="80%"
+                                    labelLine={false}
+                                    label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
+                                        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                                        const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+                                        const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+                                        if (percent < 0.05) return null;
+                                        return (
+                                            <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="text-xs">
+                                            {`${(percent * 100).toFixed(0)}%`}
+                                            </text>
+                                        );
+                                    }}
+                                >
+                                    {monthlyExpensesData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Legend
+                                    verticalAlign="bottom"
+                                    content={({ payload }) => {
+                                        return (
+                                        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground justify-center mt-4">
+                                            {payload?.map((entry, index) => (
+                                            <li key={`item-${index}`} className="flex items-center gap-1.5">
+                                                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                                                <span>{entry.value}</span>
+                                            </li>
+                                            ))}
+                                        </ul>
+                                        )
+                                    }}
+                                    />
+                            </PieChart>
+                        </ResponsiveContainer>
                     </ChartContainer>
                 </CardContent>
                 </Card>
@@ -184,48 +187,51 @@ export default function ExpenseAnalyticsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
-                       <PieChart>
-                            <ChartTooltip content={<ChartTooltipContent nameKey="year" />} />
-                            <Pie
-                                data={yearlyExpensesData}
-                                dataKey="expenses"
-                                nameKey="year"
-                                cx="50%"
-                                cy="50%"
-                                outerRadius={80}
-                                labelLine={false}
-                                label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-                                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                                    const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
-                                    const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
-                                    if (percent < 0.05) return null;
-                                    return (
-                                        <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central">
-                                        {`${(percent * 100).toFixed(0)}%`}
-                                        </text>
-                                    );
-                                }}
-                            >
-                                {yearlyExpensesData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                            </Pie>
-                             <Legend
-                                content={({ payload }) => {
-                                    return (
-                                    <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground justify-center">
-                                        {payload?.map((entry, index) => (
-                                        <li key={`item-${index}`} className="flex items-center gap-1.5">
-                                            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
-                                            <span>{entry.value}</span>
-                                        </li>
-                                        ))}
-                                    </ul>
-                                    )
-                                }}
-                                />
-                        </PieChart>
+                     <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
+                        <ResponsiveContainer width="100%" height={250}>
+                            <PieChart>
+                                <ChartTooltip content={<ChartTooltipContent nameKey="year" />} />
+                                <Pie
+                                    data={yearlyExpensesData}
+                                    dataKey="expenses"
+                                    nameKey="year"
+                                    cx="50%"
+                                    cy="50%"
+                                    outerRadius="80%"
+                                    labelLine={false}
+                                    label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+                                        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                                        const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+                                        const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+                                        if (percent < 0.05) return null;
+                                        return (
+                                            <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="text-xs">
+                                            {`${(percent * 100).toFixed(0)}%`}
+                                            </text>
+                                        );
+                                    }}
+                                >
+                                    {yearlyExpensesData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Legend
+                                    verticalAlign="bottom"
+                                    content={({ payload }) => {
+                                        return (
+                                        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground justify-center mt-4">
+                                            {payload?.map((entry, index) => (
+                                            <li key={`item-${index}`} className="flex items-center gap-1.5">
+                                                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                                                <span>{entry.value}</span>
+                                            </li>
+                                            ))}
+                                        </ul>
+                                        )
+                                    }}
+                                    />
+                            </PieChart>
+                        </ResponsiveContainer>
                     </ChartContainer>
                 </CardContent>
                 </Card>
