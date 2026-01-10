@@ -122,13 +122,13 @@ export default function ClassFinancialReportPage() {
         const imgHeight = (imgProps.height * contentWidth) / imgProps.width;
 
         let heightLeft = imgHeight;
-        let position = -margin;
+        let position = margin;
         
-        pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, imgHeight);
+        pdf.addImage(imgData, 'PNG', margin, position, contentWidth, imgHeight);
         heightLeft -= (pdfHeight - margin * 2);
 
         while (heightLeft > 0) {
-            position -= (pdfHeight - margin);
+            position = margin - (imgHeight - heightLeft);
             pdf.addPage();
             pdf.addImage(imgData, 'PNG', margin, position, contentWidth, imgHeight);
             heightLeft -= (pdfHeight - margin * 2);
