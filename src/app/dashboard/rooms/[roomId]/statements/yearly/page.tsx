@@ -145,7 +145,7 @@ export default function YearlyStatementPage() {
             <div className="overflow-x-auto border rounded-lg">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-primary hover:bg-primary/90">
+                  <TableRow className="bg-primary/90 hover:bg-primary/90">
                     <TableHead className="text-primary-foreground">Date</TableHead>
                     <TableHead className="text-primary-foreground">Type</TableHead>
                     <TableHead className="text-primary-foreground">Description</TableHead>
