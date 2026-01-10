@@ -121,19 +121,17 @@ export default function ClassFinancialReportPage() {
         const imgProps = pdf.getImageProperties(imgData);
         const imgHeight = (imgProps.height * contentWidth) / imgProps.width;
 
-        const pageHeight = pdfHeight - margin * 2;
-        
         let heightLeft = imgHeight;
-        let position = 0;
+        let position = -margin;
         
         pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, imgHeight);
-        heightLeft -= pageHeight;
+        heightLeft -= (pdfHeight - margin * 2);
 
         while (heightLeft > 0) {
-            position -= pdfHeight;
+            position -= (pdfHeight - margin);
             pdf.addPage();
-            pdf.addImage(imgData, 'PNG', margin, margin + (position + margin), contentWidth, imgHeight);
-            heightLeft -= pageHeight;
+            pdf.addImage(imgData, 'PNG', margin, position, contentWidth, imgHeight);
+            heightLeft -= (pdfHeight - margin * 2);
         }
 
         pdf.save(`class-financial-report-${roomId}-${year}-${monthName}.pdf`);
@@ -187,10 +185,10 @@ export default function ClassFinancialReportPage() {
                     <p className="text-sm">of San Fernando, La Union</p>
                     <p className="text-xs">The Beacon of Wisdom in the North</p>
                     <h3 className="text-lg font-bold mt-2">SENIOR HIGH SCHOOL</h3>
-                    <div className="flex flex-col sm:flex-row justify-around text-xs mt-2 text-gray-600">
-                        <span>● Center of Excellence in Teacher Education</span>
-                        <span>● ISO 9001:2015 Quality Management System Certified</span>
-                        <span>● CHED Autonomous Status</span>
+                    <div className="flex flex-col sm:flex-row justify-center sm:justify-around items-center text-xs mt-2 text-gray-600 gap-2 sm:gap-4">
+                        <span className="text-center">● Center of Excellence in Teacher Education</span>
+                        <span className="text-center">● ISO 9001:2015 Quality Management System Certified</span>
+                        <span className="text-center">● CHED Autonomous Status</span>
                     </div>
                 </div>
 
