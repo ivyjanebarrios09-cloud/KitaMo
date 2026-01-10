@@ -43,27 +43,55 @@ export default function ClassFinancialReportPage() {
   const monthNumber = monthName ? monthMap[monthName.toLowerCase()] : -1;
   const yearNumber = year ? parseInt(year) : new Date().getFullYear();
 
-  const { collections, expenses, roomBalance } = useMemo(() => {
-    return transactions.reduce((acc, t) => {
-        if (t.createdAt) {
-            const txDate = t.createdAt.toDate();
-            const isInMonth = txDate.getFullYear() === yearNumber && (monthNumber === -1 || txDate.getMonth() === monthNumber);
-            
-            if (isInMonth) {
-                if (t.type === 'credit') acc.collections.push(t);
-                if (t.type === 'debit') acc.expenses.push(t);
-            }
+  const { collections, expenses, deadlinesInMonth } = useMemo(() => {
+    const paymentsInMonth: any[] = [];
+    const expensesInMonth: any[] = [];
+    const deadlines: any[] = [];
+    
+    transactions.forEach(t => {
+      if (t.createdAt) {
+        const txDate = t.createdAt.toDate();
+        const isInPeriod = txDate.getFullYear() === yearNumber && (monthNumber === -1 || txDate.getMonth() === monthNumber);
+
+        if (isInPeriod) {
+          if (t.type === 'credit') paymentsInMonth.push(t);
+          if (t.type === 'debit') expensesInMonth.push(t);
         }
+      }
+      if (t.type === 'deadline') {
+        deadlines.push(t);
+      }
+    });
+
+    const collectionsByDeadline = paymentsInMonth.reduce((acc, payment) => {
+        const key = payment.deadlineId || 'general';
+        if (!acc[key]) {
+            const deadlineInfo = deadlines.find(d => d.id === key);
+            acc[key] = {
+                id: key,
+                description: deadlineInfo?.description || 'General Payment',
+                date: deadlineInfo?.createdAt || payment.createdAt,
+                amount: 0,
+                paidCount: new Set()
+            };
+        }
+        acc[key].amount += payment.amount;
+        acc[key].paidCount.add(payment.userId);
         return acc;
-    }, { collections: [] as any[], expenses: [] as any[], roomBalance: room?.totalCollected - room?.totalExpenses || 0 });
-  }, [transactions, yearNumber, monthNumber, room]);
+    }, {} as Record<string, {id: string, description: string, date: any, amount: number, paidCount: Set<string>}>);
+
+    const collectionSummary = Object.values(collectionsByDeadline).map(c => ({...c, paidCount: c.paidCount.size}));
+
+    return { collections: collectionSummary, expenses: expensesInMonth, deadlinesInMonth: deadlines };
+
+  }, [transactions, yearNumber, monthNumber]);
 
   const totalCollections = collections.reduce((sum, t) => sum + t.amount, 0);
   const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
   
-  const uniqueStudentsPaid = new Set(collections.map(c => c.userId)).size;
+  const uniqueStudentsPaid = collections.reduce((acc, curr) => acc + curr.paidCount, 0);
 
-  const financialPosition = roomBalance;
+  const financialPosition = (room?.totalCollected || 0) - (room?.totalExpenses || 0);
 
 
   const handleDownloadPdf = async () => {
@@ -91,7 +119,6 @@ export default function ClassFinancialReportPage() {
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
       
       const contentHeight = (canvas.height * pdfWidth) / canvas.width;
       let pageHeight = pdf.internal.pageSize.height;
@@ -196,7 +223,7 @@ export default function ClassFinancialReportPage() {
                             {collections.length > 0 ? (
                                 collections.map(item => (
                                     <tr key={item.id}>
-                                        <td className="border border-black p-1">{format(item.createdAt.toDate(), 'MMM d, yyyy')}</td>
+                                        <td className="border border-black p-1">{format(item.date.toDate(), 'MMM d, yyyy')}</td>
                                         <td className="border border-black p-1">{item.description}</td>
                                         <td className="border border-black p-1 text-right">{item.amount.toFixed(2)}</td>
                                     </tr>
