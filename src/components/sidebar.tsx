@@ -189,8 +189,15 @@ export function Header() {
               {user && userProfile && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full transition-transform duration-200 ease-in-out hover:scale-110 active:scale-105">
-                      <UserIcon className="h-5 w-5" />
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className={cn(
+                        "h-10 w-10 rounded-full transition-transform duration-200 ease-in-out hover:scale-110 active:scale-105",
+                        isMobile ? "fixed bottom-24 right-4 z-50 h-14 w-14 bg-primary text-primary-foreground shadow-lg" : "relative"
+                      )}
+                    >
+                      <UserIcon className={cn("h-5 w-5", isMobile && "h-6 w-6")} />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="end" forceMount>
