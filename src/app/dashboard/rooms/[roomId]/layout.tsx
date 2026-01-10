@@ -62,7 +62,7 @@ export default function RoomDetailLayout({
                 <ChevronLeft className="h-6 w-6" />
            </Link>
            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-1">
-            <h1 className="text-xl sm:text-2xl font-bold truncate max-w-[200px] sm:max-w-none">
+            <h1 className="text-xl sm:text-2xl font-bold">
                 {loading ? 'Loading...' : room?.name || 'Room'}
             </h1>
             {!loading && room?.code && isChairperson && <Badge variant="secondary">CODE: {room.code}</Badge>}

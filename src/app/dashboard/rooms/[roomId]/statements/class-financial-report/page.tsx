@@ -177,7 +177,7 @@ export default function ClassFinancialReportPage() {
         <div className="flex justify-center p-8"><Loader/></div>
       ) : (
         <div className="bg-background sm:p-4 overflow-x-auto">
-          <div ref={statementRef} className="bg-white text-black p-4 sm:p-8 mx-auto origin-top-left w-full sm:w-[800px] scale-[0.8] xs:scale-100 sm:scale-100">
+          <div ref={statementRef} className="bg-white text-black p-4 sm:p-8 mx-auto origin-top-left w-full sm:w-[800px]">
               <div className="max-w-4xl mx-auto report-content">
                   {/* Header */}
                   <div className="text-center mb-8 report-section">
@@ -186,7 +186,7 @@ export default function ClassFinancialReportPage() {
                       <p className="text-sm">of San Fernando, La Union</p>
                       <p className="text-xs">The Beacon of Wisdom in the North</p>
                       <h3 className="text-lg font-bold mt-2">SENIOR HIGH SCHOOL</h3>
-                      <div className="flex flex-col sm:flex-row justify-center sm:justify-around items-center text-xs mt-2 text-gray-600 gap-2 sm:gap-4">
+                      <div className="flex flex-col justify-center items-center text-xs mt-2 text-gray-600 gap-1 sm:gap-4">
                           <span className="text-center">● Center of Excellence in Teacher Education</span>
                           <span className="text-center">● ISO 9001:2015 Quality Management System Certified</span>
                           <span className="text-center">● CHED Autonomous Status</span>
