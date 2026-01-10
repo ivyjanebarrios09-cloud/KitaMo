@@ -107,7 +107,7 @@ export default function ClassFinancialReportPage() {
             useCORS: true,
             backgroundColor: '#ffffff',
             windowWidth: element.scrollWidth,
-            windowHeight: element.scrollHeight
+            windowHeight: element.scrollHeight,
         });
 
         const imgData = canvas.toDataURL('image/png');
@@ -116,27 +116,23 @@ export default function ClassFinancialReportPage() {
         const pdfHeight = pdf.internal.pageSize.getHeight();
         
         const margin = 10;
-        const contentWidth = pdfWidth - (margin * 2);
+        const contentWidth = pdfWidth - margin * 2;
         
         const imgProps = pdf.getImageProperties(imgData);
         const imgHeight = (imgProps.height * contentWidth) / imgProps.width;
-        const contentHeight = imgHeight; // Use the scaled image height as the full content height
 
-        const pageHeight = pdfHeight - (margin * 2); // The printable area height on one page
+        const pageHeight = pdfHeight - margin * 2;
         
-        let heightLeft = contentHeight;
-        let position = 0;
+        let heightLeft = imgHeight;
+        let position = -margin; // Start position should be negative margin
         
-        // Add first page
-        pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, contentHeight);
+        pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, imgHeight);
         heightLeft -= pageHeight;
 
-        // Add subsequent pages if content overflows
         while (heightLeft > 0) {
-            position = position - pageHeight; 
+            position -= pageHeight;
             pdf.addPage();
-            // The image is added again, but the negative 'position' crops it to show the next part
-            pdf.addImage(imgData, 'PNG', margin, position + margin, contentWidth, contentHeight);
+            pdf.addImage(imgData, 'PNG', margin, position + margin, contentWidth, imgHeight);
             heightLeft -= pageHeight;
         }
 
@@ -376,3 +372,5 @@ export default function ClassFinancialReportPage() {
     </div>
   );
 }
+
+    
