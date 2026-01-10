@@ -53,6 +53,7 @@ import { useUserProfile } from '@/hooks/use-user-profile';
 
 const expenseSchema = z.object({
   description: z.string().min(1, 'Description is required'),
+  recipient: z.string().min(1, 'Recipient is required'),
   amount: z.coerce.number().min(0.01, 'Amount must be greater than 0'),
 });
 
@@ -67,6 +68,7 @@ function NewExpenseModal({ roomId }: { roomId: string }) {
     resolver: zodResolver(expenseSchema),
     defaultValues: {
       description: '',
+      recipient: '',
       amount: 0,
     },
   });
@@ -119,6 +121,22 @@ function NewExpenseModal({ roomId }: { roomId: string }) {
                   <FormControl>
                     <Textarea
                       placeholder="e.g., Materials for event"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="recipient"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Recipient</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="e.g., John Doe or Store Name"
                       {...field}
                     />
                   </FormControl>
@@ -184,13 +202,14 @@ export default function ExpensesPage() {
               <TableRow>
                 <TableHead>Date</TableHead>
                 <TableHead>Description</TableHead>
+                <TableHead>Recipient</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center">
+                  <TableCell colSpan={4} className="text-center">
                     <div className="flex justify-center p-8">
                       <Loader />
                     </div>
@@ -205,6 +224,7 @@ export default function ExpensesPage() {
                         : 'N/A'}
                     </TableCell>
                     <TableCell className="font-medium">{expense.description}</TableCell>
+                    <TableCell>{expense.recipient}</TableCell>
                     <TableCell className="text-right font-medium">
                       ₱{expense.amount.toFixed(2)}
                     </TableCell>
@@ -212,7 +232,7 @@ export default function ExpensesPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={3} className="h-24 text-center">
+                  <TableCell colSpan={4} className="h-24 text-center">
                     No expenses posted yet.
                   </TableCell>
                 </TableRow>

@@ -81,7 +81,7 @@ export const deleteRoom = async (roomId: string) => {
     }
 }
 
-export const addExpense = async (roomId: string, userId: string, userName: string, data: { description: string, amount: number, date: Date }) => {
+export const addExpense = async (roomId: string, userId: string, userName: string, data: { description: string, amount: number, recipient: string, date: Date }) => {
     try {
         const roomRef = doc(db, 'rooms', roomId);
         
@@ -95,6 +95,7 @@ export const addExpense = async (roomId: string, userId: string, userName: strin
                 amount: data.amount,
                 type: 'debit',
                 description: data.description,
+                recipient: data.recipient,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
                 seenBy: [userId],
