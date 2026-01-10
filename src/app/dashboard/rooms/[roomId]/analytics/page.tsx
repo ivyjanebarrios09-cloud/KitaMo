@@ -16,7 +16,7 @@ import {
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Bar, BarChart, CartesianGrid, Legend, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { useRoomTransactions } from '@/hooks/use-room-transactions';
 import { useRoom } from '@/hooks/use-room';
 import { Loader } from '@/components/loader';
@@ -50,14 +50,12 @@ export default function ExpenseAnalyticsPage() {
       if (expense.createdAt) {
         const date = expense.createdAt.toDate();
         
-        // Monthly aggregation
         const monthKey = format(date, 'MMM yyyy');
         if (!monthly[monthKey]) {
           monthly[monthKey] = 0;
         }
         monthly[monthKey] += expense.amount;
 
-        // Yearly aggregation
         const yearKey = format(date, 'yyyy');
         if (!yearly[yearKey]) {
           yearly[yearKey] = 0;
@@ -69,15 +67,14 @@ export default function ExpenseAnalyticsPage() {
     const monthlyData = Object.keys(monthly).map(key => ({
         month: key,
         expenses: monthly[key],
-        // Add a timestamp for sorting
         timestamp: new Date(key).getTime(),
-    })).sort((a,b) => a.timestamp - b.timestamp);
+    })).sort((a,b) => b.timestamp - a.timestamp);
 
 
     const yearlyData = Object.keys(yearly).map(key => ({
         year: key,
         expenses: yearly[key],
-    })).sort((a,b) => parseInt(a.year) - parseInt(b.year));
+    })).sort((a,b) => parseInt(b.year) - parseInt(a.year));
 
     return { monthlyExpensesData: monthlyData, yearlyExpensesData: yearlyData };
 
@@ -122,31 +119,30 @@ export default function ExpenseAnalyticsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
-                    <BarChart accessibilityLayer data={monthlyExpensesData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
-                        <CartesianGrid vertical={false} />
-                        <XAxis
+                    <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+                    <BarChart accessibilityLayer data={monthlyExpensesData} layout="vertical" margin={{ left: 10, right: 30 }}>
+                        <CartesianGrid horizontal={false} />
+                        <YAxis
                             dataKey="month"
+                            type="category"
                             tickLine={false}
                             tickMargin={10}
                             axisLine={false}
-                            tickFormatter={(value) => value.split(' ')[0]} // Show only month abbreviation
-                            interval={0}
-                            angle={-45}
-                            textAnchor="end"
-                            height={50}
+                            tickFormatter={(value) => value}
+                            width={80}
                         />
-                        <YAxis
+                        <XAxis
+                            dataKey="expenses"
+                            type="number"
                             tickFormatter={(value) => `₱${value}`}
                             tickLine={false}
                             axisLine={false}
-                            width={80}
                         />
                         <ChartTooltip
                             content={<ChartTooltipContent />}
                             cursor={false}
                         />
-                        <Bar dataKey="expenses" fill="var(--color-expenses)" radius={4} />
+                        <Bar dataKey="expenses" fill="var(--color-expenses)" radius={4} layout="vertical" />
                     </BarChart>
                     </ChartContainer>
                 </CardContent>
@@ -160,26 +156,29 @@ export default function ExpenseAnalyticsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
-                    <BarChart accessibilityLayer data={yearlyExpensesData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
-                        <CartesianGrid vertical={false} />
-                        <XAxis
+                    <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+                    <BarChart accessibilityLayer data={yearlyExpensesData} layout="vertical" margin={{ left: 10, right: 30 }}>
+                        <CartesianGrid horizontal={false} />
+                         <YAxis
                             dataKey="year"
+                            type="category"
                             tickLine={false}
                             tickMargin={10}
                             axisLine={false}
+                            width={50}
                         />
-                        <YAxis
+                        <XAxis
+                            dataKey="expenses"
+                            type="number"
                             tickFormatter={(value) => `₱${value}`}
                             tickLine={false}
                             axisLine={false}
-                            width={80}
                         />
                         <ChartTooltip
                             content={<ChartTooltipContent />}
                             cursor={false}
                         />
-                        <Bar dataKey="expenses" fill="var(--color-expenses)" radius={4} />
+                        <Bar dataKey="expenses" fill="var(--color-expenses)" radius={4} layout="vertical" />
                     </BarChart>
                     </ChartContainer>
                 </CardContent>
