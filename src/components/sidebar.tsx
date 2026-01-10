@@ -194,7 +194,7 @@ export function Header() {
                       size="icon" 
                       className={cn(
                         "h-10 w-10 rounded-full transition-transform duration-200 ease-in-out hover:scale-110 active:scale-105",
-                        isMobile ? "fixed bottom-24 right-4 z-50 h-14 w-14 bg-primary text-primary-foreground shadow-lg" : "relative"
+                        isMobile ? "fixed bottom-24 left-4 z-50 h-14 w-14 bg-primary text-primary-foreground shadow-lg" : "relative"
                       )}
                     >
                       <UserIcon className={cn("h-5 w-5", isMobile && "h-6 w-6")} />
