@@ -176,176 +176,178 @@ export default function ClassFinancialReportPage() {
       {loading ? (
         <div className="flex justify-center p-8"><Loader/></div>
       ) : (
-        <div ref={statementRef} className="bg-white p-0 sm:p-4">
-            <div className="max-w-4xl mx-auto bg-white p-4 sm:p-8 report-content text-black">
-                {/* Header */}
-                <div className="text-center mb-8 report-section">
-                    <img src="/image/logoooo.png" alt="Logo" className="w-16 h-16 mx-auto mb-2"/>
-                    <h2 className="text-xl font-bold">Saint Louis College</h2>
-                    <p className="text-sm">of San Fernando, La Union</p>
-                    <p className="text-xs">The Beacon of Wisdom in the North</p>
-                    <h3 className="text-lg font-bold mt-2">SENIOR HIGH SCHOOL</h3>
-                    <div className="flex flex-col sm:flex-row justify-center sm:justify-around items-center text-xs mt-2 text-gray-600 gap-2 sm:gap-4">
-                        <span className="text-center">● Center of Excellence in Teacher Education</span>
-                        <span className="text-center">● ISO 9001:2015 Quality Management System Certified</span>
-                        <span className="text-center">● CHED Autonomous Status</span>
-                    </div>
-                </div>
+        <div className="sm:p-4 overflow-x-auto">
+          <div ref={statementRef} className="bg-white text-black p-8 mx-auto origin-top-left sm:origin-top-center w-[800px] scale-[0.45] xs:scale-50 sm:scale-100">
+              <div className="max-w-4xl mx-auto report-content">
+                  {/* Header */}
+                  <div className="text-center mb-8 report-section">
+                      <img src="/image/logoooo.png" alt="Logo" className="w-16 h-16 mx-auto mb-2"/>
+                      <h2 className="text-xl font-bold">Saint Louis College</h2>
+                      <p className="text-sm">of San Fernando, La Union</p>
+                      <p className="text-xs">The Beacon of Wisdom in the North</p>
+                      <h3 className="text-lg font-bold mt-2">SENIOR HIGH SCHOOL</h3>
+                      <div className="flex flex-col sm:flex-row justify-center sm:justify-around items-center text-xs mt-2 text-gray-600 gap-2 sm:gap-4">
+                          <span className="text-center">● Center of Excellence in Teacher Education</span>
+                          <span className="text-center">● ISO 9001:2015 Quality Management System Certified</span>
+                          <span className="text-center">● CHED Autonomous Status</span>
+                      </div>
+                  </div>
 
-                <hr className="my-4 border-black"/>
+                  <hr className="my-4 border-black"/>
 
-                {/* Report Title */}
-                <h1 className="text-xl font-bold text-center mb-4 report-section">Class Financial Report</h1>
-                
-                <div className="mb-6 text-sm report-section">
-                    <p><span className="font-semibold">Month:</span> <span className='capitalize'>{monthName} {year}</span></p>
-                    <p><span className="font-semibold">Prepared by:</span> {userProfile?.name}</p>
-                    <p><span className="font-semibold">Position:</span> Class Finance Officer</p>
-                    <p><span className="font-semibold">Date:</span> {format(new Date(), 'MMMM d, yyyy')}</p>
-                </div>
+                  {/* Report Title */}
+                  <h1 className="text-xl font-bold text-center mb-4 report-section">Class Financial Report</h1>
+                  
+                  <div className="mb-6 text-sm report-section">
+                      <p><span className="font-semibold">Month:</span> <span className='capitalize'>{monthName} {year}</span></p>
+                      <p><span className="font-semibold">Prepared by:</span> {userProfile?.name}</p>
+                      <p><span className="font-semibold">Position:</span> Class Finance Officer</p>
+                      <p><span className="font-semibold">Date:</span> {format(new Date(), 'MMMM d, yyyy')}</p>
+                  </div>
 
-                {/* Collections */}
-                <div className="mb-8 report-section overflow-x-auto">
-                    <h3 className="font-bold text-lg mb-2">I. SUMMARY OF COLLECTIONS</h3>
-                    <p className="text-sm mb-2">
-                        The total amount collected from all students of {room?.name} for the month of <span className='capitalize'>{monthName} {year}</span> is:
-                    </p>
-                    <table className="w-full text-sm border-collapse border border-black min-w-[600px]">
-                        <thead>
-                            <tr>
-                                <th className="border border-black p-1 text-left">Date</th>
-                                <th className="border border-black p-1 text-left">Description</th>
-                                <th className="border border-black p-1 text-right">Amount Per Student (PHP)</th>
-                                <th className="border border-black p-1 text-right">No. of Students Paid</th>
-                                <th className="border border-black p-1 text-right">Amount Collected (PHP)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {collections.length > 0 ? (
-                                collections.map(item => (
-                                    <tr key={item.id}>
-                                        <td className="border border-black p-1">{format(item.date.toDate(), 'MMM d, yyyy')}</td>
-                                        <td className="border border-black p-1">{item.description}</td>
-                                        <td className="border border-black p-1 text-right">{item.amountPerStudent.toFixed(2)}</td>
-                                        <td className="border border-black p-1 text-right">{item.paidCount}</td>
-                                        <td className="border border-black p-1 text-right">{item.amount.toFixed(2)}</td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan={5} className="border border-black p-1 text-center">No collections this month.</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                    <table className="w-full text-sm mt-2">
-                         <tbody>
-                            <tr className="font-bold">
-                                <td className="text-left p-1">Total Amount Collected:</td>
-                                <td className="text-right p-1">P {totalCollections.toFixed(2)}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                  {/* Collections */}
+                  <div className="mb-8 report-section overflow-x-auto">
+                      <h3 className="font-bold text-lg mb-2">I. SUMMARY OF COLLECTIONS</h3>
+                      <p className="text-sm mb-2">
+                          The total amount collected from all students of {room?.name} for the month of <span className='capitalize'>{monthName} {year}</span> is:
+                      </p>
+                      <table className="w-full text-sm border-collapse border border-black min-w-[600px]">
+                          <thead>
+                              <tr>
+                                  <th className="border border-black p-1 text-left">Date</th>
+                                  <th className="border border-black p-1 text-left">Description</th>
+                                  <th className="border border-black p-1 text-right">Amount Per Student (PHP)</th>
+                                  <th className="border border-black p-1 text-right">No. of Students Paid</th>
+                                  <th className="border border-black p-1 text-right">Amount Collected (PHP)</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              {collections.length > 0 ? (
+                                  collections.map(item => (
+                                      <tr key={item.id}>
+                                          <td className="border border-black p-1">{format(item.date.toDate(), 'MMM d, yyyy')}</td>
+                                          <td className="border border-black p-1">{item.description}</td>
+                                          <td className="border border-black p-1 text-right">{item.amountPerStudent.toFixed(2)}</td>
+                                          <td className="border border-black p-1 text-right">{item.paidCount}</td>
+                                          <td className="border border-black p-1 text-right">{item.amount.toFixed(2)}</td>
+                                      </tr>
+                                  ))
+                              ) : (
+                                  <tr>
+                                      <td colSpan={5} className="border border-black p-1 text-center">No collections this month.</td>
+                                  </tr>
+                              )}
+                          </tbody>
+                      </table>
+                      <table className="w-full text-sm mt-2">
+                           <tbody>
+                              <tr className="font-bold">
+                                  <td className="text-left p-1">Total Amount Collected:</td>
+                                  <td className="text-right p-1">P {totalCollections.toFixed(2)}</td>
+                              </tr>
+                          </tbody>
+                      </table>
+                  </div>
 
-                {/* Expenses */}
-                <div className="mb-8 report-section overflow-x-auto">
-                    <h3 className="font-bold text-lg mb-2">II. SUMMARY OF EXPENSES</h3>
-                    <p className="text-sm mb-2">
-                        Major disbursements were made this month for class activities:
-                    </p>
-                     <table className="w-full text-sm border-collapse border border-black min-w-[600px]">
-                        <thead>
-                            <tr>
-                                <th className="border border-black p-1 text-left">Date</th>
-                                <th className="border border-black p-1 text-left">Description</th>
-                                <th className="border border-black p-1 text-left">Recipient</th>
-                                <th className="border border-black p-1 text-right">Amount (PHP)</th>
-                                <th className="border border-black p-1 text-left">Signature</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {expenses.length > 0 ? (
-                                expenses.map(item => (
-                                    <tr key={item.id}>
-                                        <td className="border border-black p-1">{format(item.createdAt.toDate(), 'MMM d, yyyy')}</td>
-                                        <td className="border border-black p-1">{item.description}</td>
-                                        <td className="border border-black p-1">{item.recipient}</td>
-                                        <td className="border border-black p-1 text-right">{item.amount.toFixed(2)}</td>
-                                        <td className="border border-black p-1 h-8"></td>
-                                    </tr>
-                                ))
-                             ) : (
-                                <tr>
-                                    <td colSpan={5} className="border border-black p-1 text-center">No expenses this month.</td>
-                                </tr>
-                             )}
-                            <tr className="font-bold bg-gray-100">
-                                <td colSpan={3} className="border border-black p-1 text-left">Total Expenses</td>
-                                <td className="border border-black p-1 text-right">P {totalExpenses.toFixed(2)}</td>
-                                <td className="border border-black p-1"></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                  {/* Expenses */}
+                  <div className="mb-8 report-section overflow-x-auto">
+                      <h3 className="font-bold text-lg mb-2">II. SUMMARY OF EXPENSES</h3>
+                      <p className="text-sm mb-2">
+                          Major disbursements were made this month for class activities:
+                      </p>
+                       <table className="w-full text-sm border-collapse border border-black min-w-[600px]">
+                          <thead>
+                              <tr>
+                                  <th className="border border-black p-1 text-left">Date</th>
+                                  <th className="border border-black p-1 text-left">Description</th>
+                                  <th className="border border-black p-1 text-left">Recipient</th>
+                                  <th className="border border-black p-1 text-right">Amount (PHP)</th>
+                                  <th className="border border-black p-1 text-left">Signature</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              {expenses.length > 0 ? (
+                                  expenses.map(item => (
+                                      <tr key={item.id}>
+                                          <td className="border border-black p-1">{format(item.createdAt.toDate(), 'MMM d, yyyy')}</td>
+                                          <td className="border border-black p-1">{item.description}</td>
+                                          <td className="border border-black p-1">{item.recipient}</td>
+                                          <td className="border border-black p-1 text-right">{item.amount.toFixed(2)}</td>
+                                          <td className="border border-black p-1 h-8"></td>
+                                      </tr>
+                                  ))
+                               ) : (
+                                  <tr>
+                                      <td colSpan={5} className="border border-black p-1 text-center">No expenses this month.</td>
+                                  </tr>
+                               )}
+                              <tr className="font-bold bg-gray-100">
+                                  <td colSpan={3} className="border border-black p-1 text-left">Total Expenses</td>
+                                  <td className="border border-black p-1 text-right">P {totalExpenses.toFixed(2)}</td>
+                                  <td className="border border-black p-1"></td>
+                              </tr>
+                          </tbody>
+                      </table>
+                  </div>
 
-                {/* Financial Position */}
-                <div className="mb-12 report-section">
-                     <h3 className="font-bold text-lg mb-2">III. FINANCIAL POSITION</h3>
-                      <table className="w-full sm:w-1/2 text-sm border-collapse border border-black">
-                        <thead>
-                            <tr>
-                                <th className="border border-black p-1 text-left">Particulars</th>
-                                <th className="border border-black p-1 text-right">Amount (PHP)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td className="border border-black p-1">Total Collections this Month</td>
-                                <td className="border border-black p-1 text-right">{totalCollections.toFixed(2)}</td>
-                            </tr>
-                            <tr>
-                                <td className="border border-black p-1">Total Expenses this Month</td>
-                                <td className="border border-black p-1 text-right">- {totalExpenses.toFixed(2)}</td>
-                            </tr>
-                            <tr className='font-bold bg-gray-100'>
-                                <td className="border border-black p-1">Current Room Balance</td>
-                                <td className="border border-black p-1 text-right">{financialPosition.toFixed(2)}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                  {/* Financial Position */}
+                  <div className="mb-12 report-section">
+                       <h3 className="font-bold text-lg mb-2">III. FINANCIAL POSITION</h3>
+                        <table className="w-full sm:w-1/2 text-sm border-collapse border border-black">
+                          <thead>
+                              <tr>
+                                  <th className="border border-black p-1 text-left">Particulars</th>
+                                  <th className="border border-black p-1 text-right">Amount (PHP)</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              <tr>
+                                  <td className="border border-black p-1">Total Collections this Month</td>
+                                  <td className="border border-black p-1 text-right">{totalCollections.toFixed(2)}</td>
+                              </tr>
+                              <tr>
+                                  <td className="border border-black p-1">Total Expenses this Month</td>
+                                  <td className="border border-black p-1 text-right">- {totalExpenses.toFixed(2)}</td>
+                              </tr>
+                              <tr className='font-bold bg-gray-100'>
+                                  <td className="border border-black p-1">Current Room Balance</td>
+                                  <td className="border border-black p-1 text-right">{financialPosition.toFixed(2)}</td>
+                              </tr>
+                          </tbody>
+                      </table>
+                  </div>
 
-                {/* Remarks */}
-                {remarks && (
-                    <div className="mb-12 text-sm report-section">
-                        <h3 className="font-bold text-lg mb-2">IV. REMARKS</h3>
-                        <p className='whitespace-pre-wrap'>{remarks}</p>
-                    </div>
-                )}
-                
-                {/* Signatories */}
-                <div className="mb-8 text-sm report-section" style={{paddingTop: '50px' }}>
-                    <h3 className="font-bold text-lg mb-4">V. SIGNATORIES</h3>
-                    <div className="flex justify-around items-start">
-                        <div className="text-center w-1/2">
-                            <p className="font-semibold mb-1">Prepared by:</p>
-                            <div className='h-16'></div>
-                            <p className="font-bold underline">{userProfile?.name}</p>
-                            <p>Class Finance Officer</p>
-                        </div>
-                        {adviserName && (
-                            <div className="text-center w-1/2">
-                                <p className="font-semibold mb-1">Verified by:</p>
-                                <div className='h-16'></div>
-                                <p className="font-bold underline">{adviserName}</p>
-                                <p>{adviserPosition}</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
+                  {/* Remarks */}
+                  {remarks && (
+                      <div className="mb-12 text-sm report-section">
+                          <h3 className="font-bold text-lg mb-2">IV. REMARKS</h3>
+                          <p className='whitespace-pre-wrap'>{remarks}</p>
+                      </div>
+                  )}
+                  
+                  {/* Signatories */}
+                  <div className="mb-8 text-sm report-section" style={{paddingTop: '50px' }}>
+                      <h3 className="font-bold text-lg mb-4">V. SIGNATORIES</h3>
+                      <div className="flex justify-around items-start">
+                          <div className="text-center w-1/2">
+                              <p className="font-semibold mb-1">Prepared by:</p>
+                              <div className='h-16'></div>
+                              <p className="font-bold underline">{userProfile?.name}</p>
+                              <p>Class Finance Officer</p>
+                          </div>
+                          {adviserName && (
+                              <div className="text-center w-1/2">
+                                  <p className="font-semibold mb-1">Verified by:</p>
+                                  <div className='h-16'></div>
+                                  <p className="font-bold underline">{adviserName}</p>
+                                  <p>{adviserPosition}</p>
+                              </div>
+                          )}
+                      </div>
+                  </div>
 
-            </div>
+              </div>
+          </div>
         </div>
       )}
 
@@ -365,6 +367,11 @@ export default function ClassFinancialReportPage() {
         }
         @page {
             margin: 10mm;
+        }
+        @media (max-width: 640px) {
+          .xs\\:scale-50 {
+            transform: scale(0.5);
+          }
         }
       `}</style>
     </div>
