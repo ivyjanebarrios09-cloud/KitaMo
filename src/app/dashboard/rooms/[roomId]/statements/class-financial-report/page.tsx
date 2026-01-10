@@ -197,7 +197,7 @@ export default function ClassFinancialReportPage() {
                                 collections.map(item => (
                                     <tr key={item.id}>
                                         <td className="border border-black p-1">{format(item.createdAt.toDate(), 'MMM d, yyyy')}</td>
-                                        <td className="border border-black p-1">{item.description}</td>
+                                        <td className="border border-black p-1">{item.description.replace('Payment for ', '')}</td>
                                         <td className="border border-black p-1 text-right">{item.amount.toFixed(2)}</td>
                                     </tr>
                                 ))
