@@ -105,33 +105,36 @@ export default function ClassFinancialReportPage() {
     try {
         const element = statementRef.current;
         const canvas = await html2canvas(element, {
-            scale: 2, // Higher scale for better quality
+            scale: 2,
             useCORS: true,
-            backgroundColor: '#ffffff' // Explicitly set a white background
+            backgroundColor: '#ffffff'
         });
 
         const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4'); // Portrait, millimeters, A4 size
-
+        const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
-        const margin = 10; // 10mm margin on all sides
+        
+        const margin = 10;
+        const contentWidth = pdfWidth - (margin * 2);
+        const contentHeight = pdfHeight - (margin * 2);
         
         const imgProps = pdf.getImageProperties(imgData);
-        const imgWidth = pdfWidth - margin * 2;
-        const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+        const imgHeight = (imgProps.height * contentWidth) / imgProps.width;
         
         let heightLeft = imgHeight;
-        let position = margin;
+        let position = 0;
         
-        pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
-        heightLeft -= (pdfHeight - margin * 2);
+        // Add first page
+        pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, imgHeight);
+        heightLeft -= contentHeight;
 
+        // Add subsequent pages if content overflows
         while (heightLeft > 0) {
-            position = heightLeft - imgHeight + margin;
+            position = position - contentHeight;
             pdf.addPage();
-            pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
-            heightLeft -= (pdfHeight - margin * 2);
+            pdf.addImage(imgData, 'PNG', margin, position, contentWidth, imgHeight);
+            heightLeft -= contentHeight;
         }
 
         pdf.save(`class-financial-report-${roomId}-${year}-${monthName}.pdf`);
@@ -147,7 +150,7 @@ export default function ClassFinancialReportPage() {
   useEffect(() => {
     if (!loading && !isDownloading) {
       if (downloadAction === 'pdf') {
-        setTimeout(handleDownloadPdf, 500); // Add a small delay for content to render
+        setTimeout(handleDownloadPdf, 500);
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
