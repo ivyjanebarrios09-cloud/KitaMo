@@ -72,13 +72,14 @@ export default function ClassFinancialReportPage() {
                 description: deadlineInfo?.description || 'General Payment',
                 date: deadlineInfo?.createdAt || payment.createdAt,
                 amount: 0,
+                amountPerStudent: deadlineInfo?.amount || 0,
                 paidCount: new Set()
             };
         }
         acc[key].amount += payment.amount;
         acc[key].paidCount.add(payment.userId);
         return acc;
-    }, {} as Record<string, {id: string, description: string, date: any, amount: number, paidCount: Set<string>}>);
+    }, {} as Record<string, {id: string, description: string, date: any, amount: number, amountPerStudent: number, paidCount: Set<string>}>);
 
     const collectionSummary = Object.values(collectionsByDeadline).map(c => ({...c, paidCount: c.paidCount.size}));
 
@@ -216,7 +217,8 @@ export default function ClassFinancialReportPage() {
                             <tr>
                                 <th className="border border-black p-1 text-left">Date</th>
                                 <th className="border border-black p-1 text-left">Description</th>
-                                <th className="border border-black p-1 text-right">Amount (PHP)</th>
+                                <th className="border border-black p-1 text-right">Amount Per Student (PHP)</th>
+                                <th className="border border-black p-1 text-right">Amount Collected (PHP)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -225,12 +227,13 @@ export default function ClassFinancialReportPage() {
                                     <tr key={item.id}>
                                         <td className="border border-black p-1">{format(item.date.toDate(), 'MMM d, yyyy')}</td>
                                         <td className="border border-black p-1">{item.description}</td>
+                                        <td className="border border-black p-1 text-right">{item.amountPerStudent.toFixed(2)}</td>
                                         <td className="border border-black p-1 text-right">{item.amount.toFixed(2)}</td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={3} className="border border-black p-1 text-center">No collections this month.</td>
+                                    <td colSpan={4} className="border border-black p-1 text-center">No collections this month.</td>
                                 </tr>
                             )}
                         </tbody>
