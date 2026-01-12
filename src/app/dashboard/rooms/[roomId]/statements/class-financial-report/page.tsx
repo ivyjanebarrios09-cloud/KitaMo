@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { ArrowLeft, Download, Menu } from 'lucide-react';
@@ -127,20 +128,17 @@ export default function ClassFinancialReportPage() {
         const imgProps = pdf.getImageProperties(imgData);
         const imgWidth = imgProps.width;
         const imgHeight = imgProps.height;
+        
         const ratio = imgWidth / pdfWidth;
-        const canvasHeight = imgHeight / ratio;
-
+        const totalPages = Math.ceil(imgHeight / (pdfHeight * ratio));
         let position = 0;
-        let heightLeft = canvasHeight;
 
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, canvasHeight);
-        heightLeft -= pdfHeight;
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight / ratio);
 
-        while (heightLeft > 0) {
-            position = -heightLeft;
+        for (let i = 1; i < totalPages; i++) {
             pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, canvasHeight);
-            heightLeft -= pdfHeight;
+            position = -(pdfHeight * i);
+            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight / ratio);
         }
 
         pdf.save(`class-financial-report-${roomId}-${year}-${monthName}.pdf`);
