@@ -264,7 +264,7 @@ export function BottomNavBar({userProfile}) {
 
   return (
     <div className="bg-card border-t">
-      <div className="flex justify-around items-center h-12">
+      <div className="flex justify-around items-center h-10">
         {navItemsToShow.map((item) => {
             const href = item.href;
 
