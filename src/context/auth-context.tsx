@@ -3,7 +3,7 @@
 
 import type { User } from 'firebase/auth';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, signOut, getRedirectResult, UserCredential } from 'firebase/auth';
+import { onAuthStateChanged, signOut, getRedirectResult } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { useRouter } from 'next/navigation';
@@ -31,49 +31,52 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 
   useEffect(() => {
-    const handleRedirectResult = async () => {
-      setLoading(true);
-      try {
-        const result = await getRedirectResult(auth);
+    // This effect handles the result of a redirect sign-in (for mobile)
+    getRedirectResult(auth)
+      .then(async (result) => {
         if (result) {
-          // This is a sign-in after a redirect.
+          // This was a successful redirect sign-in
+          toast({
+            title: 'Welcome!',
+            description: 'You have successfully signed in with Google.',
+          });
+          
           const user = result.user;
           const userDocRef = doc(db, 'users', user.uid);
           const userDoc = await getDoc(userDocRef);
 
           if (!userDoc.exists()) {
-            // New user, redirect to select role. This is the main purpose of this function.
+            // New user, redirect to select role.
             router.push('/select-role');
-            // We don't return here, let onAuthStateChanged handle setting user and loading state
           } else {
-             toast({
-                title: 'Welcome back!',
-                description: 'You have successfully signed in.',
-            });
+            // Existing user, go to dashboard. onAuthStateChanged will also handle this,
+            // but we can push here for a faster redirect.
             router.push('/dashboard');
           }
         }
-      } catch (error: any) {
+        // If result is null, it means this wasn't a redirect sign-in,
+        // so we let onAuthStateChanged handle everything.
+      })
+      .catch((error) => {
+        // Handle Errors here.
+        console.error("Error during redirect sign-in: ", error);
         toast({
           variant: 'destructive',
           title: 'Google Sign-In Failed',
           description: error.message || 'An unexpected error occurred.',
         });
-      } finally {
-        // This will be set to false by onAuthStateChanged
-      }
-    };
-    
-    handleRedirectResult();
+      });
 
+    // This listener handles all auth state changes, including initial load,
+    // popup sign-ins, and state changes after a redirect.
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
         if (user) {
             const userDocRef = doc(db, 'users', user.uid);
             const userDoc = await getDoc(userDocRef);
             if (!userDoc.exists()) {
                 // If user doc doesn't exist, they are a new user.
-                // This can happen from a popup or first time redirect.
-                // The select-role page should be protected and only accessible if there is a user.
+                // Redirect them to select a role. This is critical for both
+                // popup and redirect flows.
                 if (router) router.push('/select-role');
             }
         }

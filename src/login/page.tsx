@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { signInWithEmailAndPassword, signInWithPopup, sendPasswordResetEmail, GoogleAuthProvider, signInWithRedirect } from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+
 
 import { Button } from '@/components/ui/button';
 import {
@@ -32,29 +33,18 @@ import { auth, db } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-context';
 import { useEffect, useState } from 'react';
 import { Loader } from '@/components/loader';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Separator } from '@/components/ui/separator';
 import { ArrowLeft } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-
-const formSchema = z
-  .object({
-    name: z.string().min(1, { message: 'Name is required' }),
-    email: z.string().email({
-      message: 'Please enter a valid email address.',
-    }),
-    password: z.string().min(6, {
-      message: 'Password must be at least 6 characters.',
-    }),
-    confirmPassword: z.string(),
-    role: z.enum(['student', 'chairperson'], {
-        required_error: "You need to select a role."
-    }),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match.",
-    path: ['confirmPassword'],
-  });
+const formSchema = z.object({
+  email: z.string().email({
+    message: 'Please enter a valid email address.',
+  }),
+  password: z.string().min(1, {
+    message: 'Password is required.',
+  }),
+});
 
 const Logo = () => (
     <div className="flex items-center gap-2">
@@ -84,7 +74,7 @@ const Logo = () => (
     </svg>
   );
 
-export default function RegisterPage() {
+export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
@@ -96,53 +86,40 @@ export default function RegisterPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: '',
       email: '',
       password: '',
-      confirmPassword: '',
     },
   });
-  
+
   useEffect(() => {
     if (!authLoading && user) {
-      const userDocRef = doc(db, 'users', user.uid);
-      getDoc(userDocRef).then(userDoc => {
-        if(userDoc.exists()) {
-            router.push('/dashboard');
-        }
-        // If doc doesn't exist, the AuthProvider will redirect to /select-role
-      })
+        const userDocRef = doc(db, 'users', user.uid);
+        getDoc(userDocRef).then(userDoc => {
+          if(userDoc.exists()) {
+              router.push('/dashboard');
+          }
+          // If doc doesn't exist, the AuthProvider will redirect to /select-role
+        })
     }
   }, [user, authLoading, router]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setFormLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        values.email,
-        values.password
-      );
-      
-      await setDoc(doc(db, 'users', userCredential.user.uid), {
-        name: values.name,
-        email: values.email,
-        role: values.role,
-        createdAt: serverTimestamp(),
-        rooms: [],
-        profilePic: `https://avatar.vercel.sh/${values.email}.png`
-      });
-
+      await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({
-        title: 'Account created!',
-        description: "Welcome! You have been successfully registered.",
+        title: 'Welcome back!',
+        description: 'You have successfully logged in.',
       });
       // The AuthProvider will handle redirection
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Registration Failed',
-        description: error.code === 'auth/email-already-in-use' ? 'This email is already taken.' : 'An unexpected error occurred. Please try again.',
+        title: 'Login Failed',
+        description:
+          error.code === 'auth/invalid-credential'
+            ? 'Invalid email or password.'
+            : 'An unexpected error occurred. Please try again.',
       });
     } finally {
       setFormLoading(false);
@@ -178,13 +155,39 @@ export default function RegisterPage() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    const email = form.getValues('email');
+    if (!email) {
+      toast({
+        variant: 'destructive',
+        title: 'Email Required',
+        description: 'Please enter your email address to reset your password.',
+      });
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast({
+        title: 'Password Reset Email Sent',
+        description: `An email has been sent to ${email} with instructions to reset your password.`,
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to send password reset email.',
+      });
+    }
+  };
+
+
   if (authLoading || user) {
-    return <div className="h-screen w-full flex items-center justify-center bg-background"><Loader /></div>;
+     return <div className="h-screen w-full flex items-center justify-center bg-background"><Loader /></div>;
   }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-secondary/20">
-       <div className="absolute top-6 left-6">
+      <div className="absolute top-6 left-6">
         <Link href="/" className="flex items-center gap-2 font-semibold text-lg text-primary hover:text-primary/80 transition-colors">
           <ArrowLeft className="h-5 w-5" />
           <span>Back to Home</span>
@@ -192,28 +195,15 @@ export default function RegisterPage() {
       </div>
       <Card className="w-full max-w-sm shadow-xl">
         <CardHeader className="text-center space-y-2">
-           <div className="flex justify-center mb-4">
+          <div className="flex justify-center mb-4">
             <Logo />
           </div>
-          <CardTitle className="text-3xl">Create an Account</CardTitle>
-          <CardDescription>Enter your details to get started.</CardDescription>
+          <CardTitle className="text-3xl">Welcome Back</CardTitle>
+          <CardDescription>Enter your credentials to access your dashboard.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Full Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Juan Dela Cruz" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <FormField
                 control={form.control}
                 name="email"
@@ -232,7 +222,12 @@ export default function RegisterPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <div className="flex justify-between items-center">
+                        <FormLabel>Password</FormLabel>
+                        <Button variant="link" type="button" onClick={handleForgotPassword} className="p-0 h-auto text-xs">
+                            Forgot password?
+                        </Button>
+                    </div>
                     <FormControl>
                       <Input type="password" placeholder="••••••••" {...field} />
                     </FormControl>
@@ -240,55 +235,8 @@ export default function RegisterPage() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
-                control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>Select your role</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex space-x-4"
-                      >
-                        <FormItem className="flex items-center space-x-2 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="student" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            Student
-                          </FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-2 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="chairperson" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            Financial Chairperson
-                          </FormLabel>
-                        </FormItem>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" className="w-full" disabled={formLoading || googleLoading}>
-                {formLoading ? <Loader className="h-4 w-4" /> : 'Create Account'}
+              <Button type="submit" className="w-full" disabled={formLoading}>
+                {formLoading ? <Loader className="h-4 w-4" /> : 'Login'}
               </Button>
             </form>
           </Form>
@@ -302,15 +250,15 @@ export default function RegisterPage() {
                 </span>
             </div>
           </div>
-          <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={googleLoading || formLoading}>
-            {googleLoading ? <Loader className="h-4 w-4"/> : <><GoogleIcon className="mr-2 h-5 w-5"/> Sign up with Google</>}
+          <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={googleLoading}>
+            {googleLoading ? <Loader className="h-4 w-4"/> : <><GoogleIcon className="mr-2 h-5 w-5"/> Sign in with Google</>}
           </Button>
         </CardContent>
         <CardFooter className="flex justify-center">
           <p className="text-sm text-muted-foreground">
-            Already have an account?{' '}
-            <Link href="/login" className="text-primary hover:underline font-medium">
-              Login
+            Don't have an account?{' '}
+            <Link href="/register" className="text-primary hover:underline font-medium">
+              Register
             </Link>
           </p>
         </CardFooter>
