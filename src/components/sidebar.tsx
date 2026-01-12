@@ -16,7 +16,8 @@ import {
   Settings,
   Megaphone,
   ArchiveRestore,
-  Calculator
+  Calculator,
+  Moon,
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import {
@@ -47,7 +48,7 @@ const chairpersonExtraNav = [
 
 const studentExtraNav = [
     { href: '/dashboard/personal-statements', icon: ClipboardList, label: 'My Statements' },
-    { href: '/dashboard/profile', icon: Settings, label: 'Settings' },
+    { href: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ]
 
 const roomSubNavItems = [
@@ -263,7 +264,7 @@ export function BottomNavBar({userProfile}) {
 
   return (
     <div className="bg-card border-t">
-      <div className="flex justify-around items-center h-16">
+      <div className="flex justify-around items-center h-14">
         {navItemsToShow.map((item) => {
             const href = item.href;
 
@@ -296,5 +297,3 @@ export function BottomNavBar({userProfile}) {
     </div>
   );
 }
-
-    

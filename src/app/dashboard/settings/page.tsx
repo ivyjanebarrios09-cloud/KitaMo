@@ -29,7 +29,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, SunMoon, Lock, LogOut } from 'lucide-react';
+import { User, SunMoon, Lock, LogOut, Moon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';

@@ -52,7 +52,11 @@ const StatementCard = ({
             <CardDescription>{description}</CardDescription>
             </div>
         </div>
-        <div className="flex items-center gap-2">
+      </div>
+    </CardHeader>
+    <CardContent>
+        {children && <div className="grid gap-4 mb-6">{children}</div>}
+        <div className="flex items-center justify-end gap-2">
             {actions.map((action, index) => (
             <Button key={index} variant="outline" size="sm" onClick={() => onAction(action.label)} disabled={action.disabled}>
                 {action.icon}
@@ -60,10 +64,6 @@ const StatementCard = ({
             </Button>
             ))}
         </div>
-      </div>
-    </CardHeader>
-    <CardContent>
-      {children && <div className="grid gap-4">{children}</div>}
     </CardContent>
   </Card>
 );
