@@ -104,6 +104,7 @@ export default function ClassFinancialReportPage() {
   const handleDownloadPdf = async () => {
     if (!statementRef.current || isDownloading) return;
     setIsDownloading(true);
+    toast({ title: 'Generating PDF...', description: 'Please wait a moment.' });
     try {
         const element = statementRef.current;
         const canvas = await html2canvas(element, {
@@ -120,26 +121,26 @@ export default function ClassFinancialReportPage() {
           unit: 'mm',
           format: 'a4'
         });
+        
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
-        
-        const margin = 10;
-        const contentWidth = pdfWidth - margin * 2;
-        
         const imgProps = pdf.getImageProperties(imgData);
-        const imgHeight = (imgProps.height * contentWidth) / imgProps.width;
+        const imgWidth = imgProps.width;
+        const imgHeight = imgProps.height;
+        const ratio = imgWidth / pdfWidth;
+        const canvasHeight = imgHeight / ratio;
 
-        let heightLeft = imgHeight;
-        let position = margin;
-        
-        pdf.addImage(imgData, 'PNG', margin, position, contentWidth, imgHeight);
-        heightLeft -= (pdfHeight - margin * 2);
+        let position = 0;
+        let heightLeft = canvasHeight;
+
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, canvasHeight);
+        heightLeft -= pdfHeight;
 
         while (heightLeft > 0) {
-            position = margin - (imgHeight - heightLeft);
+            position = -heightLeft;
             pdf.addPage();
-            pdf.addImage(imgData, 'PNG', margin, position, contentWidth, imgHeight);
-            heightLeft -= (pdfHeight - margin * 2);
+            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, canvasHeight);
+            heightLeft -= pdfHeight;
         }
 
         pdf.save(`class-financial-report-${roomId}-${year}-${monthName}.pdf`);
