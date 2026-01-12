@@ -174,8 +174,8 @@ export default function ClassFinancialReportPage() {
                     <p className="text-muted-foreground text-sm sm:text-base capitalize">{monthName} {year} for {room?.name || '...'}</p>
                 </div>
             </div>
-             <div className="flex w-full sm:w-auto pl-12 sm:pl-0">
-                <Button onClick={handleDownloadPdf} variant="outline" disabled={isDownloading} className="w-auto">
+             <div className="flex w-full sm:w-auto sm:pl-0 pl-14">
+                <Button onClick={handleDownloadPdf} variant="outline" disabled={isDownloading} className="w-full">
                     {isDownloading ? <Loader className="mr-2 h-4 w-4"/> : <Download className="mr-2 h-4 w-4"/>} PDF
                 </Button>
             </div>
@@ -185,7 +185,7 @@ export default function ClassFinancialReportPage() {
         <div className="flex justify-center p-8"><Loader/></div>
       ) : (
         <div className="bg-background sm:p-4 overflow-x-auto">
-          <div ref={statementRef} className="bg-white text-black p-4 sm:p-8 mx-auto origin-top-left w-[800px] sm:w-[800px] scale-[0.45] sm:scale-100">
+          <div ref={statementRef} className="bg-white text-black p-4 sm:p-8 mx-auto origin-top-left w-[800px] sm:w-auto sm:max-w-[800px] sm:scale-100 scale-[0.45] md:scale-100">
               <div className="max-w-4xl mx-auto report-content">
                   {/* Header */}
                   <div className="text-center mb-8 report-section">
@@ -329,7 +329,7 @@ export default function ClassFinancialReportPage() {
                   )}
                   
                   {/* Signatories */}
-                  <div className="mb-8 text-sm report-section" style={{paddingTop: '50px' }}>
+                  <div className="mb-8 text-sm report-section" style={{paddingTop: '50px', pageBreakInside: 'avoid' }}>
                       <h3 className="font-bold text-lg mb-4">V. SIGNATORIES</h3>
                       <div className="flex justify-around items-start">
                           <div className="text-center w-1/2">
