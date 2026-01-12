@@ -42,7 +42,13 @@ const baseSidebarNavItems = [
 const chairpersonExtraNav = [
     { href: '/dashboard/archived-rooms', icon: ArchiveRestore, label: 'Archived Rooms' },
     { href: '/dashboard/calculator', icon: Calculator, label: 'Calculator' },
+    { href: '/dashboard/settings', icon: Settings, label: 'Settings'},
 ];
+
+const studentExtraNav = [
+    { href: '/dashboard/personal-statements', icon: ClipboardList, label: 'My Statements' },
+    { href: '/dashboard/profile', icon: Settings, label: 'Settings' },
+]
 
 const roomSubNavItems = [
     { href: '', label: 'Room Dashboard', icon: Home, chairpersonOnly: false },
@@ -67,7 +73,7 @@ const Logo = () => (
     </div>
   );
 
-function NavContent({ isMobile = false, userProfile }) {
+function NavContent({ isMobileSheet = false, userProfile }) {
     const pathname = usePathname();
     const isRoomRoute = pathname.startsWith('/dashboard/rooms/');
     const roomId = isRoomRoute ? pathname.split('/')[3] : null;
@@ -76,7 +82,7 @@ function NavContent({ isMobile = false, userProfile }) {
     
     let sidebarNavItems = isChairperson
         ? [...baseSidebarNavItems, ...chairpersonExtraNav]
-        : baseSidebarNavItems;
+        : [...baseSidebarNavItems, ...studentExtraNav];
 
 
     const renderLink = (item: any, isSubItem = false) => {
@@ -192,12 +198,9 @@ export function Header() {
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className={cn(
-                        "h-10 w-10 rounded-full transition-transform duration-200 ease-in-out hover:scale-110 active:scale-105",
-                        isMobile ? "fixed bottom-24 left-4 z-50 h-14 w-14 bg-primary text-primary-foreground shadow-lg" : "relative"
-                      )}
+                      className="relative h-10 w-10 rounded-full transition-transform duration-200 ease-in-out hover:scale-110 active:scale-105"
                     >
-                      <UserIcon className={cn("h-5 w-5", isMobile && "h-6 w-6")} />
+                      <UserIcon className="h-5 w-5" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -210,10 +213,10 @@ export function Header() {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                        <Link href="/dashboard/settings">
+                     <DropdownMenuItem asChild>
+                        <Link href={userProfile.role === 'chairperson' ? '/dashboard/settings' : '/dashboard/profile'}>
                             <Settings className="mr-2 h-4 w-4" />
-                            {isMobile ? <span>Settings</span> : <span>Profile Settings</span>}
+                            <span>Settings</span>
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -236,7 +239,7 @@ export function BottomNavBar({userProfile}) {
   
   let mainNavItems = isChairperson
   ? [...baseSidebarNavItems, ...chairpersonExtraNav]
-  : baseSidebarNavItems;
+  : [...baseSidebarNavItems, ...studentExtraNav];
 
 
   const isRoomRoute = pathname.startsWith('/dashboard/rooms/');
@@ -259,7 +262,7 @@ export function BottomNavBar({userProfile}) {
 
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-card border-t z-40">
+    <div className="bg-card border-t">
       <div className="flex justify-around items-center h-16">
         {navItemsToShow.map((item) => {
             const href = item.href;
