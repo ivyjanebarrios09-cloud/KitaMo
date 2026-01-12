@@ -186,7 +186,7 @@ export default function ClassFinancialReportPage() {
         <div className="flex justify-center p-8"><Loader/></div>
       ) : (
         <div className="bg-background sm:p-4 overflow-x-auto">
-          <div ref={statementRef} className="bg-white text-black p-4 sm:p-8 mx-auto origin-top-left w-full sm:w-[800px]">
+          <div ref={statementRef} className="bg-white text-black p-4 sm:p-8 mx-auto origin-top-left w-[800px] sm:w-[800px] scale-[0.45] sm:scale-100">
               <div className="max-w-4xl mx-auto report-content">
                   {/* Header */}
                   <div className="text-center mb-8 report-section">
