@@ -22,7 +22,7 @@ import { useRoom } from '@/hooks/use-room';
 import { Loader } from '@/components/loader';
 import { format } from 'date-fns';
 import React from 'react';
-import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 
 const chartConfig = {
@@ -46,6 +46,7 @@ export default function ExpenseAnalyticsPage() {
   const roomId = params.roomId as string;
   const { room, loading: roomLoading } = useRoom(roomId);
   const { transactions: expenses, loading: expensesLoading } = useRoomTransactions(roomId, 'debit');
+  const isMobile = useIsMobile();
 
   const loading = roomLoading || expensesLoading;
 
@@ -92,6 +93,11 @@ export default function ExpenseAnalyticsPage() {
   }, [expenses]);
 
 
+  const chartHeight = isMobile ? 200 : 250;
+  const outerRadius = isMobile ? '60%' : '80%';
+  const labelFontSize = isMobile ? 'text-[10px]' : 'text-xs';
+
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center gap-2 sm:gap-4">
@@ -101,9 +107,9 @@ export default function ExpenseAnalyticsPage() {
         >
           <ArrowLeft className="h-6 w-6" />
         </Link>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl sm:text-3xl font-bold">Expense Analytics</h1>
-          <p className="text-muted-foreground text-sm sm:text-base">
+          <p className="text-muted-foreground text-sm sm:text-base break-words">
             Visualizing data for: {room?.name || '...'}
           </p>
         </div>
@@ -131,7 +137,7 @@ export default function ExpenseAnalyticsPage() {
                 </CardHeader>
                 <CardContent>
                     <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
-                        <ResponsiveContainer width="100%" height={250}>
+                        <ResponsiveContainer width="100%" height={chartHeight}>
                             <PieChart>
                                 <ChartTooltip content={<ChartTooltipContent nameKey="month" />} />
                                 <Pie
@@ -140,15 +146,17 @@ export default function ExpenseAnalyticsPage() {
                                     nameKey="month"
                                     cx="50%"
                                     cy="50%"
-                                    outerRadius="80%"
+                                    outerRadius={outerRadius}
                                     labelLine={false}
+                                    isAnimationActive={true}
+                                    animationDuration={500}
                                     label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
                                         const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
                                         const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
                                         const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
                                         if (percent < 0.05) return null;
                                         return (
-                                            <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="text-xs">
+                                            <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className={labelFontSize}>
                                             {`${(percent * 100).toFixed(0)}%`}
                                             </text>
                                         );
@@ -188,7 +196,7 @@ export default function ExpenseAnalyticsPage() {
                 </CardHeader>
                 <CardContent>
                      <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
-                        <ResponsiveContainer width="100%" height={250}>
+                        <ResponsiveContainer width="100%" height={chartHeight}>
                             <PieChart>
                                 <ChartTooltip content={<ChartTooltipContent nameKey="year" />} />
                                 <Pie
@@ -197,15 +205,17 @@ export default function ExpenseAnalyticsPage() {
                                     nameKey="year"
                                     cx="50%"
                                     cy="50%"
-                                    outerRadius="80%"
+                                    outerRadius={outerRadius}
                                     labelLine={false}
+                                    isAnimationActive={true}
+                                    animationDuration={500}
                                     label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
                                         const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
                                         const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
                                         const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
                                         if (percent < 0.05) return null;
                                         return (
-                                            <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="text-xs">
+                                            <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className={labelFontSize}>
                                             {`${(percent * 100).toFixed(0)}%`}
                                             </text>
                                         );
