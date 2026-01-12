@@ -160,12 +160,10 @@ export default function RegisterPage() {
     const signInMethod = isMobile ? signInWithRedirect : signInWithPopup;
 
     try {
-        const result = await signInMethod(auth, googleProvider);
-        if (signInMethod === signInWithPopup) {
-            // After popup sign in, the onAuthStateChanged listener in AuthProvider will handle the logic
-            // of checking if the user is new and redirecting them.
-        }
-        // For redirect, the logic is handled entirely in AuthProvider's useEffect
+        await signInMethod(auth, googleProvider);
+        // For popup, AuthProvider's onAuthStateChanged handles it.
+        // For redirect, AuthProvider's getRedirectResult handles it.
+        // We don't need to do anything else here.
     } catch (error: any) {
        if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
             toast({
@@ -175,7 +173,10 @@ export default function RegisterPage() {
             });
         }
     } finally {
-        setGoogleLoading(false);
+        // For popup, we stop loading. For redirect, the page will navigate away.
+        if (signInMethod === signInWithPopup) {
+            setGoogleLoading(false);
+        }
     }
   };
 
