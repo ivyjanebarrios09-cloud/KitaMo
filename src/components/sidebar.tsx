@@ -148,7 +148,7 @@ function NavContent({ isMobile = false, userProfile }) {
 
 
 export function Sidebar({isMobileSheet = false, userProfile}: {isMobileSheet?: boolean, userProfile: any}) {
-
+    const isMobile = useIsMobile();
   const sidebarContent = (
     <>
       <div className="flex-1 overflow-y-auto">
@@ -161,7 +161,7 @@ export function Sidebar({isMobileSheet = false, userProfile}: {isMobileSheet?: b
             </Link>
         </div>
         <nav className="flex-1 py-4 px-2 space-y-2">
-            <NavContent isMobile={isMobileSheet} userProfile={userProfile}/>
+            <NavContent isMobile={isMobileSheet || !isMobile} userProfile={userProfile}/>
         </nav>
       </div>
     </>
@@ -215,7 +215,7 @@ export function Header() {
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                      <DropdownMenuItem asChild>
-                        <Link href={userProfile.role === 'chairperson' ? '/dashboard/settings' : '/dashboard/profile'}>
+                        <Link href={'/dashboard/settings'}>
                             <Settings className="mr-2 h-4 w-4" />
                             <span>Settings</span>
                         </Link>
@@ -264,7 +264,7 @@ export function BottomNavBar({userProfile}) {
 
   return (
     <div className="bg-card border-t">
-      <div className="flex justify-around items-center h-14">
+      <div className="flex justify-around items-center h-12">
         {navItemsToShow.map((item) => {
             const href = item.href;
 

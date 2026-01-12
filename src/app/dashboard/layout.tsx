@@ -19,6 +19,28 @@ export default function DashboardLayout({
   const { user } = useAuth();
   const { userProfile, loading } = useUserProfile(user?.uid);
   const isMobile = useIsMobile();
+  const lastScrollY = useRef(0);
+  const [showNav, setShowNav] = useState(true);
+
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+        // Scrolling down
+        setShowNav(false);
+      } else {
+        // Scrolling up
+        setShowNav(true);
+      }
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isMobile]);
+
 
   if (loading) {
     return (
@@ -34,13 +56,14 @@ export default function DashboardLayout({
         <Sidebar userProfile={userProfile} />
         <div className="flex-1 flex flex-col relative">
           <Header />
-          <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 pb-16">
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 pb-14">
             {children}
           </main>
            {isMobile && (
               <div
                 className={cn(
-                  'fixed bottom-0 left-0 right-0 z-40'
+                  'fixed bottom-0 left-0 right-0 z-40 transition-transform duration-300 ease-in-out',
+                  showNav ? 'translate-y-0' : 'translate-y-full'
                 )}
               >
                 <BottomNavBar userProfile={userProfile} />
