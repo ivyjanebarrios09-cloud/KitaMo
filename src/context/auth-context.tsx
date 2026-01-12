@@ -31,46 +31,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 
   useEffect(() => {
-    // This handles the result from a redirect sign-in flow (primarily for mobile)
-    getRedirectResult(auth)
-    .then(async (result: UserCredential | null) => {
-      if (result) {
-        // User has successfully signed in via redirect.
-        const user = result.user;
-        const userDocRef = doc(db, 'users', user.uid);
-        const userDoc = await getDoc(userDocRef);
-
-        toast({
-          title: 'Welcome!',
-          description: 'You have successfully signed in.',
-        });
-
-        if (!userDoc.exists()) {
-          // New user: Redirect to select a role.
-          router.push('/select-role');
-        } else {
-          // Existing user: Go to the dashboard.
-          router.push('/dashboard');
+    const handleAuth = async (user: User | null) => {
+        if (user) {
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (!userDoc.exists()) {
+                // If the user document doesn't exist, it's a new user.
+                // This can happen after a Google Sign-In redirect.
+                // The select-role page will handle creating the document.
+                router.push('/select-role');
+            } else {
+                // Existing user, stay on the current page or go to dashboard if they land on an auth page
+                const currentPath = window.location.pathname;
+                if (['/login', '/register', '/select-role'].includes(currentPath)) {
+                    router.push('/dashboard');
+                }
+            }
         }
-      }
-      // If result is null, it means this isn't a return from a redirect,
-      // so we let onAuthStateChanged handle the session state below.
-    }).catch((error) => {
-        console.error("Error during redirect sign in:", error);
-        toast({
-            variant: 'destructive',
-            title: 'Sign-In Failed',
-            description: error.message || 'An unexpected error occurred during sign-in.',
-        });
-    }).finally(() => {
-        // This is the primary listener for auth state. It will also catch the user
-        // from the redirect result after the promise above resolves.
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            setUser(user);
-            setLoading(false);
-        });
-        return () => unsubscribe();
-    });
+        setUser(user);
+        setLoading(false);
+    };
+
+    const unsubscribe = onAuthStateChanged(auth, handleAuth);
+
+    return () => unsubscribe();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
