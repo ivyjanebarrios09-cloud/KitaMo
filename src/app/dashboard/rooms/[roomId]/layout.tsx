@@ -55,7 +55,7 @@ export default function RoomDetailLayout({
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
         <div className="flex items-center gap-2">
            <Link href="/dashboard/rooms" className="p-2 rounded-md hover:bg-muted -ml-2">
@@ -94,6 +94,7 @@ export default function RoomDetailLayout({
         )}
       </div>
       <div className="flex-1">{children}</div>
-    </div>
+    </>
   );
 }
+
