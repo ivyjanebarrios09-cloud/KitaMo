@@ -46,17 +46,13 @@ const StatementCard = ({
     <CardHeader>
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-4">
-            <Icon className="h-6 w-6 text-primary mt-1" />
+            <Icon className="h-5 w-5 text-primary mt-1" />
             <div>
             <CardTitle>{title}</CardTitle>
             <CardDescription>{description}</CardDescription>
             </div>
         </div>
-      </div>
-    </CardHeader>
-    <CardContent>
-        {children && <div className="grid gap-4 mb-6">{children}</div>}
-        <div className="flex items-center justify-end gap-2">
+         <div className="flex items-center justify-end gap-2">
             {actions.map((action, index) => (
             <Button key={index} variant="outline" size="sm" onClick={() => onAction(action.label)} disabled={action.disabled}>
                 {action.icon}
@@ -64,6 +60,10 @@ const StatementCard = ({
             </Button>
             ))}
         </div>
+      </div>
+    </CardHeader>
+    <CardContent>
+        {children && <div className="grid gap-2 mb-4">{children}</div>}
     </CardContent>
   </Card>
 );
@@ -118,10 +118,10 @@ function ChairpersonStatementsPage() {
     ]
 
   return (
-    <div className='flex flex-col gap-6'>
+    <div className='flex flex-col gap-4'>
         <div>
-            <h2 className="text-xl font-semibold">Generate Statements</h2>
-            <p className="text-muted-foreground">
+            <h2 className="text-lg font-semibold">Generate Statements</h2>
+            <p className="text-muted-foreground text-sm">
             Select a statement type to view, download, or export financial data
             for this room.
             </p>
@@ -138,9 +138,9 @@ function ChairpersonStatementsPage() {
                  <div className="grid grid-cols-1 gap-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                        <label className="text-sm font-medium">Select Month</label>
+                        <label className="text-xs font-medium">Select Month</label>
                         <Select value={month} onValueChange={setMonth}>
-                            <SelectTrigger>
+                            <SelectTrigger className="h-8">
                             <SelectValue placeholder="Select a month" />
                             </SelectTrigger>
                             <SelectContent>
@@ -160,9 +160,9 @@ function ChairpersonStatementsPage() {
                         </Select>
                         </div>
                         <div className="space-y-2">
-                        <label className="text-sm font-medium">Select Year</label>
+                        <label className="text-xs font-medium">Select Year</label>
                         <Select value={year} onValueChange={setYear}>
-                            <SelectTrigger>
+                            <SelectTrigger className="h-8">
                                 <SelectValue placeholder="Select a year" />
                             </SelectTrigger>
                             <SelectContent>
@@ -174,17 +174,17 @@ function ChairpersonStatementsPage() {
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Remarks</label>
-                        <Textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} placeholder="Enter remarks for the report..." rows={4}/>
+                        <label className="text-xs font-medium">Remarks</label>
+                        <Textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} placeholder="Enter remarks for the report..." rows={3}/>
                     </div>
                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Class Adviser Name</label>
-                            <Input value={adviserName} onChange={(e) => setAdviserName(e.target.value)} placeholder="e.g., Mrs. Florence S."/>
+                            <label className="text-xs font-medium">Class Adviser Name</label>
+                            <Input value={adviserName} onChange={(e) => setAdviserName(e.target.value)} placeholder="e.g., Mrs. Florence S." className="h-8"/>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Adviser Position</label>
-                            <Input value={adviserPosition} onChange={(e) => setAdviserPosition(e.target.value)} placeholder="e.g., Class Adviser"/>
+                            <label className="text-xs font-medium">Adviser Position</label>
+                            <Input value={adviserPosition} onChange={(e) => setAdviserPosition(e.target.value)} placeholder="e.g., Class Adviser" className="h-8"/>
                         </div>
                     </div>
                 </div>
@@ -301,7 +301,7 @@ export default function RoomStatementsPage() {
     const isChairperson = user?.uid === room?.createdBy;
   
     return (
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2">
                 <ClipboardList className="w-6 h-6" />
                 <h1 className="text-2xl font-bold">Statements</h1>
