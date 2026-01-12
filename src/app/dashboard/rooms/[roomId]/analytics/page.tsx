@@ -94,7 +94,8 @@ export default function ExpenseAnalyticsPage() {
 
 
   const chartHeight = isMobile ? 200 : 250;
-  const outerRadius = isMobile ? '60%' : '80%';
+  const outerRadius = isMobile ? 60 : 80;
+  const innerRadius = isMobile ? 40 : 60;
   const labelFontSize = isMobile ? 'text-[10px]' : 'text-xs';
 
 
@@ -146,6 +147,7 @@ export default function ExpenseAnalyticsPage() {
                                     nameKey="month"
                                     cx="50%"
                                     cy="50%"
+                                    innerRadius={innerRadius}
                                     outerRadius={outerRadius}
                                     labelLine={false}
                                     isAnimationActive={true}
@@ -168,6 +170,8 @@ export default function ExpenseAnalyticsPage() {
                                 </Pie>
                                 <Legend
                                     verticalAlign="bottom"
+                                    layout={isMobile ? 'vertical' : 'horizontal'}
+                                    align={isMobile ? 'center' : 'center'}
                                     content={({ payload }) => {
                                         return (
                                         <ul className="flex flex-col sm:flex-row flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground justify-center mt-4">
@@ -205,6 +209,7 @@ export default function ExpenseAnalyticsPage() {
                                     nameKey="year"
                                     cx="50%"
                                     cy="50%"
+                                    innerRadius={innerRadius}
                                     outerRadius={outerRadius}
                                     labelLine={false}
                                     isAnimationActive={true}
@@ -227,6 +232,8 @@ export default function ExpenseAnalyticsPage() {
                                 </Pie>
                                 <Legend
                                     verticalAlign="bottom"
+                                    layout={isMobile ? 'vertical' : 'horizontal'}
+                                    align={isMobile ? 'center' : 'center'}
                                     content={({ payload }) => {
                                         return (
                                         <ul className="flex flex-col sm:flex-row flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground justify-center mt-4">
