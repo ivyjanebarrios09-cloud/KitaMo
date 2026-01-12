@@ -173,7 +173,7 @@ export default function ClassFinancialReportPage() {
                     <p className="text-muted-foreground text-sm sm:text-base capitalize">{monthName} {year} for {room?.name || '...'}</p>
                 </div>
             </div>
-             {!downloadAction && (
+             {downloadAction === 'pdf' && (
                 <div className="flex w-full sm:w-auto sm:pl-0 pl-14">
                     <Button onClick={handleDownloadPdf} variant="outline" disabled={isDownloading} className="w-full">
                         {isDownloading ? <Loader className="mr-2 h-4 w-4"/> : <Download className="mr-2 h-4 w-4"/>} PDF
