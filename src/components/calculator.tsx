@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -25,12 +26,14 @@ export function Calculator() {
 
   const handleCalculate = () => {
     try {
+      // Replace 'x' with '*' for calculation
+      const expression = input.replace(/x/g, '*');
       // Basic validation to prevent unsafe eval
-      if (!/^[0-9+\-*/.() ]+$/.test(input)) {
+      if (!/^[0-9+\-*/.() ]+$/.test(expression)) {
         throw new Error('Invalid characters in expression');
       }
       // eslint-disable-next-line no-eval
-      const result = eval(input);
+      const result = eval(expression);
       if (typeof result !== 'number' || !isFinite(result)) {
         throw new Error('Invalid calculation');
       }
@@ -47,7 +50,7 @@ export function Calculator() {
 
   const buttons = [
     '7', '8', '9', '/',
-    '4', '5', '6', '*',
+    '4', '5', '6', 'x',
     '1', '2', '3', '-',
     '0', '.', '=', '+',
   ];
