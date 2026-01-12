@@ -191,10 +191,6 @@ export default function ClassFinancialReportPage() {
                   {/* Header */}
                   <div className="text-center mb-8 report-section">
                       <img src="/image/logoooo.png" alt="Logo" className="w-16 h-16 mx-auto mb-2"/>
-                      <h2 className="text-xl font-bold">Saint Louis College</h2>
-                      <p className="text-sm">of San Fernando, La Union</p>
-                      <p className="text-xs">The Beacon of Wisdom in the North</p>
-                      <h3 className="text-lg font-bold mt-2">SENIOR HIGH SCHOOL</h3>
                   </div>
 
                   <hr className="my-4 border-black"/>
