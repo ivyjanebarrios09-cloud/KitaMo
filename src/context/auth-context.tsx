@@ -53,9 +53,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             // but we can push here for a faster redirect.
             router.push('/dashboard');
           }
+        } else {
+            // No redirect result, so we check the auth state normally.
+            const unsubscribe = onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    const userDocRef = doc(db, 'users', user.uid);
+                    const userDoc = await getDoc(userDocRef);
+                    if (!userDoc.exists()) {
+                        // This can happen with popup sign-in for new users.
+                        if (router) router.push('/select-role');
+                    }
+                }
+                setUser(user);
+                setLoading(false);
+            });
+            return () => unsubscribe();
         }
-        // If result is null, it means this wasn't a redirect sign-in,
-        // so we let onAuthStateChanged handle everything.
       })
       .catch((error) => {
         // Handle Errors here.
@@ -65,26 +78,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           title: 'Google Sign-In Failed',
           description: error.message || 'An unexpected error occurred.',
         });
+        setLoading(false); // Stop loading on error
       });
-
-    // This listener handles all auth state changes, including initial load,
-    // popup sign-ins, and state changes after a redirect.
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            const userDocRef = doc(db, 'users', user.uid);
-            const userDoc = await getDoc(userDocRef);
-            if (!userDoc.exists()) {
-                // If user doc doesn't exist, they are a new user.
-                // Redirect them to select a role. This is critical for both
-                // popup and redirect flows.
-                if (router) router.push('/select-role');
-            }
-        }
-        setUser(user);
-        setLoading(false);
-    });
-
-    return () => unsubscribe();
     
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

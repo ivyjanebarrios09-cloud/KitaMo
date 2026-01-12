@@ -148,11 +148,10 @@ export default function LoginPage() {
             description: error.message || 'An unexpected error occurred. Please try again.',
         });
       }
-    } finally {
-        // For popup, we stop loading. For redirect, the page will navigate away.
-        if (signInMethod === signInWithPopup) {
-            setGoogleLoading(false);
-        }
+      // For popup, we stop loading. For redirect, the page will navigate away.
+      if (signInMethod === signInWithPopup) {
+          setGoogleLoading(false);
+      }
     }
   };
 
