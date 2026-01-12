@@ -165,7 +165,7 @@ function ChairpersonDashboard() {
                     The last 10 transactions across all of your rooms.
                 </CardDescription>
                 </CardHeader>
-                <CardContent className="p-0 sm:p-6 sm:pt-0">
+                <CardContent className="p-0 sm:p-6 sm:pt-0 max-h-[400px] overflow-y-auto">
                     {loading ? (
                          <div className="flex justify-center p-8"><Loader/></div>
                     ) : transactions.length > 0 ? (
@@ -218,7 +218,7 @@ function StudentDashboard() {
                     The latest deadlines and expenses across all of your joined rooms.
                 </CardDescription>
                 </CardHeader>
-                <CardContent className="p-0 sm:p-6 sm:pt-0">
+                <CardContent className="p-0 sm:p-6 sm:pt-0 max-h-[400px] overflow-y-auto">
                      {loading ? (
                         <div className="flex justify-center p-8"><Loader/></div>
                     ) : transactions.length > 0 ? (

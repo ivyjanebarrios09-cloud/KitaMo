@@ -416,10 +416,12 @@ function ChairpersonRoomsPage() {
                     <RoomCard key={room.id} room={room} onEdit={handleEdit} onDelete={handleDelete} onArchive={handleArchive} isChairperson={true}/>
                 ))
                 ) : (
-                    <div className="md:col-span-2 lg:col-span-3 text-center text-muted-foreground py-16">
-                        <p>No active rooms found.</p>
-                        <p className="text-sm">Click "Create Room" to get started.</p>
-                    </div>
+                    <Card className="md:col-span-2 lg:col-span-3">
+                        <CardContent className="text-center text-muted-foreground py-16">
+                            <p>No active rooms found.</p>
+                            <p className="text-sm">Click "Create Room" to get started.</p>
+                        </CardContent>
+                    </Card>
                 )}
             </div>
         </div>
@@ -489,10 +491,12 @@ function StudentRoomsPage() {
                     <RoomCard key={room.id} room={room} onEdit={() => {}} onDelete={() => {}} onArchive={()=>{}} isChairperson={false} />
                 ))
                 ) : (
-                    <div className="md:col-span-2 lg:col-span-3 text-center text-muted-foreground py-16">
-                        <p>You haven't joined any rooms yet.</p>
-                        <p className="text-sm">Click "Join Room" to get started.</p>
-                    </div>
+                    <Card className="md:col-span-2 lg:col-span-3">
+                        <CardContent className="text-center text-muted-foreground py-16">
+                            <p>You haven't joined any rooms yet.</p>
+                            <p className="text-sm">Click "Join Room" to get started.</p>
+                        </CardContent>
+                    </Card>
                 )}
             </div>
         </div>

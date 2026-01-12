@@ -213,7 +213,7 @@ function ChairpersonFundDeadlines({ roomId }: { roomId: string }) {
             All fund deadlines created for this room.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="max-h-[60vh] overflow-y-auto">
             {loading ? (
                 <div className="flex justify-center p-8"><Loader /></div>
             ) : deadlines.length > 0 ? (
@@ -275,7 +275,7 @@ function StudentFundDeadlines({ roomId, studentId }: { roomId: string, studentId
                     <CardTitle>Fund Deadlines</CardTitle>
                     <CardDescription>Upcoming and past due payments.</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="max-h-[60vh] overflow-y-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>

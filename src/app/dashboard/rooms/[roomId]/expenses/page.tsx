@@ -222,7 +222,7 @@ export default function ExpensesPage() {
             All expenses posted for this room.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="max-h-[60vh] overflow-y-auto">
             {loading ? (
                 <div className="flex justify-center p-8"><Loader /></div>
             ) : expenses.length > 0 ? (

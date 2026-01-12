@@ -121,7 +121,7 @@ function StudentRoomDashboard({ roomId, userId }) {
                     <CardTitle>Transaction History</CardTitle>
                     <CardDescription>A record of all payments you have made in this room.</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="max-h-[50vh] overflow-y-auto">
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>

@@ -59,7 +59,7 @@ function ChairpersonStudentsPage() {
             A list of all students who have joined this room. Click to view and manage their deadlines.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="max-h-[60vh] overflow-y-auto">
             {loading ? (
                  <div className="flex justify-center p-8"><Loader/></div>
             ) : students.length > 0 ? (
@@ -144,7 +144,7 @@ function StudentMembersPage() {
                     A list of all members in this room.
                 </CardDescription>
             </CardHeader>
-            <CardContent className='p-0'>
+            <CardContent className='p-0 max-h-[60vh] overflow-y-auto'>
                 {loading ? (
                     <div className="flex justify-center p-8"><Loader /></div>
                 ) : (
