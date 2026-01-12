@@ -102,7 +102,7 @@ function NavContent({ isMobile = false, userProfile }) {
           )}
         >
           <item.icon className="h-5 w-5" />
-          {!isMobile ? null : <span className="truncate">{item.label}</span>}
+          {!isMobile ? null : <span>{item.label}</span>}
         </div>
       );
 
@@ -179,53 +179,13 @@ export function Sidebar({isMobileSheet = false, userProfile}: {isMobileSheet?: b
 }
 
 export function Header() {
-    const { user, logout } = useAuth();
-    const { userProfile } = useUserProfile(user?.uid);
-    const isMobile = useIsMobile();
-
-
     return (
-        <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-16 lg:px-6 sticky top-0 z-30">
+        <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[57px] lg:px-6 sticky top-0 z-30">
             <Link href="/dashboard" className="lg:hidden">
               <LogoWithTitle />
             </Link>
             <div className="w-full flex-1">
                 {/* Optional: Add search or other header elements here */}
-            </div>
-            <div className="flex items-center gap-2">
-              {user && userProfile && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="relative h-10 w-10 rounded-full transition-transform duration-200 ease-in-out hover:scale-110 active:scale-105"
-                    >
-                      <UserIcon className="h-5 w-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end" forceMount>
-                    <DropdownMenuLabel className="font-normal">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{userProfile.name}</p>
-                        <p className="text-xs leading-none text-muted-foreground">
-                          {user.email}
-                        </p>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                     <DropdownMenuItem asChild>
-                       <Link href="/dashboard/settings">
-                          <Settings className="mr-2 h-4 w-4" />
-                          <span>Settings</span>
-                       </Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-               <Button variant="ghost" size="icon" onClick={logout}>
-                <LogOut className="h-5 w-5" />
-              </Button>
             </div>
         </header>
     )
@@ -262,7 +222,7 @@ export function BottomNavBar({userProfile}) {
 
   return (
     <div className="bg-card border-t">
-      <div className="flex justify-around items-center h-12">
+      <div className="flex justify-around items-center h-10">
         {navItemsToShow.map((item) => {
             const href = item.href;
 
