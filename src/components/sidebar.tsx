@@ -73,7 +73,7 @@ const Logo = () => (
     </div>
   );
 
-function NavContent({ isMobileSheet = false, userProfile }) {
+function NavContent({ isMobile = false, userProfile }) {
     const pathname = usePathname();
     const isRoomRoute = pathname.startsWith('/dashboard/rooms/');
     const roomId = isRoomRoute ? pathname.split('/')[3] : null;
