@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft, Download, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useRoom } from '@/hooks/use-room';
@@ -15,6 +15,9 @@ import html2canvas from 'html2canvas';
 import { useToast } from '@/hooks/use-toast';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { useAuth } from '@/context/auth-context';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sidebar } from '@/components/sidebar';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const monthMap = {
     january: 0, february: 1, march: 2, april: 3, may: 4, june: 5, 
@@ -40,6 +43,7 @@ export default function ClassFinancialReportPage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const statementRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const loading = roomLoading || transactionsLoading || profileLoading;
 
@@ -155,18 +159,18 @@ export default function ClassFinancialReportPage() {
 
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 pb-20">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 print:hidden">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
                 <Link href={`/dashboard/rooms/${roomId}/statements`} className="p-2 rounded-md hover:bg-muted">
                     <ArrowLeft className="h-6 w-6" />
                 </Link>
-                <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold">Class Financial Report</h1>
+                <div className="flex-1">
+                    <h1 className="text-xl sm:text-2xl font-bold">Class Financial Report</h1>
                     <p className="text-muted-foreground text-sm sm:text-base capitalize">{monthName} {year} for {room?.name || '...'}</p>
                 </div>
             </div>
-            <div className="sm:hidden w-full">
+            <div className="flex sm:hidden w-full pl-14">
                 <Button onClick={handleDownloadPdf} variant="outline" disabled={isDownloading} className="w-auto">
                     {isDownloading ? <Loader className="mr-2 h-4 w-4"/> : <Download className="mr-2 h-4 w-4"/>} PDF
                 </Button>
@@ -191,11 +195,6 @@ export default function ClassFinancialReportPage() {
                       <p className="text-sm">of San Fernando, La Union</p>
                       <p className="text-xs">The Beacon of Wisdom in the North</p>
                       <h3 className="text-lg font-bold mt-2">SENIOR HIGH SCHOOL</h3>
-                      <div className="flex flex-col justify-center items-center text-xs mt-2 text-gray-600 gap-1 sm:gap-4">
-                          <span className="text-center">● Center of Excellence in Teacher Education</span>
-                          <span className="text-center">● ISO 9001:2015 Quality Management System Certified</span>
-                          <span className="text-center">● CHED Autonomous Status</span>
-                      </div>
                   </div>
 
                   <hr className="my-4 border-black"/>
@@ -359,6 +358,10 @@ export default function ClassFinancialReportPage() {
           </div>
         </div>
       )}
+      
+      <Button onClick={handleDownloadPdf} variant="secondary" className="fixed bottom-24 left-4 z-50 h-14 w-14 rounded-full shadow-lg lg:hidden" disabled={isDownloading}>
+        {isDownloading ? <Loader className="h-6 w-6"/> : <Download className="h-6 w-6"/>}
+      </Button>
 
       <style jsx global>{`
         @media print {
