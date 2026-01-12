@@ -192,7 +192,7 @@ export function Header() {
             <div className="w-full flex-1">
                 {/* Optional: Add search or other header elements here */}
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               {user && userProfile && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -214,13 +214,18 @@ export function Header() {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={logout}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Log out</span>
+                     <DropdownMenuItem asChild>
+                       <Link href="/dashboard/settings">
+                          <Settings className="mr-2 h-4 w-4" />
+                          <span>Settings</span>
+                       </Link>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
+               <Button variant="ghost" size="icon" onClick={logout}>
+                <LogOut className="h-5 w-5" />
+              </Button>
             </div>
         </header>
     )
@@ -257,7 +262,7 @@ export function BottomNavBar({userProfile}) {
 
   return (
     <div className="bg-card border-t">
-      <div className="flex justify-around items-center h-16">
+      <div className="flex justify-around items-center h-12">
         {navItemsToShow.map((item) => {
             const href = item.href;
 
@@ -278,12 +283,11 @@ export function BottomNavBar({userProfile}) {
                     key={item.label}
                     href={href}
                     className={cn(
-                    'flex flex-col items-center justify-center text-muted-foreground transition-all w-full h-full gap-1 p-2 text-xs',
+                    'flex flex-col items-center justify-center text-muted-foreground transition-all w-full h-full gap-1 p-1 text-xs',
                     newIsActive && 'text-primary bg-muted/50'
                     )}
                 >
                     <item.icon className="h-5 w-5" />
-                    <span>{item.label}</span>
                 </Link>
             )
         })}
