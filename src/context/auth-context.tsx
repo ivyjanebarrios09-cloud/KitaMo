@@ -31,30 +31,73 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 
   useEffect(() => {
-    const handleAuth = async (user: User | null) => {
-        if (user) {
-            const userDocRef = doc(db, 'users', user.uid);
-            const userDoc = await getDoc(userDocRef);
-            if (!userDoc.exists()) {
-                // If the user document doesn't exist, it's a new user.
-                // This can happen after a Google Sign-In redirect.
-                // The select-role page will handle creating the document.
-                router.push('/select-role');
-            } else {
-                // Existing user, stay on the current page or go to dashboard if they land on an auth page
-                const currentPath = window.location.pathname;
-                if (['/login', '/register', '/select-role'].includes(currentPath)) {
+    const handleGoogleRedirect = async () => {
+        try {
+            const result = await getRedirectResult(auth);
+            if (result) {
+                // This is the first sign-in after a redirect.
+                const user = result.user;
+                const userDocRef = doc(db, 'users', user.uid);
+                const userDoc = await getDoc(userDocRef);
+
+                if (!userDoc.exists()) {
+                    // New user, redirect to select role
+                    router.push('/select-role');
+                    return true; // Indicates redirect was handled
+                } else {
+                    // Existing user, redirect to dashboard
+                    toast({
+                        title: 'Welcome back!',
+                        description: 'You have successfully signed in.',
+                    });
                     router.push('/dashboard');
+                    return true; // Indicates redirect was handled
                 }
             }
+        } catch (error: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Google Sign-In Failed',
+                description: error.message || 'An unexpected error occurred.',
+            });
         }
-        setUser(user);
-        setLoading(false);
+        return false; // No redirect result
     };
 
-    const unsubscribe = onAuthStateChanged(auth, handleAuth);
 
-    return () => unsubscribe();
+    const initializeAuth = async () => {
+        setLoading(true);
+        // Check for redirect result first
+        const redirectHandled = await handleGoogleRedirect();
+        
+        // If a redirect was handled, the user state will be set by the onAuthStateChanged listener,
+        // so we can wait for that. If not, we proceed with the listener immediately.
+        if (!redirectHandled) {
+             const unsubscribe = onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    const userDocRef = doc(db, 'users', user.uid);
+                    const userDoc = await getDoc(userDocRef);
+                    if (!userDoc.exists()) {
+                        // New user from a non-redirect sign-in (e.g., first-time email or popup)
+                        router.push('/select-role');
+                    }
+                }
+                setUser(user);
+                setLoading(false);
+            });
+            return () => unsubscribe();
+        } else {
+            // After a redirect, onAuthStateChanged will fire, so we just need to listen for it.
+            const unsubscribe = onAuthStateChanged(auth, (user) => {
+                setUser(user);
+                setLoading(false);
+            });
+            return () => unsubscribe();
+        }
+    };
+
+    initializeAuth();
+    
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
@@ -82,3 +125,4 @@ export const useAuth = () => {
   }
   return context;
 };
+
