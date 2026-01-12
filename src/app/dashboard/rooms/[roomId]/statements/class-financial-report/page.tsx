@@ -355,10 +355,6 @@ export default function ClassFinancialReportPage() {
         </div>
       )}
       
-      <Button onClick={handleDownloadPdf} variant="secondary" className="fixed bottom-24 left-4 z-50 h-14 w-14 rounded-full shadow-lg lg:hidden" disabled={isDownloading}>
-        {isDownloading ? <Loader className="h-6 w-6"/> : <Download className="h-6 w-6"/>}
-      </Button>
-
       <style jsx global>{`
         @media print {
           body { background-color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
