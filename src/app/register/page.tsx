@@ -105,7 +105,13 @@ export default function RegisterPage() {
   
   useEffect(() => {
     if (!authLoading && user) {
-      router.push('/dashboard');
+      const userDocRef = doc(db, 'users', user.uid);
+      getDoc(userDocRef).then(userDoc => {
+        if(userDoc.exists()) {
+            router.push('/dashboard');
+        }
+        // If doc doesn't exist, the AuthProvider will redirect to /select-role
+      })
     }
   }, [user, authLoading, router]);
 
@@ -154,12 +160,14 @@ export default function RegisterPage() {
     const signInMethod = isMobile ? signInWithRedirect : signInWithPopup;
 
     try {
-        await signInMethod(auth, googleProvider);
-         if (signInMethod === signInWithPopup) {
-            // Logic handled in AuthProvider
-         }
+        const result = await signInMethod(auth, googleProvider);
+        if (signInMethod === signInWithPopup) {
+            // After popup sign in, the onAuthStateChanged listener in AuthProvider will handle the logic
+            // of checking if the user is new and redirecting them.
+        }
+        // For redirect, the logic is handled entirely in AuthProvider's useEffect
     } catch (error: any) {
-       if (error.code !== 'auth/popup-closed-by-user') {
+       if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
             toast({
                 variant: 'destructive',
                 title: 'Google Sign-In Failed',

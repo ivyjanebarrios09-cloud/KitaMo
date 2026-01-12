@@ -31,72 +31,57 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 
   useEffect(() => {
-    const handleGoogleRedirect = async () => {
-        try {
-            const result = await getRedirectResult(auth);
-            if (result) {
-                // This is the first sign-in after a redirect.
-                const user = result.user;
-                const userDocRef = doc(db, 'users', user.uid);
-                const userDoc = await getDoc(userDocRef);
+    const handleRedirectResult = async () => {
+      setLoading(true);
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          // This is a sign-in after a redirect.
+          const user = result.user;
+          const userDocRef = doc(db, 'users', user.uid);
+          const userDoc = await getDoc(userDocRef);
 
-                if (!userDoc.exists()) {
-                    // New user, redirect to select role
-                    router.push('/select-role');
-                    return true; // Indicates redirect was handled
-                } else {
-                    // Existing user, redirect to dashboard
-                    toast({
-                        title: 'Welcome back!',
-                        description: 'You have successfully signed in.',
-                    });
-                    router.push('/dashboard');
-                    return true; // Indicates redirect was handled
-                }
+          if (!userDoc.exists()) {
+            // New user, redirect to select role. This is the main purpose of this function.
+            router.push('/select-role');
+            // We don't return here, let onAuthStateChanged handle setting user and loading state
+          } else {
+             toast({
+                title: 'Welcome back!',
+                description: 'You have successfully signed in.',
+            });
+            router.push('/dashboard');
+          }
+        }
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Google Sign-In Failed',
+          description: error.message || 'An unexpected error occurred.',
+        });
+      } finally {
+        // This will be set to false by onAuthStateChanged
+      }
+    };
+    
+    handleRedirectResult();
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (!userDoc.exists()) {
+                // If user doc doesn't exist, they are a new user.
+                // This can happen from a popup or first time redirect.
+                // The select-role page should be protected and only accessible if there is a user.
+                if (router) router.push('/select-role');
             }
-        } catch (error: any) {
-            toast({
-                variant: 'destructive',
-                title: 'Google Sign-In Failed',
-                description: error.message || 'An unexpected error occurred.',
-            });
         }
-        return false; // No redirect result
-    };
+        setUser(user);
+        setLoading(false);
+    });
 
-
-    const initializeAuth = async () => {
-        setLoading(true);
-        // Check for redirect result first
-        const redirectHandled = await handleGoogleRedirect();
-        
-        // If a redirect was handled, the user state will be set by the onAuthStateChanged listener,
-        // so we can wait for that. If not, we proceed with the listener immediately.
-        if (!redirectHandled) {
-             const unsubscribe = onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    const userDocRef = doc(db, 'users', user.uid);
-                    const userDoc = await getDoc(userDocRef);
-                    if (!userDoc.exists()) {
-                        // New user from a non-redirect sign-in (e.g., first-time email or popup)
-                        router.push('/select-role');
-                    }
-                }
-                setUser(user);
-                setLoading(false);
-            });
-            return () => unsubscribe();
-        } else {
-            // After a redirect, onAuthStateChanged will fire, so we just need to listen for it.
-            const unsubscribe = onAuthStateChanged(auth, (user) => {
-                setUser(user);
-                setLoading(false);
-            });
-            return () => unsubscribe();
-        }
-    };
-
-    initializeAuth();
+    return () => unsubscribe();
     
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -125,4 +110,3 @@ export const useAuth = () => {
   }
   return context;
 };
-
