@@ -161,7 +161,7 @@ export function Sidebar({isMobileSheet = false, userProfile}: {isMobileSheet?: b
             </Link>
         </div>
         <nav className="flex-1 py-4 px-2 space-y-2">
-            <NavContent isMobile={isMobileSheet || !isMobile} userProfile={userProfile}/>
+            <NavContent isMobile={isMobileSheet || isMobile} userProfile={userProfile}/>
         </nav>
       </div>
     </>
@@ -264,7 +264,7 @@ export function BottomNavBar({userProfile}) {
 
   return (
     <div className="bg-card border-t">
-      <div className="flex justify-around items-center h-10">
+      <div className="flex justify-around items-center h-9">
         {navItemsToShow.map((item) => {
             const href = item.href;
 
@@ -289,7 +289,7 @@ export function BottomNavBar({userProfile}) {
                     newIsActive && 'text-primary bg-muted/50'
                     )}
                 >
-                    <item.icon className="h-5 w-5" />
+                    <item.icon className="h-4 w-4" />
                 </Link>
             )
         })}
