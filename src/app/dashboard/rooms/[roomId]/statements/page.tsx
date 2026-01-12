@@ -19,12 +19,8 @@ import {
 } from '@/components/ui/select';
 import {
   ClipboardList,
-  CalendarDays,
-  BarChart3,
-  FileText,
   Eye,
-  FileSpreadsheet,
-  Wallet,
+  FileText,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useAuth } from '@/context/auth-context';
@@ -48,33 +44,29 @@ const StatementCard = ({
 }) => (
   <Card className="shadow-sm hover:shadow-md transition-shadow">
     <CardHeader>
-      <div className="flex items-start gap-4">
-        <Icon className="h-6 w-6 text-primary mt-1" />
-        <div>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-4">
+            <Icon className="h-6 w-6 text-primary mt-1" />
+            <div>
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
+            </div>
+        </div>
+        <div className="flex items-center gap-2">
+            {actions.map((action, index) => (
+            <Button key={index} variant="outline" size="sm" onClick={() => onAction(action.label)} disabled={action.disabled}>
+                {action.icon}
+                {action.label}
+            </Button>
+            ))}
         </div>
       </div>
     </CardHeader>
     <CardContent>
-      {children && <div className="grid gap-4 mb-6">{children}</div>}
-      <div className="flex items-center justify-end gap-2">
-        {actions.map((action, index) => (
-          <Button key={index} variant="outline" onClick={() => onAction(action.label)} disabled={action.disabled}>
-            {action.icon}
-            {action.label}
-          </Button>
-        ))}
-      </div>
+      {children && <div className="grid gap-4">{children}</div>}
     </CardContent>
   </Card>
 );
-
-const baseActions = [
-    { label: 'View', icon: <Eye className="mr-2 h-4 w-4" /> , disabled: false},
-    { label: 'PDF', icon: <FileText className="mr-2 h-4 w-4" /> , disabled: false},
-    { label: 'Excel', icon: <FileSpreadsheet className="mr-2 h-4 w-4" />, disabled: false },
-  ];
 
 const generateYearOptions = () => {
     const currentYear = new Date().getFullYear();
@@ -105,12 +97,6 @@ function ChairpersonStatementsPage() {
         let path = `/dashboard/rooms/${roomId}/statements/${reportType}`;
         const queryParams = new URLSearchParams();
 
-        if (reportType === 'yearly') {
-            queryParams.set('year', year);
-        } 
-        if (reportType === 'monthly') {
-            queryParams.set('month', month);
-        }
         if (reportType === 'class-financial-report') {
             queryParams.set('year', year);
             queryParams.set('month', month);
@@ -121,12 +107,6 @@ function ChairpersonStatementsPage() {
 
         if (action === 'PDF') {
             queryParams.set('download', 'pdf');
-        } else if (action === 'Excel') {
-            if (reportType === 'class-financial-report') {
-                router.push(`${path}?${queryParams.toString()}`);
-                return;
-            }
-            queryParams.set('download', 'csv');
         }
 
         router.push(`${path}?${queryParams.toString()}`);
@@ -146,7 +126,7 @@ function ChairpersonStatementsPage() {
             for this room.
             </p>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
 
             <StatementCard
                 icon={FileText}
@@ -269,7 +249,6 @@ function StudentStatementsPage() {
     const studentActions = [
         { label: 'View', icon: <Eye className="mr-2 h-4 w-4" />, disabled: false, onClick: () => handleActionClick('View') },
         { label: 'PDF', icon: <FileText className="mr-2 h-4 w-4" />, disabled: false, onClick: () => handleActionClick('PDF') },
-        { label: 'Excel', icon: <FileSpreadsheet className="mr-2 h-4 w-4" />, disabled: deadlinesLoading, onClick: () => handleActionClick('Excel') },
       ];
 
     return (
@@ -284,7 +263,7 @@ function StudentStatementsPage() {
                 <CardHeader>
                     <div className="flex items-start gap-4">
                         <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                            <Wallet className="h-6 w-6 text-primary" />
+                            <FileText className="h-6 w-6 text-primary" />
                         </div>
                         <div>
                             <CardTitle>Personal Expense Report</CardTitle>
