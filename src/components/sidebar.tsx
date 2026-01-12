@@ -214,13 +214,6 @@ export function Header() {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                     <DropdownMenuItem asChild>
-                        <Link href={'/dashboard/settings'}>
-                            <Settings className="mr-2 h-4 w-4" />
-                            <span>Settings</span>
-                        </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={logout}>
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Log out</span>
@@ -264,7 +257,7 @@ export function BottomNavBar({userProfile}) {
 
   return (
     <div className="bg-card border-t">
-      <div className="flex justify-around items-center h-9">
+      <div className="flex justify-around items-center h-16">
         {navItemsToShow.map((item) => {
             const href = item.href;
 
@@ -285,11 +278,12 @@ export function BottomNavBar({userProfile}) {
                     key={item.label}
                     href={href}
                     className={cn(
-                    'flex flex-col items-center justify-center text-muted-foreground transition-all w-full h-full gap-1 p-1 text-xs',
+                    'flex flex-col items-center justify-center text-muted-foreground transition-all w-full h-full gap-1 p-2 text-xs',
                     newIsActive && 'text-primary bg-muted/50'
                     )}
                 >
-                    <item.icon className="h-4 w-4" />
+                    <item.icon className="h-5 w-5" />
+                    <span>{item.label}</span>
                 </Link>
             )
         })}
