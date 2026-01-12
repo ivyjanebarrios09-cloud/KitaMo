@@ -115,7 +115,11 @@ export default function ClassFinancialReportPage() {
         });
 
         const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdf = new jsPDF({
+          orientation: 'p',
+          unit: 'mm',
+          format: 'a4'
+        });
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
         
@@ -170,13 +174,8 @@ export default function ClassFinancialReportPage() {
                     <p className="text-muted-foreground text-sm sm:text-base capitalize">{monthName} {year} for {room?.name || '...'}</p>
                 </div>
             </div>
-            <div className="flex sm:hidden w-full pl-14">
+             <div className="flex w-full sm:w-auto pl-12 sm:pl-0">
                 <Button onClick={handleDownloadPdf} variant="outline" disabled={isDownloading} className="w-auto">
-                    {isDownloading ? <Loader className="mr-2 h-4 w-4"/> : <Download className="mr-2 h-4 w-4"/>} PDF
-                </Button>
-            </div>
-            <div className="hidden sm:flex w-full sm:w-auto gap-2 justify-end">
-                <Button onClick={handleDownloadPdf} variant="outline" disabled={isDownloading} className="flex-1 sm:flex-initial">
                     {isDownloading ? <Loader className="mr-2 h-4 w-4"/> : <Download className="mr-2 h-4 w-4"/>} PDF
                 </Button>
             </div>
@@ -371,6 +370,7 @@ export default function ClassFinancialReportPage() {
         }
         @page {
             margin: 10mm;
+            size: a4;
         }
       `}</style>
     </div>
