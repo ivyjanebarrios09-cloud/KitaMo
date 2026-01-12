@@ -68,25 +68,25 @@ const RoomCard = ({ room, onEdit, onDelete, onArchive, isChairperson }) => {
     <Card className="shadow-sm hover:shadow-lg transition-shadow flex flex-col">
       <CardHeader>
         <div className="flex justify-between items-start">
-            <CardTitle className="text-xl">{room.name}</CardTitle>
+            <CardTitle className="text-lg">{room.name}</CardTitle>
             {isChairperson && room.code && <Badge variant="outline">CODE: {room.code}</Badge>}
         </div>
-        <CardDescription className="h-10">{room.description}</CardDescription>
+        <CardDescription className="h-10 text-xs">{room.description}</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow">
-        <div className="text-sm text-muted-foreground">
+        <div className="text-xs text-muted-foreground">
             Created by: {room.createdByName}
         </div>
       </CardContent>
       <CardFooter className="flex justify-between items-center text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4" />
-          <span>{memberCount} Members</span>
+          <span className="text-xs">{memberCount} Members</span>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" asChild>
             <Link href={`/dashboard/rooms/${room.id}`}>
-              {isChairperson ? 'Manage Room' : 'View Room'} <ArrowRight className="h-4 w-4 ml-2" />
+              {isChairperson ? 'Manage' : 'View'} <ArrowRight className="h-4 w-4 ml-1" />
             </Link>
           </Button>
           {isChairperson && (
@@ -113,15 +113,17 @@ const RoomCard = ({ room, onEdit, onDelete, onArchive, isChairperson }) => {
 const RoomCardSkeleton = () => (
     <Card className="shadow-sm flex flex-col">
         <CardHeader>
-            <Skeleton className="h-6 w-3/4" />
-            <Skeleton className="h-4 w-full mt-2" />
-            <Skeleton className="h-4 w-2/3 mt-1" />
+            <Skeleton className="h-5 w-3/4" />
+            <Skeleton className="h-3 w-full mt-2" />
+            <Skeleton className="h-3 w-2/3 mt-1" />
         </CardHeader>
-        <CardContent className="flex-grow"></CardContent>
+        <CardContent className="flex-grow">
+             <Skeleton className="h-3 w-1/2" />
+        </CardContent>
         <CardFooter className="flex justify-between items-center">
-            <Skeleton className="h-5 w-24" />
+            <Skeleton className="h-4 w-20" />
             <div className="flex items-center gap-2">
-                <Skeleton className="h-8 w-24" />
+                <Skeleton className="h-8 w-20" />
                 <Skeleton className="h-8 w-8" />
             </div>
         </CardFooter>

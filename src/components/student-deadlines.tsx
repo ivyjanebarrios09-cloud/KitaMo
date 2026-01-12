@@ -16,15 +16,15 @@ import { Separator } from './ui/separator';
 
 const DeadlineCard = ({ deadline, onMarkAsPaid, payingDeadlineId }) => (
     <Card className="mb-4">
-        <CardContent className="p-4 space-y-3">
+        <CardContent className="p-4 space-y-2">
             <div className="flex justify-between items-start">
-                 <p className="font-semibold pr-4">{deadline.description}</p>
+                 <p className="font-semibold pr-4 text-sm">{deadline.description}</p>
                  <Badge variant={deadline.status === 'Paid' ? 'secondary' : 'destructive'} className={`${deadline.status === 'Paid' ? 'bg-green-100 text-green-800' : ''} whitespace-nowrap`}>
                     {deadline.status}
                 </Badge>
             </div>
             <Separator/>
-            <div className="text-muted-foreground text-sm space-y-2">
+            <div className="text-muted-foreground text-xs space-y-1">
                 <div className="flex justify-between">
                     <span>Due Date:</span>
                     <span>{deadline.dueDate ? format(deadline.dueDate.toDate(), 'PP') : 'N/A'}</span>

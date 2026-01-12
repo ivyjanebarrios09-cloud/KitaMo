@@ -173,13 +173,13 @@ function NewExpenseModal({ roomId }: { roomId: string }) {
 
 const ExpenseCard = ({ expense }) => (
     <Card className="mb-4">
-        <CardContent className="p-4 space-y-3">
+        <CardContent className="p-4 space-y-2">
             <div className="flex justify-between items-start">
-                <p className="font-semibold pr-4">{expense.description}</p>
-                <p className="font-bold text-lg whitespace-nowrap">₱{expense.amount.toFixed(2)}</p>
+                <p className="font-semibold pr-4 text-sm">{expense.description}</p>
+                <p className="font-bold text-base whitespace-nowrap">₱{expense.amount.toFixed(2)}</p>
             </div>
             <Separator />
-            <div className="text-muted-foreground text-sm space-y-2">
+            <div className="text-muted-foreground text-xs space-y-1">
                 <div className="flex justify-between">
                     <span>Recipient:</span>
                     <span>{expense.recipient}</span>

@@ -176,10 +176,10 @@ function NewDeadlineModal({ roomId }: { roomId: string }) {
 
 const DeadlineCard = ({ deadline }) => (
     <Card className="mb-4">
-        <CardContent className="p-4 space-y-3">
-             <p className="font-semibold pr-4">{deadline.description}</p>
+        <CardContent className="p-4 space-y-2">
+             <p className="font-semibold pr-4 text-sm">{deadline.description}</p>
              <Separator/>
-            <div className="text-muted-foreground text-sm space-y-2">
+            <div className="text-muted-foreground text-xs space-y-1">
                 <div className="flex justify-between">
                     <span>Due Date:</span>
                     <span>{deadline.dueDate ? format(deadline.dueDate.toDate(), 'PP') : 'N/A'}</span>
