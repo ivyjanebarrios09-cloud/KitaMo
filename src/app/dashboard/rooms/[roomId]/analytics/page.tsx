@@ -136,8 +136,8 @@ export default function ExpenseAnalyticsPage() {
                         Proportion of expenses by month.
                     </CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
+                <CardContent className="flex justify-center">
+                    <ChartContainer config={chartConfig} className="min-h-[250px] w-full max-w-xs">
                         <ResponsiveContainer width="100%" height={chartHeight}>
                             <PieChart>
                                 <ChartTooltip content={<ChartTooltipContent nameKey="month" />} />
@@ -198,8 +198,8 @@ export default function ExpenseAnalyticsPage() {
                         Proportion of expenses by year.
                     </CardDescription>
                 </CardHeader>
-                <CardContent>
-                     <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
+                <CardContent className="flex justify-center">
+                     <ChartContainer config={chartConfig} className="min-h-[250px] w-full max-w-xs">
                         <ResponsiveContainer width="100%" height={chartHeight}>
                             <PieChart>
                                 <ChartTooltip content={<ChartTooltipContent nameKey="year" />} />
