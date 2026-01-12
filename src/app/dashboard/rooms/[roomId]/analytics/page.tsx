@@ -103,7 +103,7 @@ export default function ExpenseAnalyticsPage() {
         </Link>
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">Expense Analytics</h1>
-          <p className="text-muted-foreground text-sm sm:text-base max-w-[250px] sm:max-w-full truncate">
+          <p className="text-muted-foreground text-sm sm:text-base">
             Visualizing data for: {room?.name || '...'}
           </p>
         </div>
@@ -162,7 +162,7 @@ export default function ExpenseAnalyticsPage() {
                                     verticalAlign="bottom"
                                     content={({ payload }) => {
                                         return (
-                                        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground justify-center mt-4">
+                                        <ul className="flex flex-col sm:flex-row flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground justify-center mt-4">
                                             {payload?.map((entry, index) => (
                                             <li key={`item-${index}`} className="flex items-center gap-1.5">
                                                 <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
@@ -219,7 +219,7 @@ export default function ExpenseAnalyticsPage() {
                                     verticalAlign="bottom"
                                     content={({ payload }) => {
                                         return (
-                                        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground justify-center mt-4">
+                                        <ul className="flex flex-col sm:flex-row flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground justify-center mt-4">
                                             {payload?.map((entry, index) => (
                                             <li key={`item-${index}`} className="flex items-center gap-1.5">
                                                 <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
