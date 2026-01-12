@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect } from 'firebase/auth';
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
@@ -157,13 +157,10 @@ export default function RegisterPage() {
         prompt: 'select_account'
     });
     
-    const signInMethod = isMobile ? signInWithRedirect : signInWithPopup;
-
     try {
-        await signInMethod(auth, googleProvider);
-        // For popup, AuthProvider's onAuthStateChanged handles it.
-        // For redirect, AuthProvider's getRedirectResult handles it.
-        // We don't need to do anything else here.
+        await signInWithPopup(auth, googleProvider);
+        // After popup sign in, onAuthStateChanged listener in AuthProvider will handle
+        // checking if the user is new and redirecting them.
     } catch (error: any) {
        if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
             toast({
@@ -172,10 +169,7 @@ export default function RegisterPage() {
                 description: error.message || 'An unexpected error occurred. Please try again.',
             });
         }
-        // For popup, we stop loading. For redirect, the page will navigate away.
-        if (signInMethod === signInWithPopup) {
-            setGoogleLoading(false);
-        }
+        setGoogleLoading(false);
     }
   };
 
