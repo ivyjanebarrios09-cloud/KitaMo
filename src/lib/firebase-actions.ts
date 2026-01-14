@@ -229,14 +229,20 @@ export const joinRoom = async (roomCode: string, userId: string, userName: strin
 
     await runTransaction(db, async (transaction) => {
         const roomTransactionDoc = await transaction.get(roomRef);
+        if (!roomTransactionDoc.exists()) {
+            throw new Error("Room not found during transaction.");
+        }
+        
         const members = roomTransactionDoc.data()?.members || [];
         if (members.includes(userId)) {
             throw new Error("You are already a member of this room.");
         }
 
-        // --- Calculate initial debt ---
+        // --- Calculate initial debt for the new member ---
         const deadlinesRef = collection(db, 'rooms', roomId, 'transactions');
         const deadlinesQuery = query(deadlinesRef, where('type', '==', 'deadline'));
+        // This get() must be executed outside a transaction, so we do it before.
+        // We will assume the deadlinesSnapshot is up-to-date for the transaction.
         const deadlinesSnapshot = await getDocs(deadlinesQuery);
         let initialOwed = 0;
         deadlinesSnapshot.forEach(doc => {
@@ -244,17 +250,17 @@ export const joinRoom = async (roomCode: string, userId: string, userName: strin
         });
         // --- End calculation ---
 
-        // Add user to room's members list
+        // 1. Add user to room's members list
         transaction.update(roomRef, {
             members: arrayUnion(userId)
         });
 
-        // Add room to user's rooms list
+        // 2. Add room to user's rooms list
         transaction.update(userRef, {
             rooms: arrayUnion(roomId)
         })
 
-        // Create the student-specific details doc in the room
+        // 3. Create the student-specific details doc in the room's students subcollection
         const studentRef = doc(db, 'rooms', roomId, 'students', userId);
         transaction.set(studentRef, {
             totalPaid: 0,
