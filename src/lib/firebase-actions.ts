@@ -218,7 +218,6 @@ export const joinRoom = async (roomCode: string, userId: string, userName: strin
     const roomRef = doc(db, 'rooms', roomId);
     const userRef = doc(db, 'users', userId);
 
-    // Can't join if you're the creator
     if (roomData.createdBy === userId) {
         throw new Error("You are the creator of this room and cannot join as a student.");
     }
@@ -226,6 +225,15 @@ export const joinRoom = async (roomCode: string, userId: string, userName: strin
     if (roomData.archived) {
         throw new Error("This room is archived and cannot be joined.");
     }
+
+    // This must be done outside the transaction
+    const deadlinesRef = collection(db, 'rooms', roomId, 'transactions');
+    const deadlinesQuery = query(deadlinesRef, where('type', '==', 'deadline'));
+    const deadlinesSnapshot = await getDocs(deadlinesQuery);
+    let initialOwed = 0;
+    deadlinesSnapshot.forEach(doc => {
+        initialOwed += doc.data().amount;
+    });
 
     await runTransaction(db, async (transaction) => {
         const roomTransactionDoc = await transaction.get(roomRef);
@@ -237,18 +245,6 @@ export const joinRoom = async (roomCode: string, userId: string, userName: strin
         if (members.includes(userId)) {
             throw new Error("You are already a member of this room.");
         }
-
-        // --- Calculate initial debt for the new member ---
-        const deadlinesRef = collection(db, 'rooms', roomId, 'transactions');
-        const deadlinesQuery = query(deadlinesRef, where('type', '==', 'deadline'));
-        // This get() must be executed outside a transaction, so we do it before.
-        // We will assume the deadlinesSnapshot is up-to-date for the transaction.
-        const deadlinesSnapshot = await getDocs(deadlinesQuery);
-        let initialOwed = 0;
-        deadlinesSnapshot.forEach(doc => {
-            initialOwed += doc.data().amount;
-        });
-        // --- End calculation ---
 
         // 1. Add user to room's members list
         transaction.update(roomRef, {
