@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { signInWithEmailAndPassword, signInWithPopup, sendPasswordResetEmail, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithRedirect, sendPasswordResetEmail, GoogleAuthProvider } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 
@@ -129,23 +129,17 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     const googleProvider = new GoogleAuthProvider();
-    googleProvider.setCustomParameters({
-        prompt: 'select_account'
-    });
-    
     try {
-        await signInWithPopup(auth, googleProvider);
-        // After popup sign in, onAuthStateChanged listener in AuthProvider will handle
-        // checking if the user is new and redirecting them.
+        await signInWithRedirect(auth, googleProvider);
+        // After redirect, the page will reload and the onAuthStateChanged listener
+        // in AuthProvider will handle the result.
     } catch (error: any) {
-      if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
         toast({
             variant: 'destructive',
             title: 'Google Sign-In Failed',
             description: error.message || 'An unexpected error occurred. Please try again.',
         });
-      }
-      setGoogleLoading(false);
+        setGoogleLoading(false);
     }
   };
 
