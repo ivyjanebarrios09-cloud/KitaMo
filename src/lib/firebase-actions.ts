@@ -3,6 +3,7 @@
 import { addDoc, collection, serverTimestamp, writeBatch, doc, getDocs, query, where, updateDoc, deleteDoc, runTransaction, increment, arrayUnion, getDoc, collectionGroup, arrayRemove } from "firebase/firestore";
 import { db } from "./firebase";
 import { customAlphabet } from 'nanoid';
+import { sendNotification } from "@/ai/flows/send-notification-flow";
 
 // Generate a unique 6-character alphanumeric code
 const nanoid = customAlphabet('1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ', 6);
@@ -82,10 +83,19 @@ export const deleteRoom = async (roomId: string) => {
 }
 
 export const addExpense = async (roomId: string, userId: string, userName: string, data: { description: string, amount: number, recipient: string, date: Date }) => {
+    const roomRef = doc(db, 'rooms', roomId);
+    let roomMembers: string[] = [];
+    let roomName: string = '';
+    
     try {
-        const roomRef = doc(db, 'rooms', roomId);
-        
         await runTransaction(db, async (transaction) => {
+            const roomDoc = await transaction.get(roomRef);
+            if (!roomDoc.exists()) {
+              throw 'Room not found';
+            }
+            roomMembers = roomDoc.data().members || [];
+            roomName = roomDoc.data().name || '';
+
             // Add to general transactions log
             const transactionRef = doc(collection(db, 'rooms', roomId, 'transactions'));
             transaction.set(transactionRef, {
@@ -107,6 +117,16 @@ export const addExpense = async (roomId: string, userId: string, userName: strin
             });
         });
 
+        // Send notification after transaction is successful
+        if (roomMembers.length > 0) {
+            await sendNotification({
+                title: `New Expense in ${roomName}`,
+                message: `${data.description} - ₱${data.amount.toFixed(2)}`,
+                userIds: roomMembers,
+                url: `/dashboard/rooms/${roomId}/announcement`,
+            });
+        }
+
     } catch (error) {
         console.error("Error adding expense: ", error);
         throw new Error("Could not add expense.");
@@ -123,6 +143,7 @@ export const addDeadline = async (roomId: string, userId: string, userName: stri
     }
     const members = roomDoc.data().members || [];
     const createdBy = roomDoc.data().createdBy;
+    const roomName = roomDoc.data().name || '';
 
     // 1. Add deadline transaction
     const transactionRef = doc(collection(db, 'rooms', roomId, 'transactions'));
@@ -148,6 +169,16 @@ export const addDeadline = async (roomId: string, userId: string, userName: stri
         });
       }
     }
+    // Send notification
+    if (members.length > 0) {
+        await sendNotification({
+            title: `New Deadline in ${roomName}`,
+            message: `${data.description} - ₱${data.amount.toFixed(2)}`,
+            userIds: members,
+            url: `/dashboard/rooms/${roomId}/announcement`,
+        });
+    }
+
   }).catch((error) => {
       console.error("Error adding deadline: ", error);
       throw new Error("Could not add deadline.");
