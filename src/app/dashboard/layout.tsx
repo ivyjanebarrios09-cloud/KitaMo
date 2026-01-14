@@ -1,6 +1,7 @@
 
 'use client';
 
+import React, 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import AuthGuard from '@/components/auth-guard';
 import { Header, Sidebar } from '@/components/sidebar';
@@ -10,6 +11,7 @@ import { useUserProfile } from '@/hooks/use-user-profile';
 import { BottomNavBar } from '@/components/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import OneSignal from 'react-onesignal';
 
 export default function DashboardLayout({
   children,
@@ -21,6 +23,28 @@ export default function DashboardLayout({
   const isMobile = useIsMobile();
   const lastScrollY = useRef(0);
   const [showNav, setShowNav] = useState(true);
+
+  useEffect(() => {
+    const setupOneSignal = async () => {
+        // Wait for the SDK to be initialized
+        await OneSignal.ready;
+        
+        // If user is not subscribed, show the slide prompt
+        const isSubscribed = await OneSignal.isPushNotificationsEnabled();
+        if (!isSubscribed) {
+            OneSignal.showSlidedownPrompt();
+        }
+
+        // Tag the user with their UID for targeted notifications
+        if (user?.uid) {
+            OneSignal.login(user.uid);
+        }
+    };
+    if (user) {
+        setupOneSignal();
+    }
+  }, [user]);
+
 
   useEffect(() => {
     if (!isMobile) return;
