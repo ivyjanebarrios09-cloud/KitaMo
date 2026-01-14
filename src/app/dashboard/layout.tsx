@@ -25,22 +25,23 @@ export default function DashboardLayout({
 
   useEffect(() => {
     const setupOneSignal = async () => {
+      // The SDK must be initialized before we can use it
+      if (!OneSignal.initialized) {
         // Wait for the SDK to be initialized
         await OneSignal.ready;
-        
-        // If user is not subscribed, show the slide prompt
-        const isSubscribed = await OneSignal.isPushNotificationsEnabled();
-        if (!isSubscribed) {
-            OneSignal.showSlidedownPrompt();
-        }
+      }
+      
+      const isSubscribed = await OneSignal.isPushNotificationsEnabled();
+      if (!isSubscribed) {
+        OneSignal.showSlidedownPrompt();
+      }
 
-        // Tag the user with their UID for targeted notifications
-        if (user?.uid) {
-            OneSignal.login(user.uid);
-        }
+      if (user?.uid) {
+        OneSignal.login(user.uid);
+      }
     };
-    if (user) {
-        setupOneSignal();
+    if (user && process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID) {
+      setupOneSignal();
     }
   }, [user]);
 
