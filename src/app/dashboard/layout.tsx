@@ -25,19 +25,19 @@ export default function DashboardLayout({
 
   useEffect(() => {
     const setupOneSignal = async () => {
-      // The SDK must be initialized before we can use it, OneSignal.ready resolves when it is
       await OneSignal.ready;
       
-      const permission = OneSignal.Notifications.permission;
-      if (!permission) {
+      const permission = await OneSignal.Notifications.getPermission();
+      if (permission === 'default') {
         // This will show the native browser prompt
         await OneSignal.Notifications.requestPermission();
       }
 
       const isSubscribed = OneSignal.Notifications.subscribed;
-      if (!isSubscribed) {
-        // If they are not subscribed, you can show a slide prompt
-         OneSignal.showSlidedownPrompt();
+      if (!isSubscribed && permission === 'granted') {
+         // This state can happen if permission is granted but subscription failed.
+         // Or if you want to show a custom prompt after native, but native is already granted.
+         // For simplicity, we can log in here again or decide on UX.
       }
 
       if (user?.uid) {
