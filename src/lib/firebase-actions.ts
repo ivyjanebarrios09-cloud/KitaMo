@@ -11,22 +11,27 @@ const nanoid = customAlphabet('1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ', 6);
 export const createRoom = async (createdBy: string, createdByName: string, data: { name: string, description?: string }) => {
     try {
         const roomCode = nanoid();
-        const roomRef = await addDoc(collection(db, "rooms"), {
-            ...data,
-            createdBy,
-            createdByName,
-            code: roomCode,
-            createdAt: serverTimestamp(),
-            members: [createdBy], // Creator is the first member
-            totalCollected: 0,
-            totalExpenses: 0,
-            archived: false, // Add archived field
-        });
-
-        // Also add room to the creator's user document
+        const roomRef = doc(collection(db, "rooms")); // Create a reference first
         const userRef = doc(db, 'users', createdBy);
-        await updateDoc(userRef, {
-            rooms: arrayUnion(roomRef.id)
+
+        await runTransaction(db, async (transaction) => {
+            // 1. Create the new room with the creator in the members list
+            transaction.set(roomRef, {
+                ...data,
+                createdBy,
+                createdByName,
+                code: roomCode,
+                createdAt: serverTimestamp(),
+                members: [createdBy], // Creator is the first member
+                totalCollected: 0,
+                totalExpenses: 0,
+                archived: false,
+            });
+
+            // 2. Add the new room's ID to the creator's user document
+            transaction.update(userRef, {
+                rooms: arrayUnion(roomRef.id)
+            });
         });
 
     } catch (error) {
