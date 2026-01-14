@@ -25,15 +25,19 @@ export default function DashboardLayout({
 
   useEffect(() => {
     const setupOneSignal = async () => {
-      // The SDK must be initialized before we can use it
-      if (!OneSignal.initialized) {
-        // Wait for the SDK to be initialized
-        await OneSignal.ready;
-      }
+      // The SDK must be initialized before we can use it, OneSignal.ready resolves when it is
+      await OneSignal.ready;
       
+      const permission = await OneSignal.getNotificationPermission();
+      if (permission === 'default') {
+        // This will show the native browser prompt
+        await OneSignal.showNativePrompt();
+      }
+
       const isSubscribed = await OneSignal.isPushNotificationsEnabled();
       if (!isSubscribed) {
-        OneSignal.showSlidedownPrompt();
+        // If they are not subscribed, you can show a slide prompt
+         OneSignal.showSlidedownPrompt();
       }
 
       if (user?.uid) {
