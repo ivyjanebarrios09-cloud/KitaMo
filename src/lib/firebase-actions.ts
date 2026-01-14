@@ -365,10 +365,8 @@ export const addPayment = async (roomId: string, studentId: string, chairpersonN
                 transaction.set(studentRef, { totalPaid: 0, totalOwed: 0, balance: 0, lastPaymentAt: null});
             }
 
-             const studentData = studentDoc.data()
             const userDocSnap = await getDoc(doc(db, 'users', studentId));
             const studentName = userDocSnap.data()?.name || 'Unknown Student';
-
 
             // 1. Create a payment transaction record ('credit')
             const paymentRef = doc(collection(db, 'rooms', roomId, 'transactions'));
@@ -465,3 +463,4 @@ export const unarchiveRoom = async (roomId: string) => {
 
     await batch.commit();
 }
+
