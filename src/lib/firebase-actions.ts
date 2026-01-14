@@ -198,12 +198,13 @@ export const addDeadline = async (roomId: string, userId: string, userName: stri
         seenBy: [userId],
     });
 
-    // 2. Update totalOwed for all members in the room (in the /students subcollection)
+    // 2. Update totalOwed and balance for all members in the room (in the /students subcollection)
     for (const memberId of members) {
       if (memberId !== createdBy) { 
         const studentToUpdateRef = doc(db, 'rooms', roomId, 'students', memberId);
         transaction.update(studentToUpdateRef, {
           totalOwed: increment(data.amount),
+          balance: increment(data.amount)
         });
       }
     }
@@ -295,6 +296,8 @@ export const joinRoom = async (roomCode: string, userId: string, userName: strin
         transaction.set(studentRef, {
             totalPaid: 0,
             totalOwed: initialOwed,
+            balance: initialOwed,
+            lastPaymentAt: null,
         });
 
         // 4. Add metadata to the user's joinedRooms subcollection
@@ -321,7 +324,7 @@ export const leaveRoom = async (roomId: string, userId: string) => {
         }
         const studentDoc = await transaction.get(studentRef);
 
-        if (studentDoc.exists() && studentDoc.data().totalOwed > 0) {
+        if (studentDoc.exists() && studentDoc.data().balance > 0) {
             throw new Error("You cannot leave the room with an outstanding balance.");
         }
 
@@ -359,7 +362,7 @@ export const addPayment = async (roomId: string, studentId: string, chairpersonN
             const studentDoc = await transaction.get(studentRef);
             if (!studentDoc.exists()) {
                 // If student doc doesn't exist, create it. This can happen if they were a member before the 'students' subcollection was introduced.
-                transaction.set(studentRef, { totalPaid: 0, totalOwed: 0});
+                transaction.set(studentRef, { totalPaid: 0, totalOwed: 0, balance: 0, lastPaymentAt: null});
             }
 
              const studentData = studentDoc.data()
@@ -386,6 +389,8 @@ export const addPayment = async (roomId: string, studentId: string, chairpersonN
             transaction.update(studentRef, {
                 totalPaid: increment(amount),
                 totalOwed: increment(-amount),
+                balance: increment(-amount),
+                lastPaymentAt: serverTimestamp()
             });
 
             // 3. Update the room's total collected amount
