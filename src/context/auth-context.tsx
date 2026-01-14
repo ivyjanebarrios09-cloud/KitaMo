@@ -49,7 +49,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
   
   const logout = () => {
-    signOut(auth);
+    signOut(auth).then(() => {
+        router.push('/');
+    });
   };
 
   const value = {
