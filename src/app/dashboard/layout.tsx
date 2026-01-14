@@ -25,27 +25,27 @@ export default function DashboardLayout({
 
   useEffect(() => {
     const setupOneSignal = async () => {
-      // Wait for the SDK to be initialized
-      await OneSignal.ready;
-      
-      // Check if the user is already subscribed
-      const isSubscribed = OneSignal.Notifications.subscribed;
-      
-      if (!isSubscribed) {
-        // If not subscribed, request permission. This will show the native browser prompt.
-        const permission = await OneSignal.Notifications.requestPermission();
-        // The SDK automatically tries to subscribe the user after permission is granted.
-      }
-      
-      // Once subscribed (or if already subscribed), associate the subscription with the user's ID
-      if (user?.uid) {
-        OneSignal.login(user.uid);
+      if (user && process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID) {
+        // Wait for the SDK to be initialized
+        await OneSignal.ready;
+        
+        // Check if the user is already subscribed
+        const isSubscribed = OneSignal.Notifications.subscribed;
+        
+        if (!isSubscribed) {
+          // If not subscribed, request permission. This will show the native browser prompt.
+          await OneSignal.Notifications.requestPermission();
+          // The SDK automatically tries to subscribe the user after permission is granted.
+        }
+        
+        // Once subscribed (or if already subscribed), associate the subscription with the user's ID
+        if (user?.uid) {
+          OneSignal.login(user.uid);
+        }
       }
     };
 
-    if (user && process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID) {
-      setupOneSignal();
-    }
+    setupOneSignal();
   }, [user]);
 
 
