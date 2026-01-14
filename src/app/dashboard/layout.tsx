@@ -28,13 +28,13 @@ export default function DashboardLayout({
       // The SDK must be initialized before we can use it, OneSignal.ready resolves when it is
       await OneSignal.ready;
       
-      const permission = await OneSignal.getNotificationPermission();
-      if (permission === 'default') {
+      const permission = OneSignal.Notifications.permission;
+      if (!permission) {
         // This will show the native browser prompt
-        await OneSignal.showNativePrompt();
+        await OneSignal.Notifications.requestPermission();
       }
 
-      const isSubscribed = await OneSignal.isPushNotificationsEnabled();
+      const isSubscribed = OneSignal.Notifications.subscribed;
       if (!isSubscribed) {
         // If they are not subscribed, you can show a slide prompt
          OneSignal.showSlidedownPrompt();
