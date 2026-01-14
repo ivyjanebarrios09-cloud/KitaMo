@@ -1,7 +1,6 @@
 
 'use client';
 
-import React, 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import AuthGuard from '@/components/auth-guard';
 import { Header, Sidebar } from '@/components/sidebar';
