@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, getDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export function useUserRooms(userId: string, isChairperson: boolean, archived: boolean | null = false) {
@@ -14,54 +14,47 @@ export function useUserRooms(userId: string, isChairperson: boolean, archived: b
       setLoading(false);
       return;
     }
+    setLoading(true);
 
-    const fetchRooms = async () => {
-        setLoading(true);
-        try {
-            let roomQuery;
-            if (isChairperson) {
-                const queries = [where('createdBy', '==', userId)];
-                // If archived is not null, add a filter for it.
-                if (archived !== null) {
-                    queries.push(where('archived', '==', archived));
-                }
-                roomQuery = query(collection(db, 'rooms'), ...queries);
-            } else {
-                // Students should not see archived rooms they are a member of
-                roomQuery = query(collection(db, 'rooms'), where('members', 'array-contains', userId), where('archived', '==', false));
-            }
-            
-            const querySnapshot = await getDocs(roomQuery);
-
-            const roomsDataPromises = querySnapshot.docs.map(async (roomDoc) => {
-                const roomData = { id: roomDoc.id, ...roomDoc.data() };
-                if (roomData.createdBy && !roomData.createdByName) {
-                    const userRef = doc(db, 'users', roomData.createdBy);
-                    try {
-                        const userSnap = await getDoc(userRef);
-                        if (userSnap.exists()) {
-                            roomData.createdByName = userSnap.data().name;
-                        } else {
-                            roomData.createdByName = 'Unknown User';
-                        }
-                    } catch (e) {
-                        console.error("Error fetching creator name: ", e);
-                        roomData.createdByName = 'Unknown User';
-                    }
-                }
-                return roomData;
-            });
-            const roomsData = await Promise.all(roomsDataPromises);
+    if (isChairperson && archived) {
+        // Chairperson looking at archived rooms
+        const fetchArchivedRooms = async () => {
+            const q = query(
+                collection(db, 'rooms'), 
+                where('createdBy', '==', userId), 
+                where('archived', '==', true)
+            );
+            const snapshot = await getDocs(q);
+            const roomsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data()}));
             setRooms(roomsData);
-
-        } catch (error) {
-            console.error("Error fetching rooms: ", error);
-        } finally {
             setLoading(false);
         }
-    };
-    
-    fetchRooms();
+        fetchArchivedRooms();
+        return;
+    }
+
+
+    // For active rooms (both student and chairperson)
+    const joinedRoomsRef = collection(db, 'users', userId, 'joinedRooms');
+    const q = query(joinedRoomsRef, orderBy('joinedAt', 'desc'));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        const roomsData = snapshot.docs.map(doc => ({
+            id: doc.id,
+            name: doc.data().roomName,
+            description: doc.data().roomDescription,
+            createdByName: doc.data().chairpersonName,
+            createdBy: doc.data().chairpersonId,
+            code: doc.data().code,
+        }));
+        setRooms(roomsData);
+        setLoading(false);
+    }, (error) => {
+        console.error("Error fetching user rooms from subcollection: ", error);
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
 
   }, [userId, isChairperson, archived]);
 

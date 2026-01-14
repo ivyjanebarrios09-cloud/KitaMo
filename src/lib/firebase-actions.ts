@@ -13,10 +13,12 @@ export const createRoom = async (createdBy: string, createdByName: string, data:
         const roomCode = nanoid();
         const roomRef = doc(collection(db, "rooms")); // Create a reference first
         const userRef = doc(db, 'users', createdBy);
+        const userJoinedRoomRef = doc(db, 'users', createdBy, 'joinedRooms', roomRef.id);
+
 
         await runTransaction(db, async (transaction) => {
             // 1. Create the new room with the creator in the members list
-            transaction.set(roomRef, {
+            const roomPayload = {
                 ...data,
                 createdBy,
                 createdByName,
@@ -26,11 +28,22 @@ export const createRoom = async (createdBy: string, createdByName: string, data:
                 totalCollected: 0,
                 totalExpenses: 0,
                 archived: false,
-            });
+            };
+            transaction.set(roomRef, roomPayload);
 
             // 2. Add the new room's ID to the creator's user document
             transaction.update(userRef, {
                 rooms: arrayUnion(roomRef.id)
+            });
+
+            // 3. Add metadata to the creator's joinedRooms subcollection
+            transaction.set(userJoinedRoomRef, {
+                roomName: data.name,
+                roomDescription: data.description || '',
+                chairpersonId: createdBy,
+                chairpersonName: createdByName,
+                code: roomCode,
+                joinedAt: serverTimestamp(),
             });
         });
 
@@ -42,8 +55,26 @@ export const createRoom = async (createdBy: string, createdByName: string, data:
 
 export const updateRoom = async (roomId: string, data: { name: string, description?: string }) => {
     try {
+        const batch = writeBatch(db);
         const roomRef = doc(db, 'rooms', roomId);
-        await updateDoc(roomRef, data);
+
+        // Update the main room document
+        batch.update(roomRef, data);
+
+        // Get all members to update their joinedRooms subcollection
+        const roomDoc = await getDoc(roomRef);
+        const members = roomDoc.data()?.members || [];
+        
+        for (const memberId of members) {
+            const joinedRoomRef = doc(db, 'users', memberId, 'joinedRooms', roomId);
+            batch.update(joinedRoomRef, {
+                roomName: data.name,
+                roomDescription: data.description || ''
+            });
+        }
+        
+        await batch.commit();
+
     } catch (error) {
         console.error("Error updating room: ", error);
         throw new Error("Could not update room.");
@@ -71,12 +102,14 @@ export const deleteRoom = async (roomId: string) => {
         // Delete the room itself
         batch.delete(roomRef);
 
-        // Remove room from each member's user document
+        // Remove room from each member's user document and joinedRooms subcollection
         for (const memberId of members) {
             const userRef = doc(db, 'users', memberId);
             batch.update(userRef, {
                 rooms: arrayRemove(roomId)
             });
+            const joinedRoomRef = doc(db, 'users', memberId, 'joinedRooms', roomId);
+            batch.delete(joinedRoomRef);
         }
 
         await batch.commit();
@@ -217,6 +250,7 @@ export const joinRoom = async (roomCode: string, userId: string, userName: strin
     const roomData = roomDoc.data();
     const roomRef = doc(db, 'rooms', roomId);
     const userRef = doc(db, 'users', userId);
+    const userJoinedRoomRef = doc(db, 'users', userId, 'joinedRooms', roomId);
 
     if (roomData.createdBy === userId) {
         throw new Error("You are the creator of this room and cannot join as a student.");
@@ -262,6 +296,15 @@ export const joinRoom = async (roomCode: string, userId: string, userName: strin
             totalPaid: 0,
             totalOwed: initialOwed,
         });
+
+        // 4. Add metadata to the user's joinedRooms subcollection
+        transaction.set(userJoinedRoomRef, {
+            roomName: roomData.name,
+            roomDescription: roomData.description || '',
+            chairpersonId: roomData.createdBy,
+            chairpersonName: roomData.createdByName,
+            joinedAt: serverTimestamp(),
+        });
     });
 };
 
@@ -269,17 +312,15 @@ export const leaveRoom = async (roomId: string, userId: string) => {
     const roomRef = doc(db, 'rooms', roomId);
     const userRef = doc(db, 'users', userId);
     const studentRef = doc(db, 'rooms', roomId, 'students', userId);
-    const studentTransactionsRef = collection(db, 'rooms', roomId, 'transactions');
+    const userJoinedRoomRef = doc(db, 'users', userId, 'joinedRooms', roomId);
 
     await runTransaction(db, async (transaction) => {
         const roomDoc = await transaction.get(roomRef);
         if (!roomDoc.exists()) {
             throw new Error("Room not found.");
         }
-        const roomData = roomDoc.data();
         const studentDoc = await transaction.get(studentRef);
 
-        // Prevent leaving if there's an outstanding balance
         if (studentDoc.exists() && studentDoc.data().totalOwed > 0) {
             throw new Error("You cannot leave the room with an outstanding balance.");
         }
@@ -293,15 +334,14 @@ export const leaveRoom = async (roomId: string, userId: string) => {
         transaction.update(userRef, {
             rooms: arrayRemove(roomId)
         });
+        
+        // 3. Delete from the user's joinedRooms subcollection
+        transaction.delete(userJoinedRoomRef);
 
-        // 3. Delete the student-specific details doc
+        // 4. Delete the student-specific details doc
         if (studentDoc.exists()) {
             transaction.delete(studentRef);
         }
-        
-        // 4. (Optional but good practice) Delete student's payment transactions to clean up.
-        // This is more complex and might be better handled via a Cloud Function for atomicity.
-        // For now, we will leave them for historical record, but they won't be easily accessible.
     });
 };
 
@@ -361,12 +401,62 @@ export const addPayment = async (roomId: string, studentId: string, chairpersonN
 
 export const archiveRoom = async (roomId: string, archived: boolean) => {
     try {
+        const batch = writeBatch(db);
         const roomRef = doc(db, 'rooms', roomId);
-        await updateDoc(roomRef, {
+
+        // Update the main room document
+        batch.update(roomRef, {
             archived: archived,
         });
+
+        // Get all members to update their joinedRooms subcollection
+        const roomDoc = await getDoc(roomRef);
+        const members = roomDoc.data()?.members || [];
+        
+        for (const memberId of members) {
+            const joinedRoomRef = doc(db, 'users', memberId, 'joinedRooms', roomId);
+            if(archived) {
+                // If we archive the room, we can just delete it from the user's active list
+                batch.delete(joinedRoomRef);
+            }
+            // Note: Restoring an archived room is more complex as we'd need to reconstruct
+            // the joinedRooms documents for all members. This is handled in the unarchive flow.
+        }
+
+        await batch.commit();
+
     } catch (error) {
         console.error("Error updating room archive status: ", error);
         throw new Error("Could not update room status.");
     }
+}
+
+export const unarchiveRoom = async (roomId: string) => {
+    const roomRef = doc(db, 'rooms', roomId);
+    const batch = writeBatch(db);
+
+    // 1. Unarchive the room
+    batch.update(roomRef, { archived: false });
+
+    // 2. Re-create the joinedRooms metadata for all members
+    const roomDoc = await getDoc(roomRef);
+    if (!roomDoc.exists()) {
+        throw new Error("Room to unarchive not found.");
+    }
+    const roomData = roomDoc.data();
+    const members = roomData.members || [];
+
+    for (const memberId of members) {
+        const joinedRoomRef = doc(db, 'users', memberId, 'joinedRooms', roomId);
+        batch.set(joinedRoomRef, {
+            roomName: roomData.name,
+            roomDescription: roomData.description || '',
+            chairpersonId: roomData.createdBy,
+            chairpersonName: roomData.createdByName,
+            code: roomData.code,
+            joinedAt: roomData.createdAt, // Or a new serverTimestamp
+        });
+    }
+
+    await batch.commit();
 }

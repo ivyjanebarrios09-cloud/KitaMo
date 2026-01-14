@@ -63,7 +63,7 @@ const joinRoomSchema = z.object({
 
 
 const RoomCard = ({ room, onEdit, onDelete, onArchive, isChairperson }) => {
-    const memberCount = isChairperson ? (room.members?.length || 1) - 1 : room.members?.length || 0;
+    const memberCount = (room.members?.length || 1) - 1;
     return (
     <Card className="shadow-sm hover:shadow-lg transition-shadow flex flex-col">
       <CardHeader>
@@ -80,8 +80,8 @@ const RoomCard = ({ room, onEdit, onDelete, onArchive, isChairperson }) => {
       </CardContent>
       <CardFooter className="flex justify-between items-center text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
-          <Users className="h-4 w-4" />
-          <span className="text-xs">{memberCount} Members</span>
+          {/* <Users className="h-4 w-4" />
+          <span className="text-xs">{memberCount} Members</span> */}
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" asChild>
@@ -248,9 +248,8 @@ const JoinRoomModal = ({ open, onOpenChange, onSubmit, formLoading }) => {
     )
 }
 
-function ChairpersonRoomsPage() {
+function ChairpersonRoomsPage({userProfile}) {
     const { user } = useAuth();
-    const { userProfile } = useUserProfile(user?.uid);
     const { rooms, loading } = useUserRooms(user?.uid, true, false); // isChairperson = true, archived = false
     const [modalOpen, setModalOpen] = React.useState(false);
     const [formLoading, setFormLoading] = React.useState(false);
@@ -428,9 +427,8 @@ function ChairpersonRoomsPage() {
     )
 }
 
-function StudentRoomsPage() {
+function StudentRoomsPage({userProfile}) {
     const { user } = useAuth();
-    const { userProfile } = useUserProfile(user?.uid);
     const { rooms, loading } = useUserRooms(user?.uid, false);
     const { toast } = useToast();
     const [modalOpen, setModalOpen] = React.useState(false);
@@ -513,8 +511,8 @@ export default function ManageRoomsPage() {
     }
 
     if (userProfile?.role === 'student') {
-        return <StudentRoomsPage />;
+        return <StudentRoomsPage userProfile={userProfile}/>;
     }
     
-    return <ChairpersonRoomsPage />;
+    return <ChairpersonRoomsPage userProfile={userProfile}/>;
 }

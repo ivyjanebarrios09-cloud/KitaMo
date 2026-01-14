@@ -22,7 +22,7 @@ import { useUserRooms } from '@/hooks/use-user-rooms';
 import { useAuth } from '@/context/auth-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import React from 'react';
-import { archiveRoom } from '@/lib/firebase-actions';
+import { unarchiveRoom } from '@/lib/firebase-actions';
 import { useToast } from '@/hooks/use-toast';
 import {
     AlertDialog,
@@ -95,7 +95,7 @@ export default function ArchivedRoomsPage() {
     const confirmUnarchive = async () => {
         if (!selectedRoom) return;
         try {
-          await archiveRoom(selectedRoom.id, false);
+          await unarchiveRoom(selectedRoom.id);
           toast({
             title: 'Room Restored',
             description: `${selectedRoom.name} has been moved back to your active rooms.`,
