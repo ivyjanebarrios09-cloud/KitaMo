@@ -24,6 +24,13 @@ import { format } from 'date-fns';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { useUserRooms } from '@/hooks/use-user-rooms';
 import { useUserTransactions } from '@/hooks/use-user-transactions';
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+  } from '@/components/ui/accordion';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const StatCard = ({ title, value, icon: Icon, currency = '₱', loading = false }) => (
   <Card className="shadow-sm hover:shadow-md transition-shadow">
@@ -111,6 +118,7 @@ function ChairpersonDashboard() {
     const roomIds = rooms.map(r => r.id);
     const { transactions, loading: transactionsLoading } = useUserTransactions(roomIds);
     const { userProfile } = useUserProfile(user?.uid);
+    const isMobile = useIsMobile();
     
     const chairpersonName = userProfile?.name || user?.email?.split('@')[0] || 'Chairperson';
 
@@ -135,6 +143,23 @@ function ChairpersonDashboard() {
         const room = rooms.find(r => r.id === roomId);
         return room ? room.name : 'Unknown Room';
     }
+    
+    const transactionsContent = loading ? (
+        <div className="flex justify-center p-8"><Loader/></div>
+    ) : transactions.length > 0 ? (
+        <div className="flow-root">
+            <div className="-my-4 divide-y divide-border">
+                {transactions.map((transaction) => (
+                    <TransactionRow key={transaction.id} transaction={transaction} roomName={getRoomName(transaction.roomId)}/>
+                ))}
+            </div>
+        </div>
+    ) : (
+        <div className="text-center h-24 flex items-center justify-center text-muted-foreground">
+            No recent transactions found.
+        </div>
+    );
+
 
     return (
         <div className="flex flex-col gap-8">
@@ -159,29 +184,37 @@ function ChairpersonDashboard() {
             </div>
 
             <Card className="shadow-lg">
-                <CardHeader>
-                <CardTitle>Recent History</CardTitle>
-                <CardDescription>
-                    The last 10 transactions across all of your rooms.
-                </CardDescription>
-                </CardHeader>
-                <CardContent className="p-0 sm:p-6 sm:pt-0 max-h-[400px] overflow-y-auto">
-                    {loading ? (
-                         <div className="flex justify-center p-8"><Loader/></div>
-                    ) : transactions.length > 0 ? (
-                        <div className="flow-root">
-                            <div className="-my-4 divide-y divide-border">
-                                {transactions.map((transaction) => (
-                                    <TransactionRow key={transaction.id} transaction={transaction} roomName={getRoomName(transaction.roomId)}/>
-                                ))}
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="text-center h-24 flex items-center justify-center text-muted-foreground">
-                            No recent transactions found.
-                        </div>
-                    )}
-                </CardContent>
+                {isMobile ? (
+                    <Accordion type="single" collapsible className="w-full">
+                        <AccordionItem value="recent-history" className="border-b-0">
+                            <AccordionTrigger className="p-6 hover:no-underline">
+                                <div className="text-left">
+                                <CardTitle>Recent History</CardTitle>
+                                <CardDescription>
+                                    View recent transactions
+                                </CardDescription>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <CardContent className="px-6 pb-6 max-h-[400px] overflow-y-auto">
+                                    {transactionsContent}
+                                </CardContent>
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                ) : (
+                    <>
+                        <CardHeader>
+                            <CardTitle>Recent History</CardTitle>
+                            <CardDescription>
+                                The last 10 transactions across all of your rooms.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-0 sm:p-6 sm:pt-0 max-h-[400px] overflow-y-auto">
+                           {transactionsContent}
+                        </CardContent>
+                    </>
+                )}
             </Card>
         </div>
     )
@@ -193,6 +226,7 @@ function StudentDashboard() {
     const { rooms, loading: roomsLoading } = useUserRooms(user?.uid, false);
     const roomIds = rooms.map(r => r.id);
     const { transactions, loading: transactionsLoading } = useUserTransactions(roomIds);
+    const isMobile = useIsMobile();
     
     const studentName = userProfile?.name || user?.email?.split('@')[0] || 'Student';
 
@@ -203,6 +237,22 @@ function StudentDashboard() {
         return room ? room.name : 'Unknown Room';
     }
 
+    const transactionsContent = loading ? (
+        <div className="flex justify-center p-8"><Loader/></div>
+    ) : transactions.length > 0 ? (
+        <div className="flow-root">
+            <div className="-my-4 divide-y divide-border">
+                {transactions.map((transaction) => (
+                    <StudentTransactionRow key={transaction.id} transaction={transaction} roomName={getRoomName(transaction.roomId)}/>
+                ))}
+            </div>
+        </div>
+    ) : (
+        <div className="text-center h-24 flex items-center justify-center text-muted-foreground">
+            No recent transactions found.
+        </div>
+    );
+
     return (
         <div className="flex flex-col gap-8">
             <div>
@@ -212,29 +262,37 @@ function StudentDashboard() {
                 </p>
             </div>
              <Card className="shadow-lg">
-                <CardHeader>
-                <CardTitle>Recent History</CardTitle>
-                <CardDescription>
-                    The latest deadlines and expenses across all of your joined rooms.
-                </CardDescription>
-                </CardHeader>
-                <CardContent className="p-0 sm:p-6 sm:pt-0 max-h-[400px] overflow-y-auto">
-                     {loading ? (
-                        <div className="flex justify-center p-8"><Loader/></div>
-                    ) : transactions.length > 0 ? (
-                        <div className="flow-root">
-                            <div className="-my-4 divide-y divide-border">
-                                {transactions.map((transaction) => (
-                                    <StudentTransactionRow key={transaction.id} transaction={transaction} roomName={getRoomName(transaction.roomId)}/>
-                                ))}
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="text-center h-24 flex items-center justify-center text-muted-foreground">
-                            No recent transactions found.
-                        </div>
-                    )}
-                </CardContent>
+                {isMobile ? (
+                    <Accordion type="single" collapsible className="w-full">
+                        <AccordionItem value="recent-history" className="border-b-0">
+                            <AccordionTrigger className="p-6 hover:no-underline">
+                                <div className="text-left">
+                                <CardTitle>Recent History</CardTitle>
+                                <CardDescription>
+                                    View recent activity
+                                </CardDescription>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <CardContent className="px-6 pb-6 max-h-[400px] overflow-y-auto">
+                                    {transactionsContent}
+                                </CardContent>
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                ) : (
+                    <>
+                        <CardHeader>
+                            <CardTitle>Recent History</CardTitle>
+                            <CardDescription>
+                                The latest deadlines and expenses across all of your joined rooms.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-0 sm:p-6 sm:pt-0 max-h-[400px] overflow-y-auto">
+                            {transactionsContent}
+                        </CardContent>
+                    </>
+                )}
             </Card>
         </div>
     )
@@ -254,5 +312,7 @@ export default function DashboardPage() {
     
     return <ChairpersonDashboard />;
 }
+
+    
 
     
