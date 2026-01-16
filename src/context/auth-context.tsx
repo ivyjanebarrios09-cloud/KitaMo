@@ -3,7 +3,7 @@
 
 import type { User } from 'firebase/auth';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signOut, getRedirectResult } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { useRouter } from 'next/navigation';
@@ -31,6 +31,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 
   useEffect(() => {
+    // Check for redirect result first
+    getRedirectResult(auth)
+      .catch((error) => {
+        console.error("Error from getRedirectResult:", error);
+        toast({
+            variant: "destructive",
+            title: "Sign-in failed",
+            description: error.message || "An internal error occurred during sign-in.",
+        });
+      });
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
         if (user) {
             const userDocRef = doc(db, 'users', user.uid);
