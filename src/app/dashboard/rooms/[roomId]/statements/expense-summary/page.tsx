@@ -58,7 +58,7 @@ export default function ExpenseSummaryPage() {
       const y = 10;
       
       pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
-      pdf.save(`expense-summary-${roomId}.pdf`);
+      pdf.save(`expense-summary-${room?.name || roomId}.pdf`);
     } catch(err) {
         console.error("Error generating PDF", err);
     } finally {
@@ -78,7 +78,7 @@ export default function ExpenseSummaryPage() {
         'Posted By': e.userName,
         'Amount (PHP)': e.amount.toFixed(2),
     }));
-    downloadCSV(data, headers, `expense-summary-${roomId}.csv`);
+    downloadCSV(data, headers, `expense-summary-${room?.name || roomId}.csv`);
     toast({ title: 'Download Started', description: 'Your expense summary CSV has started downloading.' });
   }
 

@@ -91,7 +91,7 @@ export default function PersonalStatementPage() {
         const y = 10;
         
         pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
-        pdf.save(`personal-statement-${roomId}.pdf`);
+        pdf.save(`personal-statement-${userProfile?.name}-${room?.name || roomId}.pdf`);
 
     } catch(err) {
         console.error("Error generating PDF", err);

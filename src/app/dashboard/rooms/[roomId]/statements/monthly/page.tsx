@@ -75,7 +75,7 @@ export default function MonthlyStatementPage() {
       const y = 10;
       
       pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
-      pdf.save(`monthly-statement-${roomId}-${year}-${monthName}.pdf`);
+      pdf.save(`monthly-statement-${room?.name || roomId}-${year}-${monthName}.pdf`);
     } catch(err) {
         console.error("Error generating PDF", err);
     } finally {
@@ -96,7 +96,7 @@ export default function MonthlyStatementPage() {
         'User': t.userName || 'N/A',
         'Amount (PHP)': t.amount.toFixed(2),
     }));
-    downloadCSV(data, headers, `monthly-statement-${roomId}-${year}-${monthName}.csv`);
+    downloadCSV(data, headers, `monthly-statement-${room?.name || roomId}-${year}-${monthName}.csv`);
     toast({ title: 'Download Started', description: 'Your monthly statement CSV has started downloading.' });
   }
 

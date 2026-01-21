@@ -141,7 +141,7 @@ export default function ClassFinancialReportPage() {
             pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight / ratio);
         }
 
-        pdf.save(`class-financial-report-${roomId}-${year}-${monthName}.pdf`);
+        pdf.save(`report-${monthName}-${year}.pdf`);
     } catch(err) {
         console.error("Error generating PDF", err);
         toast({variant: "destructive", title: "Error generating PDF", description: "An error occurred while trying to create the PDF."})

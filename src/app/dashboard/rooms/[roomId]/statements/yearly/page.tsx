@@ -67,7 +67,7 @@ export default function YearlyStatementPage() {
       const y = 10;
       
       pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
-      pdf.save(`yearly-statement-${roomId}-${year}.pdf`);
+      pdf.save(`yearly-statement-${room?.name || roomId}-${year}.pdf`);
     } catch(err) {
         console.error("Error generating PDF", err);
     } finally {
@@ -88,7 +88,7 @@ export default function YearlyStatementPage() {
         'User': t.userName || 'N/A',
         'Amount (PHP)': t.amount.toFixed(2),
     }));
-    downloadCSV(data, headers, `yearly-statement-${roomId}-${year}.csv`);
+    downloadCSV(data, headers, `yearly-statement-${room?.name || roomId}-${year}.csv`);
     toast({ title: 'Download Started', description: 'Your yearly statement CSV has started downloading.' });
   }
 

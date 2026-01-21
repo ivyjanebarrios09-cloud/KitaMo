@@ -94,7 +94,7 @@ export default function CollectionSummaryPage() {
       const y = 10;
       
       pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
-      pdf.save(`collection-summary-${roomId}.pdf`);
+      pdf.save(`collection-summary-${room?.name || roomId}.pdf`);
     } catch(err) {
         console.error("Error generating PDF", err);
     } finally {
@@ -115,7 +115,7 @@ export default function CollectionSummaryPage() {
         'Total Amount Collected': item.totalAmountCollected.toFixed(2),
         'Number of Students Paid': item.studentsPaid,
     }));
-    downloadCSV(data, headers, `collection-summary-${roomId}.csv`);
+    downloadCSV(data, headers, `collection-summary-${room?.name || roomId}.csv`);
     toast({ title: 'Download Started', description: 'Your collection summary CSV has started downloading.' });
   }
 
