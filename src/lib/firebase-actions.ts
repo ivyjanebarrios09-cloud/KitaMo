@@ -3,7 +3,6 @@
 import { addDoc, collection, serverTimestamp, writeBatch, doc, getDocs, query, where, updateDoc, deleteDoc, runTransaction, increment, arrayUnion, getDoc, collectionGroup, arrayRemove } from "firebase/firestore";
 import { db } from "./firebase";
 import { customAlphabet } from 'nanoid';
-import { sendNotification } from "@/ai/flows/send-notification-flow";
 
 // Generate a unique 6-character alphanumeric code
 const nanoid = customAlphabet('1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ', 6);
@@ -155,16 +154,6 @@ export const addExpense = async (roomId: string, userId: string, userName: strin
             });
         });
 
-        // Send notification after transaction is successful
-        if (roomMembers.length > 0) {
-            await sendNotification({
-                title: `New Expense in ${roomName}`,
-                message: `${data.description} - ₱${data.amount.toFixed(2)}`,
-                userIds: roomMembers,
-                url: `/dashboard/rooms/${roomId}/announcement`,
-            });
-        }
-
     } catch (error) {
         console.error("Error adding expense: ", error);
         throw new Error("Could not add expense.");
@@ -207,15 +196,6 @@ export const addDeadline = async (roomId: string, userId: string, userName: stri
           balance: increment(data.amount)
         });
       }
-    }
-    // Send notification
-    if (members.length > 0) {
-        await sendNotification({
-            title: `New Deadline in ${roomName}`,
-            message: `${data.description} - ₱${data.amount.toFixed(2)}`,
-            userIds: members,
-            url: `/dashboard/rooms/${roomId}/announcement`,
-        });
     }
 
   }).catch((error) => {

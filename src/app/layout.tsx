@@ -4,7 +4,6 @@ import './globals.css';
 import { AuthProvider } from '@/context/auth-context';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
-import OneSignalInit from '@/components/OneSignalInit';
 
 export const metadata: Metadata = {
   title: 'KitaMo!',
@@ -35,7 +34,6 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <OneSignalInit />
             {children}
             <Toaster />
           </AuthProvider>
