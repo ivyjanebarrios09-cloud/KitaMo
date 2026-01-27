@@ -163,6 +163,7 @@ export async function GET(req: NextRequest) {
         
         const collHeaders = ['Date', 'Description', 'Amount Per Student (PHP)', 'No. of Students Paid', 'Amount Collected (PHP)'];
         const collWidths = [80, 140, 80, 80, 115];
+        const collTableWidth = collWidths.reduce((a, b) => a + b);
         yPos = drawTableHeader(yPos, collHeaders, collWidths);
 
         if (collectionSummary.length > 0) {
@@ -172,8 +173,8 @@ export async function GET(req: NextRequest) {
                 yPos = drawTableRow(yPos, row, collWidths, alignments);
             });
         } else {
-            docPDF.rect(startX, yPos, collWidths.reduce((a, b) => a + b), rowHeight).stroke();
-            docPDF.text('No collections this month.', startX, yPos + 6, { width: contentWidth, align: 'center' });
+            docPDF.rect(startX, yPos, collTableWidth, rowHeight).stroke();
+            docPDF.text('No collections this month.', startX, yPos + 6, { width: collTableWidth, align: 'center' });
             yPos += rowHeight;
         }
 
@@ -193,6 +194,7 @@ export async function GET(req: NextRequest) {
 
         const expHeaders = ['Date', 'Description', 'Recipient', 'Amount (PHP)', 'Signature'];
         const expWidths = [80, 185, 100, 80, 50];
+        const expTableWidth = expWidths.reduce((a, b) => a + b);
         yPos = drawTableHeader(yPos, expHeaders, expWidths);
         
         if (expensesInMonth.length > 0) {
@@ -202,8 +204,8 @@ export async function GET(req: NextRequest) {
                 yPos = drawTableRow(yPos, row, expWidths, alignments);
             });
         } else {
-            docPDF.rect(startX, yPos, expWidths.reduce((a, b) => a + b), rowHeight).stroke();
-            docPDF.text('No expenses this month.', startX, yPos + 6, { width: contentWidth, align: 'center' });
+            docPDF.rect(startX, yPos, expTableWidth, rowHeight).stroke();
+            docPDF.text('No expenses this month.', startX, yPos + 6, { width: expTableWidth, align: 'center' });
             yPos += rowHeight;
         }
 
