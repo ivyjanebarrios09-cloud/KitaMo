@@ -100,49 +100,68 @@ export async function GET(req: NextRequest) {
         if (fs.existsSync(logoPath)) {
             docPDF.image(logoPath, {
                 fit: [64, 64],
-                align: 'center',
+                x: 50,
+                y: 40
             });
-            docPDF.moveDown(2);
         }
 
-        docPDF.strokeColor('#000000').lineWidth(1).moveTo(50, docPDF.y).lineTo(550, docPDF.y).stroke();
-        docPDF.moveDown(2);
+        docPDF.strokeColor('#e5e5e5').lineWidth(1).moveTo(50, 115).lineTo(550, 115).stroke();
 
-        docPDF.font('Helvetica-Bold').fontSize(18).text('Class Financial Report', { align: 'center' });
-        docPDF.moveDown(2);
-        
-        docPDF.font('Helvetica').fontSize(12);
-        docPDF.text(`Month: ${monthName} ${yearNumber}`);
-        docPDF.text(`Prepared by: ${userProfile?.name || 'N/A'}`);
-        docPDF.text(`Position: Class Finance Officer`);
-        docPDF.text(`Date: ${format(new Date(), 'MMMM d, yyyy')}`);
-        docPDF.moveDown(2);
-
-        // Collections Table
-        docPDF.font('Helvetica-Bold').fontSize(14).text('I. SUMMARY OF COLLECTIONS', { align: 'left' });
-        docPDF.moveDown();
-        
-        const collectionsHeaders = ['Date', 'Description', 'Amount/Student', '# Paid', 'Amount Collected'];
-        const collectionsColWidths = [70, 160, 80, 80, 110];
-        let tableY = docPDF.y;
-
-        function drawTableHeader(headers: string[], colWidths: number[]) {
-            docPDF.font('Helvetica-Bold').fontSize(10);
-            let currentX = 50;
-            headers.forEach((header, i) => {
-                docPDF.text(header, currentX + 5, tableY + 5, { width: colWidths[i] - 10, align: 'left' });
-                currentX += colWidths[i];
-            });
-            docPDF.rect(50, tableY, 500, 20).stroke();
-            tableY += 20;
-        }
-        
-        drawTableHeader(collectionsHeaders, collectionsColWidths);
+        docPDF.font('Helvetica-Bold').fontSize(16).text('Class Financial Report', 50, 135, { align: 'center' });
+        docPDF.moveDown(3);
         
         docPDF.font('Helvetica').fontSize(10);
+        const metaDataY = docPDF.y;
+        docPDF.text(`Month:`, 50, metaDataY);
+        docPDF.text(`Prepared by:`, 50, metaDataY + 15);
+        docPDF.text(`Position:`, 50, metaDataY + 30);
+        docPDF.text(`Date:`, 50, metaDataY + 45);
+
+        docPDF.font('Helvetica-Bold');
+        docPDF.text(monthName, 120, metaDataY, {width: 200});
+        docPDF.text(userProfile?.name || 'N/A', 120, metaDataY + 15);
+        docPDF.text('Class Finance Officer', 120, metaDataY + 30);
+        docPDF.text(format(new Date(), 'MMMM d, yyyy'), 120, metaDataY + 45);
+        docPDF.y = metaDataY + 65;
+
+        const drawSectionHeader = (title: string) => {
+            if (docPDF.y > 700) docPDF.addPage();
+            docPDF.font('Helvetica-Bold').fontSize(12).text(title, 50, docPDF.y, { underline: true });
+            docPDF.moveDown(1.5);
+        };
+
+        const drawTableRow = (y, row, widths, aligns, isHeader = false) => {
+            let x = 50;
+            row.forEach((cell, i) => {
+                docPDF.text(cell, x + 5, y + 7, {
+                    width: widths[i] - 10,
+                    align: aligns[i]
+                });
+                x += widths[i];
+            });
+        };
+        
+        // --- Collections Table ---
+        drawSectionHeader('I. SUMMARY OF COLLECTIONS');
+        let tableY = docPDF.y;
+        const colWidthsCollections = [80, 170, 80, 80, 90];
+        const colAlignsCollections = ['left', 'left', 'right', 'right', 'right'];
+        const headersCollections = ['Date', 'Description', 'Amount/Student', '# Paid', 'Amount Collected'];
+        
+        docPDF.font('Helvetica-Bold').fontSize(9);
+        docPDF.fillColor("#4f46e5").rect(50, tableY, 500, 25).fill();
+        docPDF.fillColor("#ffffff");
+        drawTableRow(tableY, headersCollections, colWidthsCollections, colAlignsCollections, true);
+        docPDF.fillColor("#000000");
+        tableY += 25;
+
+        docPDF.font('Helvetica').fontSize(9);
         if (collectionSummary.length > 0) {
-            collectionSummary.forEach(item => {
-                let currentX = 50;
+            collectionSummary.forEach((item, i) => {
+                if (i % 2 === 1) {
+                    docPDF.fillColor("#f4f4f5").rect(50, tableY, 500, 25).fill();
+                    docPDF.fillColor("#000000");
+                }
                 const row = [
                     format(item.date.toDate(), 'MMM d, yyyy'),
                     item.description,
@@ -150,107 +169,108 @@ export async function GET(req: NextRequest) {
                     item.paidCount.toString(),
                     item.amount.toFixed(2)
                 ];
-                row.forEach((cell, i) => {
-                    docPDF.text(cell, currentX + 5, tableY + 5, { width: collectionsColWidths[i] - 10, align: i > 1 ? 'right' : 'left' });
-                    currentX += collectionsColWidths[i];
-                });
-                docPDF.rect(50, tableY, 500, 20).stroke();
-                tableY += 20;
+                drawTableRow(tableY, row, colWidthsCollections, colAlignsCollections);
+                tableY += 25;
             });
         } else {
-            docPDF.text('No collections this month.', 55, tableY + 5, { width: 490, align: 'center' });
-            docPDF.rect(50, tableY, 500, 20).stroke();
-            tableY += 20;
+            docPDF.text('No collections this month.', 55, tableY + 7, { width: 490, align: 'center' });
+            tableY += 25;
         }
+        docPDF.strokeColor('#e5e5e5').rect(50, docPDF.y, 500, tableY - docPDF.y).stroke();
+        
+        docPDF.font('Helvetica-Bold').fontSize(10);
+        docPDF.fillColor("#e4e4e7").rect(50, tableY, 500, 25).fill();
+        docPDF.fillColor("#000000");
+        drawTableRow(tableY, ['Total Amount Collected:', `P ${totalCollections.toFixed(2)}`], [410, 90], ['right', 'right']);
+        tableY += 25;
+        docPDF.y = tableY + 20;
 
-        docPDF.font('Helvetica-Bold');
-        docPDF.text('Total Amount Collected:', 50, tableY + 5, { align: 'right', width: 445 });
-        docPDF.text(`P ${totalCollections.toFixed(2)}`, 495, tableY + 5, { align: 'right', width: 50 });
-        docPDF.rect(50, tableY, 500, 20).stroke();
-        tableY += 20;
-        docPDF.y = tableY;
-        docPDF.moveDown(2);
-
-        // Expenses Table
-        docPDF.font('Helvetica-Bold').fontSize(14).text('II. SUMMARY OF EXPENSES');
-        docPDF.moveDown();
+        // --- Expenses Table ---
+        drawSectionHeader('II. SUMMARY OF EXPENSES');
         tableY = docPDF.y;
-        const expensesHeaders = ['Date', 'Description', 'Recipient', 'Amount', 'Signature'];
-        const expensesColWidths = [70, 150, 100, 80, 100];
-        drawTableHeader(expensesHeaders, expensesColWidths);
+        const colWidthsExpenses = [80, 170, 80, 70, 100];
+        const colAlignsExpenses = ['left', 'left', 'left', 'right', 'left'];
+        const headersExpenses = ['Date', 'Description', 'Recipient', 'Amount', 'Signature'];
 
-        docPDF.font('Helvetica').fontSize(10);
+        docPDF.font('Helvetica-Bold').fontSize(9);
+        docPDF.fillColor("#4f46e5").rect(50, tableY, 500, 25).fill();
+        docPDF.fillColor("#ffffff");
+        drawTableRow(tableY, headersExpenses, colWidthsExpenses, colAlignsExpenses, true);
+        docPDF.fillColor("#000000");
+        tableY += 25;
+        
+        docPDF.font('Helvetica').fontSize(9);
         if (expensesInMonth.length > 0) {
-            expensesInMonth.forEach(item => {
-                let currentX = 50;
+            expensesInMonth.forEach((item, i) => {
+                 if (i % 2 === 1) {
+                    docPDF.fillColor("#f4f4f5").rect(50, tableY, 500, 25).fill();
+                    docPDF.fillColor("#000000");
+                }
                 const row = [
                     format(item.createdAt.toDate(), 'MMM d, yyyy'),
                     item.description,
                     item.recipient,
-                    item.amount.toFixed(2),
+                    `P ${item.amount.toFixed(2)}`,
                     ''
                 ];
-                row.forEach((cell, i) => {
-                    docPDF.text(cell, currentX + 5, tableY + 5, { width: expensesColWidths[i] - 10, align: i === 3 ? 'right' : 'left' });
-                    currentX += expensesColWidths[i];
-                });
-                docPDF.rect(50, tableY, 500, 20).stroke();
-                tableY += 20;
+                drawTableRow(tableY, row, colWidthsExpenses, colAlignsExpenses);
+                tableY += 25;
             });
         } else {
-            docPDF.text('No expenses this month.', 55, tableY + 5, { width: 490, align: 'center' });
-            docPDF.rect(50, tableY, 500, 20).stroke();
-            tableY += 20;
+            docPDF.text('No expenses this month.', 55, tableY + 7, { width: 490, align: 'center' });
+            tableY += 25;
         }
+        docPDF.strokeColor('#e5e5e5').rect(50, docPDF.y, 500, tableY - docPDF.y).stroke();
 
-        docPDF.font('Helvetica-Bold');
-        docPDF.text('Total Expenses', 50, tableY + 5, { align: 'right', width: 315 });
-        docPDF.text(`P ${totalExpenses.toFixed(2)}`, 370, tableY + 5, { align: 'right', width: 75 });
-        docPDF.rect(50, tableY, 500, 20).stroke();
-        tableY += 20;
-        docPDF.y = tableY;
-        docPDF.moveDown(2);
-        
-        // Financial Position Table
-        docPDF.font('Helvetica-Bold').fontSize(14).text('III. FINANCIAL POSITION');
-        docPDF.moveDown();
+        docPDF.font('Helvetica-Bold').fontSize(10);
+        docPDF.fillColor("#e4e4e7").rect(50, tableY, 500, 25).fill();
+        docPDF.fillColor("#000000");
+        drawTableRow(tableY, ['Total Expenses', `P ${totalExpenses.toFixed(2)}`], [330, 70, 100], ['right', 'right', 'left']);
+        tableY += 25;
+        docPDF.y = tableY + 20;
+
+        // --- Financial Position Table ---
+        drawSectionHeader('III. FINANCIAL POSITION');
         tableY = docPDF.y;
-        const posHeaders = ['Particulars', 'Amount (PHP)'];
-        const posColWidths = [250, 250];
-        drawTableHeader(posHeaders, posColWidths);
+        docPDF.font('Helvetica-Bold').fontSize(9);
+        docPDF.fillColor("#4f46e5").rect(50, tableY, 350, 25).fill();
+        docPDF.fillColor("#ffffff");
+        drawTableRow(tableY, ['Particulars', 'Amount (PHP)'], [250, 100], ['left', 'right']);
+        tableY += 25;
+        docPDF.fillColor("#000000");
 
         const posRows = [
             ['Total Collections this Month', totalCollections.toFixed(2)],
             ['Total Expenses this Month', `- ${totalExpenses.toFixed(2)}`],
         ];
-        docPDF.font('Helvetica').fontSize(10);
-        posRows.forEach(row => {
-            docPDF.text(row[0], 55, tableY + 5, { width: posColWidths[0] - 10 });
-            docPDF.text(row[1], 305, tableY + 5, { width: posColWidths[1] - 10, align: 'right' });
-            docPDF.rect(50, tableY, 500, 20).stroke();
-            tableY += 20;
+        docPDF.font('Helvetica').fontSize(9);
+        posRows.forEach((row, i) => {
+             if (i % 2 === 1) {
+                docPDF.fillColor("#f4f4f5").rect(50, tableY, 350, 25).fill();
+                docPDF.fillColor("#000000");
+            }
+            drawTableRow(tableY, row, [250, 100], ['left', 'right']);
+            tableY += 25;
         });
 
-        docPDF.font('Helvetica-Bold');
-        docPDF.text('Current Room Balance', 55, tableY + 5, { width: posColWidths[0] - 10 });
-        docPDF.text(financialPosition.toFixed(2), 305, tableY + 5, { width: posColWidths[1] - 10, align: 'right' });
-        docPDF.rect(50, tableY, 500, 20).stroke();
-        tableY += 20;
-        docPDF.y = tableY;
-        docPDF.moveDown(2);
-
+        docPDF.font('Helvetica-Bold').fontSize(10);
+        docPDF.fillColor("#e4e4e7").rect(50, tableY, 350, 25).fill();
+        docPDF.fillColor("#000000");
+        drawTableRow(tableY, ['Current Room Balance', financialPosition.toFixed(2)], [250, 100], ['left', 'right']);
+        tableY += 25;
+        docPDF.strokeColor('#e5e5e5').rect(50, docPDF.y, 350, tableY - docPDF.y).stroke();
+        docPDF.y = tableY + 20;
 
         if (docPDF.y > 600) docPDF.addPage();
 
         // Remarks & Signatories
         if (remarks) {
-            docPDF.font('Helvetica-Bold').fontSize(14).text('IV. REMARKS');
-            docPDF.moveDown();
-            docPDF.font('Helvetica').fontSize(10).text(remarks, { width: 500 });
+            drawSectionHeader('IV. REMARKS');
+            docPDF.font('Helvetica').fontSize(10).text(remarks, { width: 500, align: 'justify' });
             docPDF.moveDown(2);
         }
         
-        docPDF.font('Helvetica-Bold').fontSize(14).text('V. SIGNATORIES');
+        drawSectionHeader('V. SIGNATORIES');
         const sigY = docPDF.y + 60;
         docPDF.font('Helvetica').fontSize(10);
         docPDF.text('Prepared by:', 75, sigY - 15);
@@ -279,7 +299,7 @@ export async function GET(req: NextRequest) {
         const headers = new Headers();
         headers.append('Content-Type', 'application/pdf');
         
-        const fileName = `report-${monthName}-${yearNumber}.pdf`;
+        const fileName = `report-${monthName}-${year}.pdf`;
         if (download === 'true') {
              headers.append('Content-Disposition', `attachment; filename="${fileName}"`);
         } else {
@@ -295,3 +315,5 @@ export async function GET(req: NextRequest) {
         }
         return new NextResponse('An unknown error occurred while generating the PDF.', { status: 500 });
     }
+}
+    
