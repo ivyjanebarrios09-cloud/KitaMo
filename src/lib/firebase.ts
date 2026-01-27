@@ -1,7 +1,7 @@
 
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, initializeAuth, browserSessionPersistence } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -16,11 +16,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-const auth = typeof window !== 'undefined'
-    ? initializeAuth(app, {
-        persistence: browserSessionPersistence
-      })
-    : getAuth(app);
+const auth = getAuth(app);
     
 const db = getFirestore(app);
 
