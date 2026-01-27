@@ -94,22 +94,24 @@ function ChairpersonStatementsPage() {
 
 
     const handleAction = (reportType: string, action: string) => {
-        let path = `/dashboard/rooms/${roomId}/statements/${reportType}`;
-        const queryParams = new URLSearchParams();
+        const viewPath = `/dashboard/rooms/${roomId}/statements/${reportType}`;
+        const apiPath = `/api/${reportType}`;
+        const queryParams = new URLSearchParams({
+            year,
+            month,
+            remarks,
+            adviserName,
+            adviserPosition,
+            roomId,
+        });
 
-        if (reportType === 'class-financial-report') {
-            queryParams.set('year', year);
-            queryParams.set('month', month);
-            queryParams.set('remarks', remarks);
-            queryParams.set('adviserName', adviserName);
-            queryParams.set('adviserPosition', adviserPosition);
+        if (action === 'View') {
+            router.push(`${viewPath}?${queryParams.toString()}`);
+        } else if (action === 'PDF') {
+            queryParams.set('download', 'true');
+            const downloadUrl = `${apiPath}?${queryParams.toString()}`;
+            window.open(downloadUrl, '_blank');
         }
-
-        if (action === 'PDF') {
-            queryParams.set('download', 'pdf');
-        }
-
-        router.push(`${path}?${queryParams.toString()}`);
     }
 
     const classReportActions = [
