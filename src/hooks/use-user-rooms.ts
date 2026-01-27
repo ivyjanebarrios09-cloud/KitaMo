@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, orderBy, getDocs } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, getDocs, documentId } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export function useUserRooms(userId: string, isChairperson: boolean, archived: boolean | null = false) {
@@ -37,24 +36,48 @@ export function useUserRooms(userId: string, isChairperson: boolean, archived: b
     // For active rooms (both student and chairperson)
     const joinedRoomsRef = collection(db, 'users', userId, 'joinedRooms');
     const q = query(joinedRoomsRef, orderBy('joinedAt', 'desc'));
+    
+    let unsubscribeFromRooms = () => {};
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-        const roomsData = snapshot.docs.map(doc => ({
-            id: doc.id,
-            name: doc.data().roomName,
-            description: doc.data().roomDescription,
-            createdByName: doc.data().chairpersonName,
-            createdBy: doc.data().chairpersonId,
-            code: doc.data().code,
-        }));
-        setRooms(roomsData);
-        setLoading(false);
+    const unsubscribeFromJoinedRooms = onSnapshot(q, (snapshot) => {
+        const roomIds = snapshot.docs.map(doc => doc.id);
+        
+        // cleanup previous rooms listener
+        unsubscribeFromRooms();
+
+        if (roomIds.length === 0) {
+            setRooms([]);
+            setLoading(false);
+            return;
+        }
+
+        // NOTE: 'in' queries are limited to 30 items. For this app, we assume a user won't join more than 30 active rooms.
+        const roomsQuery = query(collection(db, 'rooms'), where(documentId(), 'in', roomIds));
+        
+        unsubscribeFromRooms = onSnapshot(roomsQuery, (roomsSnapshot) => {
+            const roomsData = new Map(
+                roomsSnapshot.docs.map(doc => [doc.id, { id: doc.id, ...doc.data()}])
+            );
+
+            // Re-sort the rooms based on the order from joinedRooms (by joinedAt)
+            const sortedRooms = roomIds.map(id => roomsData.get(id)).filter(Boolean);
+
+            setRooms(sortedRooms as any[]);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching rooms details:", error);
+            setLoading(false);
+        });
+
     }, (error) => {
         console.error("Error fetching user rooms from subcollection: ", error);
         setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+        unsubscribeFromJoinedRooms();
+        unsubscribeFromRooms();
+    };
 
   }, [userId, isChairperson, archived]);
 
