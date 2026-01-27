@@ -140,7 +140,7 @@ export async function GET(req: NextRequest) {
             headers.forEach((header, i) => {
                 docPDF.rect(currentX, y, colWidths[i], headerHeight).stroke();
                 // Center text horizontally and provide padding
-                docPDF.text(header, currentX + 5, y + 5, { 
+                docPDF.text(header, currentX + 5, y + 10, { 
                     width: colWidths[i] - 10, 
                     align: 'center' 
                 });
@@ -198,7 +198,7 @@ export async function GET(req: NextRequest) {
         yPos += 25;
 
         const expHeaders = ['Date', 'Description', 'Recipient', 'Amount (PHP)', 'Signature'];
-        const expWidths = [80, 185, 100, 80, 50];
+        const expWidths = [80, 175, 100, 80, 60];
         const expTableWidth = expWidths.reduce((a, b) => a + b);
         yPos = drawTableHeader(yPos, expHeaders, expWidths);
         
