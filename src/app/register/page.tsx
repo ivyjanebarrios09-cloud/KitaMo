@@ -33,7 +33,6 @@ import { useState } from 'react';
 import { Loader } from '@/components/loader';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ArrowLeft } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 
 const formSchema = z
@@ -89,7 +88,6 @@ export default function RegisterPage() {
   const { user, loading: authLoading } = useAuth();
   const [formLoading, setFormLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const isMobile = useIsMobile();
 
 
   const form = useForm<z.infer<typeof formSchema>>({

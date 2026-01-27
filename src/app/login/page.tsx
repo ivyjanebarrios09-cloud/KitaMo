@@ -34,7 +34,6 @@ import { useState } from 'react';
 import { Loader } from '@/components/loader';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 const formSchema = z.object({
   email: z.string().email({
@@ -78,7 +77,6 @@ export default function LoginPage() {
   const { user, loading: authLoading } = useAuth();
   const [formLoading, setFormLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const isMobile = useIsMobile();
 
 
   const form = useForm<z.infer<typeof formSchema>>({
