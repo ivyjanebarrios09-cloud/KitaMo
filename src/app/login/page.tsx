@@ -31,7 +31,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { auth, db } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-context';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Loader } from '@/components/loader';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft } from 'lucide-react';
@@ -75,7 +75,6 @@ const Logo = () => (
   );
 
 export default function LoginPage() {
-  const router = useRouter();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
   const [formLoading, setFormLoading] = useState(false);
@@ -90,18 +89,6 @@ export default function LoginPage() {
       password: '',
     },
   });
-
-  useEffect(() => {
-    if (!authLoading && user) {
-        const userDocRef = doc(db, 'users', user.uid);
-        getDoc(userDocRef).then(userDoc => {
-          if(userDoc.exists()) {
-              router.push('/dashboard');
-          }
-          // If doc doesn't exist, the AuthProvider will redirect to /select-role
-        })
-    }
-  }, [user, authLoading, router]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setFormLoading(true);

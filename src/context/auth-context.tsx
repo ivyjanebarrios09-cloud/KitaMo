@@ -6,7 +6,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, signOut, getRedirectResult } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
@@ -27,11 +27,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
   const { toast } = useToast();
 
 
   useEffect(() => {
-    // Check for redirect result first
+    // Handle the redirect result from Google/other providers.
     getRedirectResult(auth)
       .catch((error) => {
         console.error("Error from getRedirectResult:", error);
@@ -47,8 +48,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const userDocRef = doc(db, 'users', user.uid);
             const userDoc = await getDoc(userDocRef);
             if (!userDoc.exists()) {
-                // This is a new user (likely from Google sign-in)
-                if (router) router.push('/select-role');
+                // New user who hasn't selected a role.
+                if (pathname !== '/select-role') {
+                    router.push('/select-role');
+                }
+            } else {
+                // Existing user with a role.
+                if (['/', '/login', '/register', '/select-role'].includes(pathname)) {
+                    router.push('/dashboard');
+                }
             }
         }
         setUser(user);
@@ -57,7 +65,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     return () => unsubscribe();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [pathname]);
   
   const logout = () => {
     signOut(auth).then(() => {

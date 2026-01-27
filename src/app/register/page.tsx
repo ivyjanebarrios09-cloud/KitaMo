@@ -30,7 +30,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { auth, db } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-context';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Loader } from '@/components/loader';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ArrowLeft } from 'lucide-react';
@@ -102,18 +102,6 @@ export default function RegisterPage() {
       confirmPassword: '',
     },
   });
-  
-  useEffect(() => {
-    if (!authLoading && user) {
-      const userDocRef = doc(db, 'users', user.uid);
-      getDoc(userDocRef).then(userDoc => {
-        if(userDoc.exists()) {
-            router.push('/dashboard');
-        }
-        // If doc doesn't exist, the AuthProvider will redirect to /select-role
-      })
-    }
-  }, [user, authLoading, router]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setFormLoading(true);
@@ -137,8 +125,7 @@ export default function RegisterPage() {
         title: 'Account created!',
         description: "Welcome! You have been successfully registered.",
       });
-      router.push('/dashboard');
-
+      // AuthProvider will handle redirect to dashboard
     } catch (error: any) {
       toast({
         variant: 'destructive',
