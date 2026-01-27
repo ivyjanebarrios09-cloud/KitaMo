@@ -33,40 +33,7 @@ import { format } from 'date-fns';
 import { downloadCSV } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-
-const StatementCard = ({
-  icon: Icon,
-  title,
-  description,
-  children,
-  actions,
-  onAction,
-}) => (
-  <Card className="shadow-sm hover:shadow-md transition-shadow">
-    <CardHeader>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
-            <Icon className="h-5 w-5 text-primary mt-1" />
-            <div>
-            <CardTitle>{title}</CardTitle>
-            <CardDescription>{description}</CardDescription>
-            </div>
-        </div>
-         <div className="flex items-center justify-end gap-2">
-            {actions.map((action, index) => (
-            <Button key={index} variant="outline" size="sm" onClick={() => onAction(action.label)} disabled={action.disabled}>
-                {action.icon}
-                {action.label}
-            </Button>
-            ))}
-        </div>
-      </div>
-    </CardHeader>
-    <CardContent>
-        {children && <div className="grid gap-2 mb-4">{children}</div>}
-    </CardContent>
-  </Card>
-);
+import Link from 'next/link';
 
 const generateYearOptions = () => {
     const currentYear = new Date().getFullYear();
@@ -92,10 +59,11 @@ function ChairpersonStatementsPage() {
     const [adviserName, setAdviserName] = useState('');
     const [adviserPosition, setAdviserPosition] = useState('Class Adviser');
 
+    const constructUrl = (basePath: 'api' | 'view', download: boolean = false) => {
+        const path = basePath === 'api'
+            ? '/api/class-financial-report'
+            : `/dashboard/rooms/${roomId}/statements/class-financial-report`;
 
-    const handleAction = (reportType: string, action: string) => {
-        const viewPath = `/dashboard/rooms/${roomId}/statements/${reportType}`;
-        const apiPath = `/api/${reportType}`;
         const queryParams = new URLSearchParams({
             year,
             month,
@@ -105,19 +73,13 @@ function ChairpersonStatementsPage() {
             roomId,
         });
 
-        if (action === 'View') {
-            router.push(`${viewPath}?${queryParams.toString()}`);
-        } else if (action === 'PDF') {
+        if (download) {
             queryParams.set('download', 'true');
-            const downloadUrl = `${apiPath}?${queryParams.toString()}`;
-            window.open(downloadUrl, '_blank');
         }
-    }
 
-    const classReportActions = [
-        { label: 'View', icon: <Eye className="mr-2 h-4 w-4" /> , disabled: false},
-        { label: 'PDF', icon: <FileText className="mr-2 h-4 w-4" /> , disabled: false},
-    ]
+        return `${path}?${queryParams.toString()}`;
+    };
+
 
   return (
     <div className='flex flex-col gap-4'>
@@ -130,67 +92,88 @@ function ChairpersonStatementsPage() {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
 
-            <StatementCard
-                icon={FileText}
-                title="Class Financial Report"
-                description="Generate an official monthly financial report with collections, expenses, and financial position."
-                actions={classReportActions}
-                onAction={(action) => handleAction('class-financial-report', action)}
-            >
-                 <div className="grid grid-cols-1 gap-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                        <label className="text-xs font-medium">Select Month</label>
-                        <Select value={month} onValueChange={setMonth}>
-                            <SelectTrigger className="h-8">
-                            <SelectValue placeholder="Select a month" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="january">January</SelectItem>
-                                <SelectItem value="february">February</SelectItem>
-                                <SelectItem value="march">March</SelectItem>
-                                <SelectItem value="april">April</SelectItem>
-                                <SelectItem value="may">May</SelectItem>
-                                <SelectItem value="june">June</SelectItem>
-                                <SelectItem value="july">July</SelectItem>
-                                <SelectItem value="august">August</SelectItem>
-                                <SelectItem value="september">September</SelectItem>
-                                <SelectItem value="october">October</SelectItem>
-                                <SelectItem value="november">November</SelectItem>
-                                <SelectItem value="december">December</SelectItem>
-                            </SelectContent>
-                        </Select>
+            <Card className="shadow-sm hover:shadow-md transition-shadow">
+                <CardHeader>
+                    <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-4">
+                            <FileText className="h-5 w-5 text-primary mt-1" />
+                            <div>
+                                <CardTitle>Class Financial Report</CardTitle>
+                                <CardDescription>Generate an official monthly financial report with collections, expenses, and financial position.</CardDescription>
+                            </div>
                         </div>
-                        <div className="space-y-2">
-                        <label className="text-xs font-medium">Select Year</label>
-                        <Select value={year} onValueChange={setYear}>
-                            <SelectTrigger className="h-8">
-                                <SelectValue placeholder="Select a year" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {yearOptions.map(year => (
-                                    <SelectItem key={year} value={year}>{year}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <div className="flex items-center justify-end gap-2">
+                            <Button variant="outline" size="sm" asChild>
+                                <Link href={constructUrl('view')}>
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    View
+                                </Link>
+                            </Button>
+                            <Button variant="outline" size="sm" asChild>
+                                <a href={constructUrl('api', true)} target="_blank" rel="noopener noreferrer">
+                                    <FileText className="mr-2 h-4 w-4" />
+                                    PDF
+                                </a>
+                            </Button>
                         </div>
                     </div>
-                    <div className="space-y-2">
-                        <label className="text-xs font-medium">Remarks</label>
-                        <Textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} placeholder="Enter remarks for the report..." rows={3}/>
-                    </div>
-                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-xs font-medium">Class Adviser Name</label>
-                            <Input value={adviserName} onChange={(e) => setAdviserName(e.target.value)} placeholder="e.g., Mrs. Florence S." className="h-8"/>
+                </CardHeader>
+                <CardContent>
+                     <div className="grid grid-cols-1 gap-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                            <label className="text-xs font-medium">Select Month</label>
+                            <Select value={month} onValueChange={setMonth}>
+                                <SelectTrigger className="h-8">
+                                <SelectValue placeholder="Select a month" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="january">January</SelectItem>
+                                    <SelectItem value="february">February</SelectItem>
+                                    <SelectItem value="march">March</SelectItem>
+                                    <SelectItem value="april">April</SelectItem>
+                                    <SelectItem value="may">May</SelectItem>
+                                    <SelectItem value="june">June</SelectItem>
+                                    <SelectItem value="july">July</SelectItem>
+                                    <SelectItem value="august">August</SelectItem>
+                                    <SelectItem value="september">September</SelectItem>
+                                    <SelectItem value="october">October</SelectItem>
+                                    <SelectItem value="november">November</SelectItem>
+                                    <SelectItem value="december">December</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            </div>
+                            <div className="space-y-2">
+                            <label className="text-xs font-medium">Select Year</label>
+                            <Select value={year} onValueChange={setYear}>
+                                <SelectTrigger className="h-8">
+                                    <SelectValue placeholder="Select a year" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {yearOptions.map(year => (
+                                        <SelectItem key={year} value={year}>{year}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            </div>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-xs font-medium">Adviser Position</label>
-                            <Input value={adviserPosition} onChange={(e) => setAdviserPosition(e.target.value)} placeholder="e.g., Class Adviser" className="h-8"/>
+                            <label className="text-xs font-medium">Remarks</label>
+                            <Textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} placeholder="Enter remarks for the report..." rows={3}/>
+                        </div>
+                         <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium">Class Adviser Name</label>
+                                <Input value={adviserName} onChange={(e) => setAdviserName(e.target.value)} placeholder="e.g., Mrs. Florence S." className="h-8"/>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium">Adviser Position</label>
+                                <Input value={adviserPosition} onChange={(e) => setAdviserPosition(e.target.value)} placeholder="e.g., Class Adviser" className="h-8"/>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </StatementCard>
+                </CardContent>
+            </Card>
 
         </div>
     </div>
