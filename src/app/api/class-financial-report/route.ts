@@ -1,8 +1,11 @@
+
 import { type NextRequest, NextResponse } from 'next/server';
 import PDFDocument from 'pdfkit';
 import { doc, getDoc, collection, query, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { format } from 'date-fns';
+import path from 'path';
+import fs from 'fs';
 
 const monthMap: { [key: string]: number } = {
     january: 0, february: 1, march: 2, april: 3, may: 4, june: 5, 
@@ -24,25 +27,6 @@ async function getUserProfile(userId: string) {
     return userSnap.data();
 }
 
-async function getTransactionsForPeriod(roomId: string, year: number, month: number) {
-    const transactionsRef = collection(db, 'rooms', roomId, 'transactions');
-    const q = query(transactionsRef);
-    const querySnapshot = await getDocs(q);
-
-    const transactions: any[] = [];
-    querySnapshot.forEach(doc => {
-        const t = doc.data();
-        if (t.createdAt) {
-            const txDate = (t.createdAt as Timestamp).toDate();
-            const isInPeriod = txDate.getFullYear() === year && (month === -1 || txDate.getMonth() === month);
-            if (isInPeriod) {
-                transactions.push({ id: doc.id, ...t });
-            }
-        }
-    });
-    return transactions;
-}
-
 export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
@@ -61,11 +45,9 @@ export async function GET(req: NextRequest) {
         const yearNumber = parseInt(yearStr);
         const monthNumber = monthName ? monthMap[monthName.toLowerCase()] : -1;
 
-        // Fetch data from Firestore
         const room = await getRoomData(roomId);
         const userProfile = await getUserProfile(room.createdBy);
         
-        // This is a simplified fetch, for a real app you might need more complex queries
         const allRoomTransactions = await getDocs(collection(db, 'rooms', roomId, 'transactions'));
         
         const paymentsInMonth: any[] = [];
@@ -111,69 +93,185 @@ export async function GET(req: NextRequest) {
         const totalExpenses = expensesInMonth.reduce((sum, t) => sum + t.amount, 0);
         const financialPosition = (room?.totalCollected || 0) - (room?.totalExpenses || 0);
 
-        // Generate PDF
-        const doc = new PDFDocument({ size: 'A4', margin: 50, bufferPages: true });
+        const docPDF = new PDFDocument({ size: 'A4', margin: 50, bufferPages: true });
         
         // --- PDF Content ---
-        doc.font('Helvetica-Bold').fontSize(18).text('Class Financial Report', { align: 'center' });
-        doc.moveDown(2);
+        const logoPath = path.resolve('./public/image/logoooo.png');
+        if (fs.existsSync(logoPath)) {
+            docPDF.image(logoPath, {
+                fit: [64, 64],
+                align: 'center',
+            });
+            docPDF.moveDown(2);
+        }
+
+        docPDF.strokeColor('#000000').lineWidth(1).moveTo(50, docPDF.y).lineTo(550, docPDF.y).stroke();
+        docPDF.moveDown(2);
+
+        docPDF.font('Helvetica-Bold').fontSize(18).text('Class Financial Report', { align: 'center' });
+        docPDF.moveDown(2);
         
-        doc.font('Helvetica').fontSize(12);
-        doc.text(`Room: ${room.name}`);
-        doc.text(`Period: ${monthName} ${yearNumber}`);
-        doc.text(`Prepared by: ${userProfile?.name || 'N/A'}`);
-        doc.moveDown(2);
+        docPDF.font('Helvetica').fontSize(12);
+        docPDF.text(`Month: ${monthName} ${yearNumber}`);
+        docPDF.text(`Prepared by: ${userProfile?.name || 'N/A'}`);
+        docPDF.text(`Position: Class Finance Officer`);
+        docPDF.text(`Date: ${format(new Date(), 'MMMM d, yyyy')}`);
+        docPDF.moveDown(2);
 
-        doc.font('Helvetica-Bold').text('I. SUMMARY OF COLLECTIONS');
-        doc.moveDown(0.5);
-        collectionSummary.forEach(item => {
-            doc.font('Helvetica').fontSize(10).text(`- ${item.description}: P ${item.amount.toFixed(2)} (${item.paidCount} paid)`);
-        });
-        doc.font('Helvetica-Bold').moveDown(0.5).text(`Total Collections: P ${totalCollections.toFixed(2)}`);
-        doc.moveDown(2);
-
-        doc.font('Helvetica-Bold').text('II. SUMMARY OF EXPENSES');
-        doc.moveDown(0.5);
-        expensesInMonth.forEach(item => {
-            doc.font('Helvetica').fontSize(10).text(`- ${item.description} (${item.recipient}): P ${item.amount.toFixed(2)}`);
-        });
-        doc.font('Helvetica-Bold').moveDown(0.5).text(`Total Expenses: P ${totalExpenses.toFixed(2)}`);
-        doc.moveDown(2);
+        // Collections Table
+        docPDF.font('Helvetica-Bold').fontSize(14).text('I. SUMMARY OF COLLECTIONS', { align: 'left' });
+        docPDF.moveDown();
         
-        doc.font('Helvetica-Bold').text('III. FINANCIAL POSITION');
-        doc.moveDown(0.5);
-        doc.font('Helvetica');
-        doc.text(`Total Collections this Month: P ${totalCollections.toFixed(2)}`);
-        doc.text(`Total Expenses this Month: - P ${totalExpenses.toFixed(2)}`);
-        doc.font('Helvetica-Bold').moveDown(0.5).text(`Current Room Balance: P ${financialPosition.toFixed(2)}`);
-        doc.moveDown(2);
+        const collectionsHeaders = ['Date', 'Description', 'Amount/Student', '# Paid', 'Amount Collected'];
+        const collectionsColWidths = [70, 160, 80, 80, 110];
+        let tableY = docPDF.y;
 
-        if (remarks) {
-            doc.font('Helvetica-Bold').text('IV. REMARKS');
-            doc.moveDown(0.5);
-            doc.font('Helvetica').text(remarks, { width: 500 });
-            doc.moveDown(2);
+        function drawTableHeader(headers: string[], colWidths: number[]) {
+            docPDF.font('Helvetica-Bold').fontSize(10);
+            let currentX = 50;
+            headers.forEach((header, i) => {
+                docPDF.text(header, currentX + 5, tableY + 5, { width: colWidths[i] - 10, align: 'left' });
+                currentX += colWidths[i];
+            });
+            docPDF.rect(50, tableY, 500, 20).stroke();
+            tableY += 20;
         }
         
+        drawTableHeader(collectionsHeaders, collectionsColWidths);
+        
+        docPDF.font('Helvetica').fontSize(10);
+        if (collectionSummary.length > 0) {
+            collectionSummary.forEach(item => {
+                let currentX = 50;
+                const row = [
+                    format(item.date.toDate(), 'MMM d, yyyy'),
+                    item.description,
+                    item.amountPerStudent.toFixed(2),
+                    item.paidCount.toString(),
+                    item.amount.toFixed(2)
+                ];
+                row.forEach((cell, i) => {
+                    docPDF.text(cell, currentX + 5, tableY + 5, { width: collectionsColWidths[i] - 10, align: i > 1 ? 'right' : 'left' });
+                    currentX += collectionsColWidths[i];
+                });
+                docPDF.rect(50, tableY, 500, 20).stroke();
+                tableY += 20;
+            });
+        } else {
+            docPDF.text('No collections this month.', 55, tableY + 5, { width: 490, align: 'center' });
+            docPDF.rect(50, tableY, 500, 20).stroke();
+            tableY += 20;
+        }
+
+        docPDF.font('Helvetica-Bold');
+        docPDF.text('Total Amount Collected:', 50, tableY + 5, { align: 'right', width: 445 });
+        docPDF.text(`P ${totalCollections.toFixed(2)}`, 495, tableY + 5, { align: 'right', width: 50 });
+        docPDF.rect(50, tableY, 500, 20).stroke();
+        tableY += 20;
+        docPDF.y = tableY;
+        docPDF.moveDown(2);
+
+        // Expenses Table
+        docPDF.font('Helvetica-Bold').fontSize(14).text('II. SUMMARY OF EXPENSES');
+        docPDF.moveDown();
+        tableY = docPDF.y;
+        const expensesHeaders = ['Date', 'Description', 'Recipient', 'Amount', 'Signature'];
+        const expensesColWidths = [70, 150, 100, 80, 100];
+        drawTableHeader(expensesHeaders, expensesColWidths);
+
+        docPDF.font('Helvetica').fontSize(10);
+        if (expensesInMonth.length > 0) {
+            expensesInMonth.forEach(item => {
+                let currentX = 50;
+                const row = [
+                    format(item.createdAt.toDate(), 'MMM d, yyyy'),
+                    item.description,
+                    item.recipient,
+                    item.amount.toFixed(2),
+                    ''
+                ];
+                row.forEach((cell, i) => {
+                    docPDF.text(cell, currentX + 5, tableY + 5, { width: expensesColWidths[i] - 10, align: i === 3 ? 'right' : 'left' });
+                    currentX += expensesColWidths[i];
+                });
+                docPDF.rect(50, tableY, 500, 20).stroke();
+                tableY += 20;
+            });
+        } else {
+            docPDF.text('No expenses this month.', 55, tableY + 5, { width: 490, align: 'center' });
+            docPDF.rect(50, tableY, 500, 20).stroke();
+            tableY += 20;
+        }
+
+        docPDF.font('Helvetica-Bold');
+        docPDF.text('Total Expenses', 50, tableY + 5, { align: 'right', width: 315 });
+        docPDF.text(`P ${totalExpenses.toFixed(2)}`, 370, tableY + 5, { align: 'right', width: 75 });
+        docPDF.rect(50, tableY, 500, 20).stroke();
+        tableY += 20;
+        docPDF.y = tableY;
+        docPDF.moveDown(2);
+        
+        // Financial Position Table
+        docPDF.font('Helvetica-Bold').fontSize(14).text('III. FINANCIAL POSITION');
+        docPDF.moveDown();
+        tableY = docPDF.y;
+        const posHeaders = ['Particulars', 'Amount (PHP)'];
+        const posColWidths = [250, 250];
+        drawTableHeader(posHeaders, posColWidths);
+
+        const posRows = [
+            ['Total Collections this Month', totalCollections.toFixed(2)],
+            ['Total Expenses this Month', `- ${totalExpenses.toFixed(2)}`],
+        ];
+        docPDF.font('Helvetica').fontSize(10);
+        posRows.forEach(row => {
+            docPDF.text(row[0], 55, tableY + 5, { width: posColWidths[0] - 10 });
+            docPDF.text(row[1], 305, tableY + 5, { width: posColWidths[1] - 10, align: 'right' });
+            docPDF.rect(50, tableY, 500, 20).stroke();
+            tableY += 20;
+        });
+
+        docPDF.font('Helvetica-Bold');
+        docPDF.text('Current Room Balance', 55, tableY + 5, { width: posColWidths[0] - 10 });
+        docPDF.text(financialPosition.toFixed(2), 305, tableY + 5, { width: posColWidths[1] - 10, align: 'right' });
+        docPDF.rect(50, tableY, 500, 20).stroke();
+        tableY += 20;
+        docPDF.y = tableY;
+        docPDF.moveDown(2);
+
+
+        if (docPDF.y > 600) docPDF.addPage();
+
+        // Remarks & Signatories
+        if (remarks) {
+            docPDF.font('Helvetica-Bold').fontSize(14).text('IV. REMARKS');
+            docPDF.moveDown();
+            docPDF.font('Helvetica').fontSize(10).text(remarks, { width: 500 });
+            docPDF.moveDown(2);
+        }
+        
+        docPDF.font('Helvetica-Bold').fontSize(14).text('V. SIGNATORIES');
+        const sigY = docPDF.y + 60;
+        docPDF.font('Helvetica').fontSize(10);
+        docPDF.text('Prepared by:', 75, sigY - 15);
+        docPDF.text('_________________________', 75, sigY);
+        docPDF.text(`${userProfile?.name}`, 75, sigY + 15, { align: 'center', width: 150 });
+        docPDF.text('Class Finance Officer', 75, sigY + 30, { align: 'center', width: 150 });
+        
         if (adviserName) {
-            doc.addPage().font('Helvetica-Bold').text('V. SIGNATORIES');
-            doc.moveDown(4);
-            doc.font('Helvetica').text('_________________________', {align: 'left'});
-            doc.text(`${userProfile?.name}`, {align: 'left'});
-            doc.text('Class Finance Officer', {align: 'left'});
-            doc.moveDown(4);
-            doc.text('_________________________', {align: 'left'});
-            doc.text(`${adviserName}`, {align: 'left'});
-            doc.text(`${adviserPosition || 'Class Adviser'}`, {align: 'left'});
+            docPDF.text('Verified by:', 325, sigY - 15);
+            docPDF.text('_________________________', 325, sigY);
+            docPDF.text(`${adviserName}`, 325, sigY + 15, { align: 'center', width: 150 });
+            docPDF.text(`${adviserPosition || 'Class Adviser'}`, 325, sigY + 30, { align: 'center', width: 150 });
         }
 
 
         const pdfPromise = new Promise<Buffer>((resolve, reject) => {
             const buffers: Buffer[] = [];
-            doc.on('data', buffers.push.bind(buffers));
-            doc.on('end', () => resolve(Buffer.concat(buffers)));
-            doc.on('error', reject);
-            doc.end();
+            docPDF.on('data', buffers.push.bind(buffers));
+            docPDF.on('end', () => resolve(Buffer.concat(buffers)));
+            docPDF.on('error', reject);
+            docPDF.end();
         });
 
         const pdfBuffer = await pdfPromise;
@@ -189,6 +287,7 @@ export async function GET(req: NextRequest) {
         }
        
         return new NextResponse(pdfBuffer, { status: 200, headers });
+
     } catch (error) {
         console.error("Error generating PDF:", error);
         if (error instanceof Error) {
@@ -196,4 +295,3 @@ export async function GET(req: NextRequest) {
         }
         return new NextResponse('An unknown error occurred while generating the PDF.', { status: 500 });
     }
-}
