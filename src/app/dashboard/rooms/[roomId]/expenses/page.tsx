@@ -227,11 +227,9 @@ export default function ExpensesPage() {
                 <div className="flex justify-center p-8"><Loader /></div>
             ) : expenses.length > 0 ? (
                 <>
-                {/* Mobile View */}
                 <div className="md:hidden space-y-4">
                     {expenses.map(expense => <ExpenseCard key={expense.id} expense={expense} />)}
                 </div>
-                {/* Desktop View */}
                 <div className="hidden md:block">
                     <Table>
                         <TableHeader>

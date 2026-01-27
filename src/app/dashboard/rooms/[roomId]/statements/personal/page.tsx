@@ -55,7 +55,6 @@ export default function PersonalStatementPage() {
     setIsDownloading(true);
     const element = statementRef.current;
     try {
-        // Temporarily change background for capture
         const originalBg = element.style.backgroundColor;
         element.style.backgroundColor = 'white';
         
@@ -64,7 +63,6 @@ export default function PersonalStatementPage() {
             useCORS: true,
         });
         
-        // Restore original background color
         element.style.backgroundColor = originalBg;
 
         const imgData = canvas.toDataURL('image/png');
@@ -79,11 +77,11 @@ export default function PersonalStatementPage() {
         const canvasAspectRatio = canvasWidth / canvasHeight;
         const pageAspectRatio = pdfWidth / pdfHeight;
 
-        let imgWidth = pdfWidth - 20; // with margin
+        let imgWidth = pdfWidth - 20;
         let imgHeight = imgWidth / canvasAspectRatio;
 
         if (imgHeight > pdfHeight - 20) {
-            imgHeight = pdfHeight - 20; // with margin
+            imgHeight = pdfHeight - 20;
             imgWidth = imgHeight * canvasAspectRatio;
         }
 
@@ -104,8 +102,7 @@ export default function PersonalStatementPage() {
     if (downloadAction === 'pdf' && !loading && !isDownloading) {
       handleDownloadPdf();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [downloadAction, loading]);
+  }, [downloadAction, loading, isDownloading]);
 
   return (
     <div className="flex flex-col gap-6">

@@ -218,11 +218,9 @@ function ChairpersonFundDeadlines({ roomId }: { roomId: string }) {
                 <div className="flex justify-center p-8"><Loader /></div>
             ) : deadlines.length > 0 ? (
                 <>
-                 {/* Mobile View */}
                 <div className="md:hidden space-y-4">
                     {deadlines.map(deadline => <DeadlineCard key={deadline.id} deadline={deadline} />)}
                 </div>
-                {/* Desktop View */}
                 <div className="hidden md:block">
                   <Table>
                     <TableHeader>
@@ -308,11 +306,9 @@ function StudentFundDeadlines({ roomId, studentId }: { roomId: string, studentId
                         <div className="flex justify-center p-8"><Loader/></div>
                     ) : deadlines.length > 0 ? (
                         <>
-                            {/* Mobile View */}
                             <div className="md:hidden space-y-4">
                                 {deadlines.map(deadline => <StudentDeadlineCard key={deadline.id} deadline={deadline} />)}
                             </div>
-                            {/* Desktop View */}
                             <div className="hidden md:block">
                                 <Table>
                                     <TableHeader>

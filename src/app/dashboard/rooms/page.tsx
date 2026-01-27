@@ -80,8 +80,7 @@ const RoomCard = ({ room, onEdit, onDelete, onArchive, isChairperson }) => {
       </CardContent>
       <CardFooter className="flex justify-between items-center text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
-          {/* <Users className="h-4 w-4" />
-          <span className="text-xs">{memberCount} Members</span> */}
+          
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" asChild>
@@ -250,7 +249,7 @@ const JoinRoomModal = ({ open, onOpenChange, onSubmit, formLoading }) => {
 
 function ChairpersonRoomsPage({userProfile}) {
     const { user } = useAuth();
-    const { rooms, loading } = useUserRooms(user?.uid, true, false); // isChairperson = true, archived = false
+    const { rooms, loading } = useUserRooms(user?.uid, true, false);
     const [modalOpen, setModalOpen] = React.useState(false);
     const [formLoading, setFormLoading] = React.useState(false);
     const [selectedRoom, setSelectedRoom] = React.useState(null);

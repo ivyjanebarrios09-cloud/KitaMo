@@ -15,7 +15,6 @@ export function useRoomDeadlines(roomId: string) {
       return;
     }
 
-    // Fetch all transactions and filter client-side to avoid composite index
     const transactionsRef = collection(db, 'rooms', roomId, 'transactions');
     const q = query(transactionsRef, orderBy('createdAt', 'desc'));
 
@@ -29,7 +28,6 @@ export function useRoomDeadlines(roomId: string) {
                 data.push(transaction);
             }
         });
-        // Sort by dueDate on the client
         data.sort((a, b) => b.dueDate.toDate() - a.dueDate.toDate());
         setDeadlines(data);
         setLoading(false);

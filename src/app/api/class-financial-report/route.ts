@@ -95,13 +95,11 @@ export async function GET(req: NextRequest) {
 
         const docPDF = new PDFDocument({ size: 'A4', margin: 50 });
         
-        // --- PDF Content ---
         const contentWidth = docPDF.page.width - docPDF.page.margins.left - docPDF.page.margins.right;
         const startX = docPDF.page.margins.left;
         let yPos = docPDF.page.margins.top;
         const rowHeight = 20;
 
-        // Header
         const logoPath = path.resolve('./public/image/logoooo.png');
         if (fs.existsSync(logoPath)) {
             docPDF.image(logoPath, (docPDF.page.width / 2) - 30, yPos, { width: 60 });
@@ -116,7 +114,6 @@ export async function GET(req: NextRequest) {
         docPDF.font('Helvetica-Bold').fontSize(14).text('Class Financial Report', startX, yPos, { align: 'center', width: contentWidth });
         yPos += 30;
 
-        // Metadata
         docPDF.font('Helvetica').fontSize(10);
         const metaStartY = yPos;
         docPDF.text('Month:', startX, metaStartY);
@@ -132,14 +129,12 @@ export async function GET(req: NextRequest) {
         docPDF.text(format(new Date(), 'MMMM d, yyyy'), startX + 90, metaStartY + 45);
         yPos = metaStartY + 70;
 
-        // --- Table Drawing Helper ---
         const drawTableHeader = (y: number, headers: string[], colWidths: number[]) => {
-            const headerHeight = 30; // Increased height to allow for wrapping
+            const headerHeight = 30;
             let currentX = startX;
             docPDF.font('Helvetica-Bold').fontSize(9);
             headers.forEach((header, i) => {
                 docPDF.rect(currentX, y, colWidths[i], headerHeight).stroke();
-                // Center text horizontally and provide padding
                 docPDF.text(header, currentX + 5, y + 10, { 
                     width: colWidths[i] - 10, 
                     align: 'center' 
@@ -160,7 +155,6 @@ export async function GET(req: NextRequest) {
             return y + rowHeight;
         };
         
-        // --- I. SUMMARY OF COLLECTIONS ---
         docPDF.font('Helvetica-Bold').fontSize(12).text('I. SUMMARY OF COLLECTIONS', startX, yPos);
         yPos += 20;
         docPDF.font('Helvetica').fontSize(9).text(`The total amount collected from all students of ${room?.name} for the month of ${capitalizedMonth} ${yearStr} is:`, { width: contentWidth });
@@ -190,7 +184,6 @@ export async function GET(req: NextRequest) {
         docPDF.text(`P ${totalCollections.toFixed(2)}`, startX + totalCollLabelWidth + 5, yPos + 6, { width: collWidths[4] - 10, align: 'right' });
         yPos += rowHeight + 30;
 
-        // --- II. SUMMARY OF EXPENSES ---
         if (yPos > 550) { docPDF.addPage(); yPos = docPDF.page.margins.top; }
         docPDF.font('Helvetica-Bold').fontSize(12).text('II. SUMMARY OF EXPENSES', startX, yPos);
         yPos += 20;
@@ -222,7 +215,6 @@ export async function GET(req: NextRequest) {
         docPDF.rect(startX + totalExpLabelWidth + expWidths[3], yPos, expWidths[4], rowHeight).stroke();
         yPos += rowHeight + 30;
 
-        // --- III. FINANCIAL POSITION ---
         if (yPos > 600) { docPDF.addPage(); yPos = docPDF.page.margins.top; }
         docPDF.font('Helvetica-Bold').fontSize(12).text('III. FINANCIAL POSITION', startX, yPos);
         yPos += 25;
@@ -238,7 +230,6 @@ export async function GET(req: NextRequest) {
         yPos = drawTableRow(yPos, ['Current Room Balance', financialPosition.toFixed(2)], posWidths, ['left', 'right']);
         yPos += 30;
 
-        // --- IV. REMARKS ---
         if (remarks) {
             if (yPos > 600) { docPDF.addPage(); yPos = docPDF.page.margins.top; }
             docPDF.font('Helvetica-Bold').fontSize(12).text('IV. REMARKS', startX, yPos);
@@ -247,7 +238,6 @@ export async function GET(req: NextRequest) {
             yPos += docPDF.heightOfString(remarks, { width: contentWidth, align: 'justify' }) + 30;
         }
 
-        // --- V. SIGNATORIES ---
         if (yPos > 650) { docPDF.addPage(); yPos = docPDF.page.margins.top; }
         docPDF.font('Helvetica-Bold').fontSize(12).text('V. SIGNATORIES', startX, yPos);
         const sigY = yPos + 40;

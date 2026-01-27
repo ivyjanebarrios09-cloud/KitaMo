@@ -81,7 +81,7 @@ const RoomCardSkeleton = () => (
 
 export default function ArchivedRoomsPage() {
     const { user } = useAuth();
-    const { rooms, loading } = useUserRooms(user?.uid, true, true); // isChairperson = true, archived = true
+    const { rooms, loading } = useUserRooms(user?.uid, true, true);
     const { toast } = useToast();
     const [selectedRoom, setSelectedRoom] = React.useState(null);
     const [unarchiveAlertOpen, setUnarchiveAlertOpen] = React.useState(false);

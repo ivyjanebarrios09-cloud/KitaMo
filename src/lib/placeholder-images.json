@@ -3,8 +3,7 @@
     {
       "id": "hero-image",
       "description": "A person organizing tasks on a digital interface.",
-      "imageUrl": "https://images.unsplash.com/photo-1721937127582-ed331de95a04?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxvcmdhbml6YXRpb24lMjBwcm9kdWN0aXZpdHl8ZW58MHx8fHwxNzY2NTU0NTI3fDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "organization productivity"
+      "imageUrl": "https://images.unsplash.com/photo-1721937127582-ed331de95a04?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxvcmdhbml6YXRpb24lMjBwcm9kdWN0aXZpdHl8ZW58MHx8fHwxNzY2NTU0NTI3fDA&ixlib=rb-4.1.0&q=80&w=1080"
     }
   ]
 }

@@ -28,10 +28,8 @@ export default function DashboardLayout({
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
-        // Scrolling down
         setShowNav(false);
       } else {
-        // Scrolling up
         setShowNav(true);
       }
       lastScrollY.current = currentScrollY;

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { ArrowLeft, Download, Menu } from 'lucide-react';
@@ -157,8 +156,7 @@ export default function ClassFinancialReportPage() {
         setTimeout(handleDownloadPdf, 500);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [downloadAction, loading]);
+  }, [downloadAction, loading, isDownloading]);
 
 
   return (
@@ -188,14 +186,12 @@ export default function ClassFinancialReportPage() {
         <div className="bg-background sm:p-4 overflow-x-auto">
           <div ref={statementRef} className="bg-white text-black p-4 sm:p-8 mx-auto origin-top-left w-[800px] sm:w-auto sm:max-w-[800px] sm:scale-100 scale-[0.45] md:scale-100">
               <div className="max-w-4xl mx-auto report-content">
-                  {/* Header */}
                   <div className="text-center mb-8 report-section">
                       <img src="/image/logoooo.png" alt="Logo" className="w-16 h-16 mx-auto mb-2"/>
                   </div>
 
                   <hr className="my-4 border-black"/>
 
-                  {/* Report Title */}
                   <h1 className="text-xl font-bold text-center mb-4 report-section">Class Financial Report</h1>
                   
                   <div className="mb-6 text-sm report-section">
@@ -205,7 +201,6 @@ export default function ClassFinancialReportPage() {
                       <p><span className="font-semibold">Date:</span> {format(new Date(), 'MMMM d, yyyy')}</p>
                   </div>
 
-                  {/* Collections */}
                   <div className="mb-8 report-section">
                       <h3 className="font-bold text-lg mb-2">I. SUMMARY OF COLLECTIONS</h3>
                       <p className="text-sm mb-2">
@@ -251,7 +246,6 @@ export default function ClassFinancialReportPage() {
                       </table>
                   </div>
 
-                  {/* Expenses */}
                   <div className="mb-8 report-section">
                       <h3 className="font-bold text-lg mb-2">II. SUMMARY OF EXPENSES</h3>
                       <p className="text-sm mb-2">
@@ -294,7 +288,6 @@ export default function ClassFinancialReportPage() {
                       </div>
                   </div>
 
-                  {/* Financial Position */}
                   <div className="mb-12 report-section">
                        <h3 className="font-bold text-lg mb-2">III. FINANCIAL POSITION</h3>
                         <table className="w-full sm:w-1/2 text-sm border-collapse border border-black">
@@ -321,7 +314,6 @@ export default function ClassFinancialReportPage() {
                       </table>
                   </div>
 
-                  {/* Remarks */}
                   {remarks && (
                       <div className="mb-12 text-sm report-section">
                           <h3 className="font-bold text-lg mb-2">IV. REMARKS</h3>
@@ -329,7 +321,6 @@ export default function ClassFinancialReportPage() {
                       </div>
                   )}
                   
-                  {/* Signatories */}
                   <div className="mb-8 text-sm report-section" style={{paddingTop: '50px', pageBreakInside: 'avoid' }}>
                       <h3 className="font-bold text-lg mb-4">V. SIGNATORIES</h3>
                       <div className="flex justify-around items-start">

@@ -90,8 +90,7 @@ export default function ExpenseSummaryPage() {
         handleDownloadCSV();
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [downloadAction, loading]);
+  }, [downloadAction, loading, isDownloading]);
 
   const totalExpenses = expenses.reduce((acc, e) => acc + e.amount, 0);
 

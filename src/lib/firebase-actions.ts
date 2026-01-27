@@ -1,41 +1,36 @@
 
-
 import { addDoc, collection, serverTimestamp, writeBatch, doc, getDocs, query, where, updateDoc, deleteDoc, runTransaction, increment, arrayUnion, getDoc, collectionGroup, arrayRemove } from "firebase/firestore";
 import { db } from "./firebase";
 import { customAlphabet } from 'nanoid';
 
-// Generate a unique 6-character alphanumeric code
 const nanoid = customAlphabet('1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ', 6);
 
 export const createRoom = async (createdBy: string, createdByName: string, data: { name: string, description?: string }) => {
     try {
         const roomCode = nanoid();
-        const roomRef = doc(collection(db, "rooms")); // Create a reference first
+        const roomRef = doc(collection(db, "rooms"));
         const userRef = doc(db, 'users', createdBy);
         const userJoinedRoomRef = doc(db, 'users', createdBy, 'joinedRooms', roomRef.id);
 
 
         await runTransaction(db, async (transaction) => {
-            // 1. Create the new room with the creator in the members list
             const roomPayload = {
                 ...data,
                 createdBy,
                 createdByName,
                 code: roomCode,
                 createdAt: serverTimestamp(),
-                members: [createdBy], // Creator is the first member
+                members: [createdBy],
                 totalCollected: 0,
                 totalExpenses: 0,
                 archived: false,
             };
             transaction.set(roomRef, roomPayload);
 
-            // 2. Add the new room's ID to the creator's user document
             transaction.update(userRef, {
                 rooms: arrayUnion(roomRef.id)
             });
 
-            // 3. Add metadata to the creator's joinedRooms subcollection
             transaction.set(userJoinedRoomRef, {
                 roomName: data.name,
                 roomDescription: data.description || '',
@@ -57,10 +52,8 @@ export const updateRoom = async (roomId: string, data: { name: string, descripti
         const batch = writeBatch(db);
         const roomRef = doc(db, 'rooms', roomId);
 
-        // Update the main room document
         batch.update(roomRef, data);
 
-        // Get all members to update their joinedRooms subcollection
         const roomDoc = await getDoc(roomRef);
         const members = roomDoc.data()?.members || [];
         
@@ -90,7 +83,6 @@ export const deleteRoom = async (roomId: string) => {
         
         const members = roomDoc.data().members || [];
 
-        // Delete all subcollections
         const subcollections = ['transactions', 'students'];
         for (const sub of subcollections) {
             const subcollectionRef = collection(db, 'rooms', roomId, sub);
@@ -98,10 +90,8 @@ export const deleteRoom = async (roomId: string) => {
             snapshot.forEach(doc => batch.delete(doc.ref));
         }
 
-        // Delete the room itself
         batch.delete(roomRef);
 
-        // Remove room from each member's user document and joinedRooms subcollection
         for (const memberId of members) {
             const userRef = doc(db, 'users', memberId);
             batch.update(userRef, {
@@ -133,7 +123,6 @@ export const addExpense = async (roomId: string, userId: string, userName: strin
             roomMembers = roomDoc.data().members || [];
             roomName = roomDoc.data().name || '';
 
-            // Add to general transactions log
             const transactionRef = doc(collection(db, 'rooms', roomId, 'transactions'));
             transaction.set(transactionRef, {
                 roomId: roomId,
@@ -148,7 +137,6 @@ export const addExpense = async (roomId: string, userId: string, userName: strin
                 seenBy: [userId],
             });
 
-            // Update total expenses in the room document
             transaction.update(roomRef, {
                 totalExpenses: increment(data.amount)
             });
@@ -172,11 +160,10 @@ export const addDeadline = async (roomId: string, userId: string, userName: stri
     const createdBy = roomDoc.data().createdBy;
     const roomName = roomDoc.data().name || '';
 
-    // 1. Add deadline transaction
     const transactionRef = doc(collection(db, 'rooms', roomId, 'transactions'));
     transaction.set(transactionRef, {
         roomId: roomId,
-        userId: userId, // who created it
+        userId: userId,
         userName: userName,
         amount: data.amount,
         type: 'deadline',
@@ -187,7 +174,6 @@ export const addDeadline = async (roomId: string, userId: string, userName: stri
         seenBy: [userId],
     });
 
-    // 2. Update totalOwed and balance for all members in the room (in the /students subcollection)
     for (const memberId of members) {
       if (memberId !== createdBy) { 
         const studentToUpdateRef = doc(db, 'rooms', roomId, 'students', memberId);
@@ -212,7 +198,6 @@ export const markTransactionAsSeen = async (roomId: string, transactionId: strin
         });
     } catch (error) {
         console.error("Error marking transaction as seen: ", error);
-        // We don't throw an error here to prevent crashing the app for the user
     }
 };
 
@@ -241,7 +226,6 @@ export const joinRoom = async (roomCode: string, userId: string, userName: strin
         throw new Error("This room is archived and cannot be joined.");
     }
 
-    // This must be done outside the transaction
     const deadlinesRef = collection(db, 'rooms', roomId, 'transactions');
     const deadlinesQuery = query(deadlinesRef, where('type', '==', 'deadline'));
     const deadlinesSnapshot = await getDocs(deadlinesQuery);
@@ -261,17 +245,14 @@ export const joinRoom = async (roomCode: string, userId: string, userName: strin
             throw new Error("You are already a member of this room.");
         }
 
-        // 1. Add user to room's members list
         transaction.update(roomRef, {
             members: arrayUnion(userId)
         });
 
-        // 2. Add room to user's rooms list
         transaction.update(userRef, {
             rooms: arrayUnion(roomId)
         })
 
-        // 3. Create the student-specific details doc in the room's students subcollection
         const studentRef = doc(db, 'rooms', roomId, 'students', userId);
         transaction.set(studentRef, {
             totalPaid: 0,
@@ -280,7 +261,6 @@ export const joinRoom = async (roomCode: string, userId: string, userName: strin
             lastPaymentAt: null,
         });
 
-        // 4. Add metadata to the user's joinedRooms subcollection
         transaction.set(userJoinedRoomRef, {
             roomName: roomData.name,
             roomDescription: roomData.description || '',
@@ -308,20 +288,16 @@ export const leaveRoom = async (roomId: string, userId: string) => {
             throw new Error("You cannot leave the room with an outstanding balance.");
         }
 
-        // 1. Remove user from room's members list
         transaction.update(roomRef, {
             members: arrayRemove(userId)
         });
 
-        // 2. Remove room from user's rooms list
         transaction.update(userRef, {
             rooms: arrayRemove(roomId)
         });
         
-        // 3. Delete from the user's joinedRooms subcollection
         transaction.delete(userJoinedRoomRef);
 
-        // 4. Delete the student-specific details doc
         if (studentDoc.exists()) {
             transaction.delete(studentRef);
         }
@@ -341,14 +317,12 @@ export const addPayment = async (roomId: string, studentId: string, chairpersonN
         await runTransaction(db, async (transaction) => {
             const studentDoc = await transaction.get(studentRef);
             if (!studentDoc.exists()) {
-                // If student doc doesn't exist, create it. This can happen if they were a member before the 'students' subcollection was introduced.
                 transaction.set(studentRef, { totalPaid: 0, totalOwed: 0, balance: 0, lastPaymentAt: null});
             }
 
             const userDocSnap = await getDoc(doc(db, 'users', studentId));
             const studentName = userDocSnap.data()?.name || 'Unknown Student';
 
-            // 1. Create a payment transaction record ('credit')
             const paymentRef = doc(collection(db, 'rooms', roomId, 'transactions'));
             transaction.set(paymentRef, {
                 roomId: roomId,
@@ -363,7 +337,6 @@ export const addPayment = async (roomId: string, studentId: string, chairpersonN
                 seenBy: [studentId, roomData.createdBy]
             });
 
-            // 2. Update the student's totals
             transaction.update(studentRef, {
                 totalPaid: increment(amount),
                 totalOwed: increment(-amount),
@@ -371,7 +344,6 @@ export const addPayment = async (roomId: string, studentId: string, chairpersonN
                 lastPaymentAt: serverTimestamp()
             });
 
-            // 3. Update the room's total collected amount
             transaction.update(roomRef, {
                 totalCollected: increment(amount)
             });
@@ -387,23 +359,18 @@ export const archiveRoom = async (roomId: string, archived: boolean) => {
         const batch = writeBatch(db);
         const roomRef = doc(db, 'rooms', roomId);
 
-        // Update the main room document
         batch.update(roomRef, {
             archived: archived,
         });
 
-        // Get all members to update their joinedRooms subcollection
         const roomDoc = await getDoc(roomRef);
         const members = roomDoc.data()?.members || [];
         
         for (const memberId of members) {
             const joinedRoomRef = doc(db, 'users', memberId, 'joinedRooms', roomId);
             if(archived) {
-                // If we archive the room, we can just delete it from the user's active list
                 batch.delete(joinedRoomRef);
             }
-            // Note: Restoring an archived room is more complex as we'd need to reconstruct
-            // the joinedRooms documents for all members. This is handled in the unarchive flow.
         }
 
         await batch.commit();
@@ -418,10 +385,8 @@ export const unarchiveRoom = async (roomId: string) => {
     const roomRef = doc(db, 'rooms', roomId);
     const batch = writeBatch(db);
 
-    // 1. Unarchive the room
     batch.update(roomRef, { archived: false });
 
-    // 2. Re-create the joinedRooms metadata for all members
     const roomDoc = await getDoc(roomRef);
     if (!roomDoc.exists()) {
         throw new Error("Room to unarchive not found.");
@@ -437,10 +402,9 @@ export const unarchiveRoom = async (roomId: string) => {
             chairpersonId: roomData.createdBy,
             chairpersonName: roomData.createdByName,
             code: roomData.code,
-            joinedAt: roomData.createdAt, // Or a new serverTimestamp
+            joinedAt: roomData.createdAt,
         });
     }
 
     await batch.commit();
 }
-

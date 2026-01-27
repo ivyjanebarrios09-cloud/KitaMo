@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User } from 'firebase/auth';
@@ -35,13 +36,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const userDoc = await getDoc(userDocRef);
         
         if (!userDoc.exists()) {
-          // New user (from Google or email signup) who needs to select a role.
           if (window.location.pathname !== '/select-role') {
             router.push('/select-role');
           }
         } else {
-          // Existing user with a role document.
-          // If they are on a public page, redirect to the dashboard.
           if (['/', '/login', '/register', '/select-role'].includes(window.location.pathname)) {
             router.push('/dashboard');
           }
@@ -53,8 +51,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [router]);
 
   
   const logout = () => {

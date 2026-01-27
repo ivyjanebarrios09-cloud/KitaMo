@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-// This hook combines deadlines with student-specific payment information
 export function useStudentDeadlines(roomId: string, studentId: string) {
   const [deadlines, setDeadlines] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import Link from 'next/link';
@@ -185,7 +184,6 @@ export function Header() {
               <LogoWithTitle />
             </Link>
             <div className="w-full flex-1">
-                {/* Optional: Add search or other header elements here */}
             </div>
         </header>
     )
@@ -230,7 +228,7 @@ export function BottomNavBar({userProfile}) {
             if(isRoomRoute && item.label === "Rooms") newIsActive = true;
             
             if (roomId) {
-                 if (href.endsWith(roomId) && pathname === href) newIsActive = true; // Room dashboard
+                 if (href.endsWith(roomId) && pathname === href) newIsActive = true;
                  if (!href.endsWith(roomId) && pathname.startsWith(href) && href.length > `/dashboard/rooms/${roomId}`.length) newIsActive = true;
             } else {
                  if (item.href !== '/dashboard' && pathname.startsWith(item.href)) newIsActive = true;

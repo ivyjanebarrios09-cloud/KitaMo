@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -122,7 +123,6 @@ export default function RegisterPage() {
         title: 'Account created!',
         description: "Welcome! You have been successfully registered.",
       });
-      // AuthProvider will handle redirect to dashboard
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -139,9 +139,6 @@ export default function RegisterPage() {
     const googleProvider = new GoogleAuthProvider();
     try {
         await signInWithPopup(auth, googleProvider);
-        // After the popup closes, the onAuthStateChanged listener in AuthProvider
-        // will detect the new user, check if they exist in Firestore, and
-        // redirect them to either the dashboard or the role selection page.
     } catch (error: any) {
         toast({
             variant: 'destructive',

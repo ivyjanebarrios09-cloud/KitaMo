@@ -64,7 +64,6 @@ export function StudentDeadlines({ roomId, student }) {
     
     setPayingDeadline(deadline.id);
     try {
-      // For chairpersons marking as paid, they should pay the full required amount for that deadline
       const amountToPay = deadline.amount - deadline.amountPaid;
       if (amountToPay <= 0) {
         toast({ title: "Already Paid", description: "This deadline has already been fully paid."});
@@ -95,7 +94,6 @@ export function StudentDeadlines({ roomId, student }) {
     <div className="px-4 py-2 bg-muted/50 rounded-b-lg">
       <h4 className="font-semibold mb-2 text-sm text-muted-foreground px-4 pt-2">Deadline Status for {student.name}</h4>
       
-      {/* Mobile View */}
       <div className="md:hidden">
         {deadlines.length > 0 ? (
             deadlines.map(d => (
@@ -113,7 +111,6 @@ export function StudentDeadlines({ roomId, student }) {
         )}
       </div>
 
-      {/* Desktop View */}
       <div className="hidden md:block">
         <Table>
             <TableHeader>

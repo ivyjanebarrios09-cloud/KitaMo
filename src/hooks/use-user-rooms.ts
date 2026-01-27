@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -16,7 +17,6 @@ export function useUserRooms(userId: string, isChairperson: boolean, archived: b
     setLoading(true);
 
     if (isChairperson && archived) {
-        // Chairperson looking at archived rooms
         const fetchArchivedRooms = async () => {
             const q = query(
                 collection(db, 'rooms'), 
@@ -33,7 +33,6 @@ export function useUserRooms(userId: string, isChairperson: boolean, archived: b
     }
 
 
-    // For active rooms (both student and chairperson)
     const joinedRoomsRef = collection(db, 'users', userId, 'joinedRooms');
     const q = query(joinedRoomsRef, orderBy('joinedAt', 'desc'));
     
@@ -42,7 +41,6 @@ export function useUserRooms(userId: string, isChairperson: boolean, archived: b
     const unsubscribeFromJoinedRooms = onSnapshot(q, (snapshot) => {
         const roomIds = snapshot.docs.map(doc => doc.id);
         
-        // cleanup previous rooms listener
         unsubscribeFromRooms();
 
         if (roomIds.length === 0) {
@@ -51,7 +49,6 @@ export function useUserRooms(userId: string, isChairperson: boolean, archived: b
             return;
         }
 
-        // NOTE: 'in' queries are limited to 30 items. For this app, we assume a user won't join more than 30 active rooms.
         const roomsQuery = query(collection(db, 'rooms'), where(documentId(), 'in', roomIds));
         
         unsubscribeFromRooms = onSnapshot(roomsQuery, (roomsSnapshot) => {
@@ -59,7 +56,6 @@ export function useUserRooms(userId: string, isChairperson: boolean, archived: b
                 roomsSnapshot.docs.map(doc => [doc.id, { id: doc.id, ...doc.data()}])
             );
 
-            // Re-sort the rooms based on the order from joinedRooms (by joinedAt)
             const sortedRooms = roomIds.map(id => roomsData.get(id)).filter(Boolean);
 
             setRooms(sortedRooms as any[]);

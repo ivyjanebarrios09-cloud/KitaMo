@@ -100,8 +100,7 @@ export default function YearlyStatementPage() {
         handleDownloadCSV();
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [downloadAction, loading]);
+  }, [downloadAction, loading, isDownloading]);
 
   const totalIncome = filteredTransactions.filter(t => t.type === 'credit').reduce((acc, t) => acc + t.amount, 0);
   const totalExpenses = filteredTransactions.filter(t => t.type === 'debit').reduce((acc, t) => acc + t.amount, 0);

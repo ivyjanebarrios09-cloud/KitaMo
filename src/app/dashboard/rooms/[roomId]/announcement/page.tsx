@@ -24,7 +24,7 @@ const TransactionIcon = ({ type }) => {
     let iconColor = 'text-muted-foreground';
 
     switch (type) {
-      case 'debit': // Expense
+      case 'debit':
         icon = <Building className="h-6 w-6" />;
         bgColor = 'bg-red-100 dark:bg-red-900/30';
         iconColor = 'text-red-600 dark:text-red-400';
@@ -34,7 +34,7 @@ const TransactionIcon = ({ type }) => {
         bgColor = 'bg-blue-100 dark:bg-blue-900/30';
         iconColor = 'text-blue-600 dark:text-blue-400';
         break;
-      case 'credit': // Payment
+      case 'credit':
           icon = <Receipt className="h-6 w-6" />;
           bgColor = 'bg-green-100 dark:bg-green-900/30';
           iconColor = 'text-green-600 dark:text-green-400';

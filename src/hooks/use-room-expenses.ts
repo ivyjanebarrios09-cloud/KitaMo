@@ -1,6 +1,6 @@
 
 'use client';
-// This hook is deprecated and will be removed. Use use-room-transactions instead.
+
 import { useState, useEffect } from 'react';
 import { collection, query, onSnapshot, orderBy, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -15,7 +15,6 @@ export function useRoomExpenses(roomId) {
       return;
     }
 
-    // Fetch all transactions and filter client-side to avoid composite index
     const transactionsRef = collection(db, 'rooms', roomId, 'transactions');
     const q = query(transactionsRef, orderBy('createdAt', 'desc'));
 

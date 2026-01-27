@@ -40,7 +40,6 @@ export default function CollectionSummaryPage() {
       const relevantPayments = payments.filter(p => p.deadlineId === deadline.id);
       const totalAmountCollected = relevantPayments.reduce((sum, p) => sum + p.amount, 0);
 
-      // Group payments by student to see who has paid in full for this deadline
       const paymentsByStudent = relevantPayments.reduce((acc, p) => {
         if (!acc[p.userId]) {
           acc[p.userId] = 0;
@@ -77,7 +76,7 @@ export default function CollectionSummaryPage() {
       element.style.backgroundColor = originalBg;
 
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('l', 'mm', 'a4'); // Use landscape
+      const pdf = new jsPDF('l', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const canvasAspectRatio = canvas.width / canvas.height;
@@ -127,8 +126,7 @@ export default function CollectionSummaryPage() {
         handleDownloadCSV();
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [downloadAction, loading, collectionSummaryData]);
+  }, [downloadAction, loading, collectionSummaryData, isDownloading]);
 
 
   return (

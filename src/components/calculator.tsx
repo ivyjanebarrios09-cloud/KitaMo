@@ -26,13 +26,10 @@ export function Calculator() {
 
   const handleCalculate = () => {
     try {
-      // Replace 'x' with '*' for calculation
       const expression = input.replace(/x/g, '*');
-      // Basic validation to prevent unsafe eval
       if (!/^[0-9+\-*/.() ]+$/.test(expression)) {
         throw new Error('Invalid characters in expression');
       }
-      // eslint-disable-next-line no-eval
       const result = eval(expression);
       if (typeof result !== 'number' || !isFinite(result)) {
         throw new Error('Invalid calculation');
