@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -6,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect } from 'firebase/auth';
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
@@ -141,15 +140,17 @@ export default function RegisterPage() {
     setGoogleLoading(true);
     const googleProvider = new GoogleAuthProvider();
     try {
-        await signInWithRedirect(auth, googleProvider);
-        // After redirect, the page will reload and the onAuthStateChanged listener
-        // in AuthProvider will handle the result.
+        await signInWithPopup(auth, googleProvider);
+        // After the popup closes, the onAuthStateChanged listener in AuthProvider
+        // will detect the new user, check if they exist in Firestore, and
+        // redirect them to either the dashboard or the role selection page.
     } catch (error: any) {
         toast({
             variant: 'destructive',
             title: 'Google Sign-In Failed',
             description: error.message || 'An unexpected error occurred. Please try again.',
         });
+    } finally {
         setGoogleLoading(false);
     }
   };

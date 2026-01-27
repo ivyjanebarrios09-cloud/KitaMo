@@ -2,12 +2,11 @@
 
 import type { User } from 'firebase/auth';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, signOut, getRedirectResult } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { useRouter } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
-import { useToast } from '@/hooks/use-toast';
 
 
 interface AuthContextType {
@@ -26,16 +25,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const { toast } = useToast();
 
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
+        setUser(user);
         const userDocRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userDocRef);
-        
-        setUser(user);
         
         if (!userDoc.exists()) {
           // New user (from Google or email signup) who needs to select a role.
@@ -49,22 +46,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             router.push('/dashboard');
           }
         }
-        setLoading(false);
-
       } else {
         setUser(null);
-        setLoading(false);
       }
-    });
-    
-    // Process redirect result for errors
-    getRedirectResult(auth).catch((error) => {
-        console.error("Error from getRedirectResult:", error);
-        toast({
-            variant: "destructive",
-            title: "Sign-in failed",
-            description: error.message || "An internal error occurred during sign-in.",
-        });
+      setLoading(false);
     });
 
     return () => unsubscribe();
