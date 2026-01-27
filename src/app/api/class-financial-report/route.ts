@@ -134,14 +134,19 @@ export async function GET(req: NextRequest) {
 
         // --- Table Drawing Helper ---
         const drawTableHeader = (y: number, headers: string[], colWidths: number[]) => {
+            const headerHeight = 30; // Increased height to allow for wrapping
             let currentX = startX;
             docPDF.font('Helvetica-Bold').fontSize(9);
             headers.forEach((header, i) => {
-                docPDF.rect(currentX, y, colWidths[i], rowHeight).stroke();
-                docPDF.text(header, currentX + 5, y + 6, { width: colWidths[i] - 10, align: 'left' });
+                docPDF.rect(currentX, y, colWidths[i], headerHeight).stroke();
+                // Center text horizontally and provide padding
+                docPDF.text(header, currentX + 5, y + 5, { 
+                    width: colWidths[i] - 10, 
+                    align: 'center' 
+                });
                 currentX += colWidths[i];
             });
-            return y + rowHeight;
+            return y + headerHeight;
         };
         
         const drawTableRow = (y: number, rowData: (string|number)[], colWidths: number[], alignments: ('left'|'right'|'center')[]) => {
