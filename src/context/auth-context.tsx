@@ -31,11 +31,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user); // Set user state immediately. This is crucial.
-
       if (user) {
         const userDocRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userDocRef);
+        
+        setUser(user);
         
         if (!userDoc.exists()) {
           // New user (from Google or email signup) who needs to select a role.
@@ -49,8 +49,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             router.push('/dashboard');
           }
         }
+        setLoading(false);
+
+      } else {
+        setUser(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
     
     // Process redirect result for errors
