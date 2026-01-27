@@ -59,26 +59,26 @@ function ChairpersonStatementsPage() {
     const [adviserName, setAdviserName] = useState('');
     const [adviserPosition, setAdviserPosition] = useState('Class Adviser');
 
-    const constructUrl = (basePath: 'api' | 'view', download: boolean = false) => {
+    const constructUrl = (basePath: 'view' | 'api', download: boolean = false) => {
         const path = basePath === 'api'
-            ? '/api/class-financial-report'
-            : `/dashboard/rooms/${roomId}/statements/class-financial-report`;
-
+          ? `/api/class-financial-report`
+          : `/dashboard/rooms/${roomId}/statements/class-financial-report`;
+    
         const queryParams = new URLSearchParams({
-            year,
-            month,
-            remarks,
-            adviserName,
-            adviserPosition,
-            roomId,
+          roomId,
+          year,
+          month,
+          remarks,
+          adviserName,
+          adviserPosition,
         });
 
         if (download) {
             queryParams.set('download', 'true');
         }
-
+    
         return `${path}?${queryParams.toString()}`;
-    };
+      };
 
 
   return (
@@ -104,10 +104,10 @@ function ChairpersonStatementsPage() {
                         </div>
                         <div className="flex items-center justify-end gap-2">
                             <Button variant="outline" size="sm" asChild>
-                                <Link href={constructUrl('view')}>
+                                <a href={constructUrl('view')} target="_blank" rel="noopener noreferrer">
                                     <Eye className="mr-2 h-4 w-4" />
                                     View
-                                </Link>
+                                </a>
                             </Button>
                             <Button variant="outline" size="sm" asChild>
                                 <a href={constructUrl('api', true)} target="_blank" rel="noopener noreferrer">
