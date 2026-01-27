@@ -1,6 +1,4 @@
-
 'use client';
-// This hook is deprecated and will be removed. Use use-user-rooms instead.
 import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -21,7 +19,6 @@ export function useStudentRooms(userId: string) {
       const roomsData: any[] = [];
       for (const doc of querySnapshot.docs) {
         const roomData = { id: doc.id, ...doc.data() };
-        // Fetch creator's name
         const userRef = doc(db, 'users', roomData.createdBy);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {

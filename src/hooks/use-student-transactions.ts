@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -27,8 +26,6 @@ export function useStudentTransactions(roomIds: string[], count = 10) {
 
     setLoading(true);
     
-    // Firestore 'in' queries on different fields are not supported in collection group queries.
-    // We must fetch and merge. For now, we'll just query by roomIds which is supported.
     const fetchTransactions = async () => {
         try {
             const q = query(

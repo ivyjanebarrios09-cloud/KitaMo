@@ -14,7 +14,6 @@ export async function GET(req: NextRequest) {
 
   const doc = new PDFDocument({ size: 'A4', margin: 50 });
   
-  // A promise-based way to get the buffer from the stream
   const pdfPromise = new Promise<Buffer>((resolve, reject) => {
     const buffers: Buffer[] = [];
     doc.on('data', buffers.push.bind(buffers));
@@ -25,17 +24,13 @@ export async function GET(req: NextRequest) {
     doc.on('error', reject);
   });
 
-  // Add content to the PDF
   doc.fontSize(18).text(`Report for ${month} ${year}`, { align: 'center' });
   doc.moveDown();
   doc.fontSize(12).text("Sensor data goes here...");
-  // ... more content can be added here
 
-  // Finalize the PDF and end the stream
   doc.end();
 
   try {
-    // Wait for the PDF to be fully generated in memory
     const pdfData = await pdfPromise;
     
     const fileName = `report-${month}-${year}.pdf`;

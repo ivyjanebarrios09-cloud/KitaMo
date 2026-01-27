@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -23,7 +22,6 @@ export function useRoomStudents(roomId: string) {
 
       setLoading(true);
       try {
-        // Fetch Chairperson details first
         const chairpersonRef = doc(db, 'users', room.createdBy);
         const chairpersonSnap = await getDoc(chairpersonRef);
         if (chairpersonSnap.exists()) {

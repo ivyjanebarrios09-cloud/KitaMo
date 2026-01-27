@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -23,7 +22,6 @@ export function useUserTransactions(roomIds: string[], count = 10) {
 
     setLoading(true);
 
-    // Keep track of all transactions from all listeners
     const allTransactionsMap = new Map<string, any>();
 
     const unsubscribes = roomIds.map(roomId => {
@@ -40,10 +38,8 @@ export function useUserTransactions(roomIds: string[], count = 10) {
 
         const combinedTransactions = Array.from(allTransactionsMap.values());
         
-        // Sort on the client-side
         combinedTransactions.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
 
-        // Limit the results
         setTransactions(combinedTransactions.slice(0, count));
         setLoading(false);
 
